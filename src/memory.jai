@@ -1,0 +1,56 @@
+read_ROM :: (name: string) {
+	file, res := file_open(name);
+	if !res then log_error("Unable to open file \"%\"", name);
+	
+	file_seek(file, 0, .END);
+	result, size := file_tell(file);
+	// Todo - at the moment we're handling only 32kB ROM files
+	if size != ROM_SIZE then log_error("Incompatible file, it must to be a 32kB ROM");
+	file_seek(file, 0, .START);
+	
+	res = file_read(file, engine.ROM.data, ROM_SIZE);
+	if !res then log_error("huh?");
+	
+	file_close(*file);
+}
+
+update_PC :: ($steps: u8, addr: u16 = 0) {
+	#if !steps then engine.PC = addr;
+	else            engine.PC += steps;
+}
+
+read_data :: (addr: u16) -> u8 {
+	if addr < 0x6000 {
+		return engine.RAM[addr];
+	} else if (addr <= 0x6000 && addr < 0x7FFF) {
+		log_warn("Trying to access I/O memory");
+		return 0;
+	} else if (addr >= 0x8000 && addr <= 0xFFFF) {
+		return engine.ROM[addr & 0x7FFF];
+	} else {
+		log_error("Address % out of memory", addr);
+		return 0;
+	}
+}
+
+write_data :: (addr: u16, data: u8) {
+	if addr < 0x6000 {
+		engine.RAM[addr] = data;
+		
+		// if addr >= 0x0200 && addr <= 0x277F {
+			// engine.windows.update_display = true;
+		// }
+	} else if addr >= 0x6000 && addr <= 0x7FFF {
+		log_warn("Trying to access I/O memory");
+	} else if addr >= 0x8000 && addr <= 0xFFFF {
+		log_error("Cannot write in ROM space");
+	} else {
+		log_error("Address % out of memory", addr);
+	}
+}
+
+read_address :: (addr: u16) -> u16 {
+	d1 := read_data(addr);
+	d2 := read_data(addr + 1);
+	return ((cast(u16)d2) << 8) | cast(u16)d1;
+}

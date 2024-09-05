@@ -1,0 +1,71 @@
+init_window :: (width: int, height: int, title: string) {
+	sleep_is_granular = (timeBeginPeriod(1) == TIMERR_NOERROR);
+
+	vp.window = WC.create_window(width, height, title, background_color_rgb = .[0, 0, 0]);
+	vp.width  = width;
+	vp.height = height;
+	
+	init_rendering();
+
+	QueryPerformanceFrequency(*perf_count_frequency);
+	QueryPerformanceCounter(*last_counter);
+	vp.running = true;
+}
+
+fetch_window_inputs :: () {
+	Input.update_window_events();
+	for Input.events_this_frame if it.type == .QUIT then vp.running = false;
+	
+	// if condition only because it's also called when moving the window
+	for Input.get_window_resizes() if it.width != vp.width || it.height != vp.height {
+		vp.width  = it.width;
+		vp.height = it.height;
+		resize_viewport();
+	}
+
+	lock_frame_rate();
+}
+
+deinit_window :: () {
+	deinit_rendering();
+	timeEndPeriod(1);
+}
+
+lock_frame_rate :: () {
+	read_os_timer :: () -> s64 {
+        timer: s64;
+        QueryPerformanceCounter(*timer);
+        return timer;
+    }
+    target_s: float = 1.0 / target_frame_rate;
+    seconds_elapsed_for_frame: float = (cast(float)(read_os_timer() - last_counter)) / perf_count_frequency;
+    if seconds_elapsed_for_frame < target_s {
+        if sleep_is_granular {
+            sleep_ms := 1000.0 * target_s - seconds_elapsed_for_frame - 1;
+            if sleep_ms > 0 then Sleep(xx sleep_ms);
+        }
+        while seconds_elapsed_for_frame < target_s {
+            seconds_elapsed_for_frame = (cast(float)(read_os_timer() - last_counter)) / perf_count_frequency;
+        }
+    }
+    end_counter: s64;
+    QueryPerformanceCounter(*end_counter);
+    dt = (cast(float)(end_counter - last_counter)) / perf_count_frequency;
+    last_counter = end_counter;
+	// Todo - maybe clamp delta_time if it's too high?
+}
+
+Viewport :: struct {
+	window: WC.Window_Type;
+	width, height: int;
+	running: bool;
+}
+
+vp: Viewport;
+engine: Emulator;
+
+sleep_is_granular: bool;
+perf_count_frequency: s64;
+last_counter: s64;
+target_frame_rate := 120;
+dt: float;
