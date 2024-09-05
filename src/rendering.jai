@@ -1,10 +1,10 @@
 draw_rect :: (pos: Vec2, size: Vec2, layer: float, col: Col) {
 	vert_count := quad_buffer.vertices_count;
 	
-	vertices_add(*quad_buffer, .{pos.x         , pos.y         , 0, col.component});
-	vertices_add(*quad_buffer, .{pos.x + size.x, pos.y         , 0, col.component});
-	vertices_add(*quad_buffer, .{pos.x + size.x, pos.y + size.y, 0, col.component});
-	vertices_add(*quad_buffer, .{pos.x         , pos.y + size.y, 0, col.component});
+	vertices_add(*quad_buffer, .{pos.x         , pos.y         , layer, col.component});
+	vertices_add(*quad_buffer, .{pos.x + size.x, pos.y         , layer, col.component});
+	vertices_add(*quad_buffer, .{pos.x + size.x, pos.y + size.y, layer, col.component});
+	vertices_add(*quad_buffer, .{pos.x         , pos.y + size.y, layer, col.component});
 	
 	indices_add(*quad_buffer, vert_count + 1);
 	indices_add(*quad_buffer, vert_count    );
@@ -14,7 +14,7 @@ draw_rect :: (pos: Vec2, size: Vec2, layer: float, col: Col) {
 	indices_add(*quad_buffer, vert_count + 3);
 }
 
-draw_text :: (text: string, pos: Vec2, scale: u32, color: Col) {
+draw_text :: (text: string, pos: Vec2, layer: float, scale: u32, color: Col) {
 	x_pos: float;
 	y_pos: float;
 	
@@ -33,10 +33,10 @@ draw_text :: (text: string, pos: Vec2, scale: u32, color: Col) {
 			uv := get_char_mapping(it);
 			vert_count := font_buffer.vertices_count;
 			
-			vertices_add(*font_buffer, .{pos.x + x_pos    , pos.y + y_pos    , 0, color.component, .[uv.x       , uv.y       ]});
-			vertices_add(*font_buffer, .{pos.x + x_pos + s, pos.y + y_pos    , 0, color.component, .[uv.x + uv_x, uv.y       ]});
-			vertices_add(*font_buffer, .{pos.x + x_pos + s, pos.y + y_pos + s, 0, color.component, .[uv.x + uv_x, uv.y + uv_y]});
-			vertices_add(*font_buffer, .{pos.x + x_pos    , pos.y + y_pos + s, 0, color.component, .[uv.x       , uv.y + uv_y]});
+			vertices_add(*font_buffer, .{pos.x + x_pos    , pos.y + y_pos    , layer, color.component, .[uv.x       , uv.y       ]});
+			vertices_add(*font_buffer, .{pos.x + x_pos + s, pos.y + y_pos    , layer, color.component, .[uv.x + uv_x, uv.y       ]});
+			vertices_add(*font_buffer, .{pos.x + x_pos + s, pos.y + y_pos + s, layer, color.component, .[uv.x + uv_x, uv.y + uv_y]});
+			vertices_add(*font_buffer, .{pos.x + x_pos    , pos.y + y_pos + s, layer, color.component, .[uv.x       , uv.y + uv_y]});
 
 			indices_add(*font_buffer, vert_count + 1);
 			indices_add(*font_buffer, vert_count    );

@@ -4,16 +4,17 @@ main :: () {
 		fetch_window_inputs();
 		
 		clear_background(COLOR_BACKGROUND);
+		begin_drawing();
 		
-		draw_rect(.{100, 0}, .{100, 100}, -10, .{0, 1, 0, 1});
+		draw_rect(.{100, 0}, .{100, 100}, 0, .{0, 1, 0, 1});
+		draw_rect(.{0, 0}, .{100, 100},   0, .{0, 0, 1, 1});
 		for 0..40 {
-			draw_rect(.{xx (20 * it), 0}, .{10, 10}, 0, .{1, 0, 0, 1});
+			draw_rect(.{xx (20 * it), 0}, .{10, 10}, 1, .{1, 0, 0, 1});
 		}
-		draw_rect(.{200, 0}, .{100, 100}, -10, COLOR_BORDER_NORMAL);
-		
+		draw_rect(.{200, 0}, .{100, 100}, 0, COLOR_BORDER_NORMAL);
 		draw_rect(.{300, 0}, .{100, 100}, 0, .{1, 1, 1, 1});
 		
-		draw_text("Text rendering", .{100, 40}, 2, COLOR_TEXT_NORMAL);
+		draw_text("Text rendering", .{100, 40}, 0, 2, COLOR_TEXT_NORMAL);
 		
 		finalize_drawing();
 		reset_temporary_storage();

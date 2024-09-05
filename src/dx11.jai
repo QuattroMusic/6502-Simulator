@@ -13,13 +13,16 @@ deinit_rendering :: () {
 		IUnknown_Release(buff.VBuffer);
 		IUnknown_Release(buff.IBuffer);
 	}
-	
+
 	release_buffer(quad_buffer);
 	release_buffer(font_buffer);
 
 	IUnknown_Release(camera_buffer);
 
 	IUnknown_Release(rasterizer);
+
+	IUnknown_Release(depth_stencil_view);
+	IUnknown_Release(depth_stencil_buffer);
 
 	IUnknown_Release(swapchain);
 	IUnknown_Release(back_buffer);
@@ -38,18 +41,56 @@ init_d3d :: () {
 	swapchain_desc.SampleDesc.Count = 4;
 	swapchain_desc.Windowed = xx true;
 
-	D3D11CreateDeviceAndSwapChain(null,
-								  .HARDWARE,
-								  null, 0, null, 0,
-								  D3D11_SDK_VERSION,
-								  *swapchain_desc,
-								  *swapchain,
-								  *dev,
-								  null,
-								  *devcon);
+	D3D11CreateDeviceAndSwapChain(null, .HARDWARE, null, 0, null, 0, D3D11_SDK_VERSION, *swapchain_desc, *swapchain, *dev, null, *devcon);
 
 	set_render_target();
 	set_viewport();
+	create_depth_stencil();
+}
+
+create_depth_stencil :: () {
+	depth_buffer_desc: D3D11_TEXTURE2D_DESC;
+	depth_buffer_desc.Width            = xx vp.width;
+	depth_buffer_desc.Height           = xx vp.height;
+	depth_buffer_desc.MipLevels        = 1;
+	depth_buffer_desc.ArraySize        = 1;
+	depth_buffer_desc.Format           = .DXGI_FORMAT_D32_FLOAT_S8X24_UINT;
+	depth_buffer_desc.SampleDesc.Count = 4;
+	depth_buffer_desc.Usage            = .DEFAULT;
+	depth_buffer_desc.BindFlags        = .DEPTH_STENCIL;
+	
+	ID3D11Device_CreateTexture2D(dev, *depth_buffer_desc, null, *depth_stencil_buffer);
+
+	depth_stencil_desc: D3D11_DEPTH_STENCIL_DESC;
+	depth_stencil_desc.DepthEnable                  =  xx true;
+	depth_stencil_desc.DepthWriteMask               = .ALL;
+	depth_stencil_desc.DepthFunc                    = .LESS;
+	depth_stencil_desc.StencilEnable                =  xx true;
+	depth_stencil_desc.StencilReadMask              =  0xFF;
+	depth_stencil_desc.StencilWriteMask             =  0xFF;
+	depth_stencil_desc.FrontFace.StencilFailOp      = .KEEP;
+	depth_stencil_desc.FrontFace.StencilDepthFailOp = .INCR;
+	depth_stencil_desc.FrontFace.StencilPassOp      = .KEEP;
+	depth_stencil_desc.FrontFace.StencilFunc        = .ALWAYS;
+	depth_stencil_desc.BackFace.StencilFailOp       = .KEEP;
+	depth_stencil_desc.BackFace.StencilDepthFailOp  = .DECR;
+	depth_stencil_desc.BackFace.StencilPassOp       = .KEEP;
+	depth_stencil_desc.BackFace.StencilFunc         = .ALWAYS;
+	
+	ID3D11DeviceContext_OMSetDepthStencilState(devcon, depth_stencil_state, 0xFFFFFFFF);
+	
+	if depth_stencil_state then IUnknown_Release(depth_stencil_state);
+	ID3D11Device_CreateDepthStencilState(dev, *depth_stencil_desc, *depth_stencil_state);
+	
+	dsvDesc: D3D11_DEPTH_STENCIL_VIEW_DESC;
+	dsvDesc.Format = .DXGI_FORMAT_D32_FLOAT_S8X24_UINT;
+	dsvDesc.ViewDimension = .D3D11_DSV_DIMENSION_TEXTURE2DMS;
+	
+	if depth_stencil_view then IUnknown_Release(depth_stencil_view);
+	ID3D11Device_CreateDepthStencilView(dev, depth_stencil_buffer, *dsvDesc, *depth_stencil_view);
+	IUnknown_Release(depth_stencil_buffer);
+	
+	ID3D11DeviceContext_OMSetRenderTargets(devcon, 1, *back_buffer, depth_stencil_view);
 }
 
 init_shaders :: () {
@@ -61,10 +102,10 @@ init_shaders :: () {
 
 	ID3D11Device_CreateVertexShader(dev, VS.data, xx VS.count, null, *quad_buffer.VS);
 	ID3D11Device_CreatePixelShader( dev, PS.data, xx PS.count, null, *quad_buffer.PS);
-	
+
 	ied :: D3D11_INPUT_ELEMENT_DESC.[
-		.{"POSITION", 0, .R32G32B32_FLOAT, 0, 0, .VERTEX_DATA, 0},
-		.{"COLOR", 0, .R32G32B32A32_FLOAT, 0, 12, .VERTEX_DATA, 0}
+		.{"POSITION", 0, .R32G32B32_FLOAT,    0,  0, .VERTEX_DATA, 0},
+		.{"COLOR",    0, .R32G32B32A32_FLOAT, 0, 12, .VERTEX_DATA, 0}
 	];
 	ID3D11Device_CreateInputLayout(dev, ied.data, xx ied.count, VS.data, xx VS.count, *quad_buffer.layout);
 
@@ -77,9 +118,9 @@ init_shaders :: () {
 	ID3D11Device_CreateVertexShader(dev, VS2.data, xx VS2.count, null, *font_buffer.VS);
 	ID3D11Device_CreatePixelShader( dev, PS2.data, xx PS2.count, null, *font_buffer.PS);
 	ied2 :: D3D11_INPUT_ELEMENT_DESC.[
-		.{"POSITION", 0, .R32G32B32_FLOAT, 0, 0, .VERTEX_DATA, 0},
-		.{"COLOR", 0, .R32G32B32A32_FLOAT, 0, 12, .VERTEX_DATA, 0},
-		.{"TEXCOORD", 0, .R32G32_FLOAT, 0, 28, .VERTEX_DATA, 0}
+		.{"POSITION", 0, .R32G32B32_FLOAT,    0,  0, .VERTEX_DATA, 0},
+		.{"COLOR",    0, .R32G32B32A32_FLOAT, 0, 12, .VERTEX_DATA, 0},
+		.{"TEXCOORD", 0, .R32G32_FLOAT,       0, 28, .VERTEX_DATA, 0}
 	];
 	ID3D11Device_CreateInputLayout(dev, ied2.data, ied2.count, VS2.data, xx VS2.count, *font_buffer.layout);
 }
@@ -87,7 +128,7 @@ init_shaders :: () {
 init_font :: () {
 	texture_data = stbi_load_from_memory(texture_data_file.data, texture_data_file.count, *texture_width, *texture_height, *texture_channels, 0);
 	assert(texture_data != null);
-	
+
 	desc: D3D11_TEXTURE2D_DESC;
 	desc.Width  = xx texture_width;
 	desc.Height = xx texture_height;
@@ -97,20 +138,20 @@ init_font :: () {
 	desc.SampleDesc.Count = 1;
 	desc.Usage = .IMMUTABLE;
 	desc.BindFlags = .SHADER_RESOURCE;
-	
+
 	init_data: D3D11_SUBRESOURCE_DATA;
 	init_data.pSysMem = texture_data;
 	init_data.SysMemPitch = xx ((texture_width * 32 + 7) / 8);
 	init_data.SysMemSlicePitch = xx ((cast(u32)init_data.SysMemPitch) * cast(u32)texture_height);
-	
+
 	ID3D11Device_CreateTexture2D(dev, *desc, *init_data, *texture);
-	
+
 	SRVDesc: D3D11_SHADER_RESOURCE_VIEW_DESC;
 	SRVDesc.Format = .DXGI_FORMAT_R8G8B8A8_UNORM;
 	SRVDesc.ViewDimension = .D3D11_SRV_DIMENSION_TEXTURE2D;
 	SRVDesc.Texture2D.MipLevels = 1;
 	ID3D11Device_CreateShaderResourceView(dev, texture, *SRVDesc, *texture_resource_view);
-	
+
 	sampler_desc: D3D11_SAMPLER_DESC;
 	sampler_desc.Filter = .MIN_MAG_MIP_POINT;
 	sampler_desc.AddressU = .D3D11_TEXTURE_ADDRESS_WRAP;
@@ -119,9 +160,9 @@ init_font :: () {
 	sampler_desc.ComparisonFunc = .D3D11_COMPARISON_NEVER;
 	sampler_desc.MinLOD = 0;
 	sampler_desc.MaxLOD = FLOAT32_MAX;
-	
+
 	ID3D11Device_CreateSamplerState(dev, *sampler_desc, *tex_sampler_state);
-	
+
 	ID3D11DeviceContext_PSSetShaderResources(devcon, 0, 1, *texture_resource_view);
 	ID3D11DeviceContext_PSSetSamplers(devcon, 0, 1, *tex_sampler_state);
 }
@@ -144,7 +185,7 @@ init_graphics :: () {
 	create_indices_buffer_dx11(*font_buffer);
 
 	ID3D11DeviceContext_IASetPrimitiveTopology(devcon, .TRIANGLELIST);
-	
+
 	rasterizer_desc: D3D11_RASTERIZER_DESC;
 	rasterizer_desc.FillMode = .SOLID;
 	rasterizer_desc.CullMode = .FRONT;
@@ -187,19 +228,26 @@ set_viewport :: () {
 	viewport.TopLeftY = 0;
 	viewport.Width  = xx vp.width;
 	viewport.Height = xx vp.height;
+	viewport.MinDepth = 0;
+	viewport.MaxDepth = 1;
 
 	ID3D11DeviceContext_RSSetViewports(devcon, 1, *viewport);
+}
+
+begin_drawing :: () {
+	flags: u32 = xx (D3D11_CLEAR_FLAG.DEPTH | D3D11_CLEAR_FLAG.STENCIL);
+	ID3D11DeviceContext_ClearDepthStencilView(devcon, depth_stencil_view, flags, 1, 0);
 }
 
 finalize_drawing :: () {
 	draw_buffer :: (data: *Buffer_Data) {
 		ID3D11DeviceContext_VSSetShader(devcon, data.VS, null, 0);
 		ID3D11DeviceContext_PSSetShader(devcon, data.PS, null, 0);
-		
+
 		ID3D11DeviceContext_IASetInputLayout(devcon, data.layout);
-		
+
 		size :: size_of(data.vertex_type);
-		
+
 		stride: u32 = size;
 		offset: u32 = 0;
 		ID3D11DeviceContext_IASetVertexBuffers(devcon, 0, 1, *data.VBuffer, *stride, *offset);
@@ -216,18 +264,18 @@ finalize_drawing :: () {
 		ID3D11DeviceContext_Unmap(devcon, data.IBuffer, 0);
 
 		ID3D11DeviceContext_DrawIndexed(devcon, data.indices_count, 0, 0);
-		
+
 		data.indices_count = 0;
 		data.vertices_count = 0;
 	}
-	
+
     ID3D11DeviceContext_OMSetBlendState(devcon, null, null, 0xFFFFFFFF);
 	draw_buffer(*quad_buffer);
 
 	scales :: float.[1, 1, 1, 1];
     ID3D11DeviceContext_OMSetBlendState(devcon, transparency, *scales, 0xFFFFFFFF);
 	draw_buffer(*font_buffer);
-	
+
 	IDXGISwapChain_Present(swapchain, 0, 0);
 }
 
@@ -247,7 +295,7 @@ indices_add :: (using buff: *Buffer_Data, val: u32) {
 
 resize_vertices :: (using buff: *Buffer_Data, new_amt: u32) {
 	size :: size_of(buff.vertex_type);
-	
+
 	vertices_data = realloc(vertices_data, new_amt * size, vertices_allocated * size);
 	vertices_allocated = new_amt;
 
@@ -282,7 +330,8 @@ create_indices_buffer_dx11 :: (using buff: *Buffer_Data) {
 }
 
 update_camera :: () {
-	camera = orthographic_projection_matrix(0, xx vp.width, xx vp.height, 0, 1, 1000);
+	camera = orthographic_projection_matrix(0, xx vp.width, xx vp.height, 0, 1, 1000, depth_range_01 = true);
+	camera._34 = 1;
 	ID3D11DeviceContext_UpdateSubresource(devcon, camera_buffer, 0, null, *camera, 0, 0);
 	ID3D11DeviceContext_VSSetConstantBuffers(devcon, 0, 1, *camera_buffer);
 }
@@ -299,6 +348,7 @@ resize_viewport :: () {
 	set_render_target();
 	set_viewport();
 	update_camera();
+	create_depth_stencil();
 }
 
 #scope_module
@@ -309,13 +359,13 @@ Buffer_Data :: struct (vertex_type: $T) {
 	indices_allocated:  u32 = 8;
 	vertices_count:     u32 = 0;
 	indices_count:      u32 = 0;
-	
+
 	VS: *ID3D11VertexShader;
 	PS: *ID3D11PixelShader;
-	
+
 	VBuffer: *ID3D11Buffer;
 	IBuffer: *ID3D11Buffer;
-	
+
 	layout: *ID3D11InputLayout;
 }
 
@@ -350,6 +400,10 @@ tex_sampler_state: *ID3D11SamplerState;
 
 transparency: *ID3D11BlendState;
 
+depth_stencil_view: *ID3D11DepthStencilView;
+depth_stencil_buffer: *ID3D11Texture2D;
+depth_stencil_state: *ID3D11DepthStencilState;
+
 texture_data_file :: #run read_entire_file("src/joystick monospace.png");
 
 texture_data: *u8;
@@ -369,7 +423,7 @@ struct VOut {
 VOut VShader(float4 position: POSITION, float4 color: COLOR) {
     VOut output;
 
-    output.position = mul(position, camera_data);
+    output.position = mul(position + float4(0, 0, 1, 0), camera_data);
     output.color    = color;
 
     return output;
@@ -388,8 +442,7 @@ cbuffer cp_per_object {
 	float4x4 camera_data;
 }
 
-struct VS_OUTPUT
-{
+struct VS_OUTPUT {
 	float4 Pos : SV_POSITION;
 	float4 Color: COLOR;
 	float2 TexCoord : TEXCOORD;
@@ -398,15 +451,14 @@ struct VS_OUTPUT
 VS_OUTPUT VShader(float4 inPos : POSITION, float4 inCol : COLOR, float2 inTexCoord : TEXCOORD) {
     VS_OUTPUT output;
 
-    output.Pos = mul(inPos, camera_data);
+    output.Pos = mul(inPos + float4(0, 0, 1, 0), camera_data);
 	output.Color = inCol;
     output.TexCoord = inTexCoord;
-	
+
     return output;
 }
 
-float4 PShader(VS_OUTPUT input) : SV_TARGET
-{
+float4 PShader(VS_OUTPUT input) : SV_TARGET {
 	float4 f = ObjTexture.Sample(ObjSamplerState, input.TexCoord);
     return f * float4(input.Color.xyz, 1);
 }
