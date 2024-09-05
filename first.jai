@@ -11,7 +11,9 @@ main :: () {
 		}
 		draw_rect(.{200, 0}, .{100, 100}, -10, COLOR_BORDER_NORMAL);
 		
-		draw_sprite();
+		draw_rect(.{300, 0}, .{100, 100}, 0, .{1, 1, 1, 1});
+		
+		draw_text("Text rendering", .{100, 40}, 2, COLOR_TEXT_NORMAL);
 		
 		finalize_drawing();
 		reset_temporary_storage();

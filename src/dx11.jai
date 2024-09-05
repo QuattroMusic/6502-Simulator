@@ -154,12 +154,12 @@ init_graphics :: () {
 
 	rtbd: D3D11_RENDER_TARGET_BLEND_DESC;
 	rtbd.BlendEnable            = xx true;
-	rtbd.SrcBlend               = .D3D11_BLEND_SRC_COLOR;
-	rtbd.DestBlend              = .D3D11_BLEND_BLEND_FACTOR;
-	rtbd.BlendOp                = .D3D11_BLEND_OP_ADD;
-	rtbd.SrcBlendAlpha          = .D3D11_BLEND_ONE;
-	rtbd.DestBlendAlpha         = .D3D11_BLEND_ZERO;
-	rtbd.BlendOpAlpha           = .D3D11_BLEND_OP_ADD;
+	rtbd.SrcBlend               = .SRC_COLOR;
+	rtbd.DestBlend              = .INV_SRC_ALPHA;
+	rtbd.BlendOp                = .ADD;
+	rtbd.SrcBlendAlpha          = .ONE;
+	rtbd.DestBlendAlpha         = .ZERO;
+	rtbd.BlendOpAlpha           = .ADD;
 	rtbd.RenderTargetWriteMask  = xx (D3D11_COLOR_WRITE_ENABLE.ALL);
 
 	blend_desc: D3D11_BLEND_DESC;
@@ -224,7 +224,8 @@ finalize_drawing :: () {
     ID3D11DeviceContext_OMSetBlendState(devcon, null, null, 0xFFFFFFFF);
 	draw_buffer(*quad_buffer);
 
-    ID3D11DeviceContext_OMSetBlendState(devcon, transparency, null, 0xFFFFFFFF);
+	scales :: float.[1, 1, 1, 1];
+    ID3D11DeviceContext_OMSetBlendState(devcon, transparency, *scales, 0xFFFFFFFF);
 	draw_buffer(*font_buffer);
 	
 	IDXGISwapChain_Present(swapchain, 0, 0);
@@ -406,6 +407,7 @@ VS_OUTPUT VShader(float4 inPos : POSITION, float4 inCol : COLOR, float2 inTexCoo
 
 float4 PShader(VS_OUTPUT input) : SV_TARGET
 {
-    return ObjTexture.Sample( ObjSamplerState, input.TexCoord ) * input.Color;
+	float4 f = ObjTexture.Sample(ObjSamplerState, input.TexCoord);
+    return f * float4(input.Color.xyz, 1);
 }
 DONE
