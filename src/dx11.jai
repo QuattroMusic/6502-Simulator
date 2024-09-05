@@ -349,7 +349,7 @@ tex_sampler_state: *ID3D11SamplerState;
 
 transparency: *ID3D11BlendState;
 
-texture_data_file :: #run read_entire_file("src/font.png");
+texture_data_file :: #run read_entire_file("src/joystick monospace.png");
 
 texture_data: *u8;
 texture_width, texture_height, texture_channels: s32;
