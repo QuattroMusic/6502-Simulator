@@ -54,11 +54,11 @@ create_depth_stencil :: () {
 	depth_buffer_desc.Height           = xx vp.height;
 	depth_buffer_desc.MipLevels        = 1;
 	depth_buffer_desc.ArraySize        = 1;
-	depth_buffer_desc.Format           = .DXGI_FORMAT_D32_FLOAT_S8X24_UINT;
+	depth_buffer_desc.Format           = .D32_FLOAT_S8X24_UINT;
 	depth_buffer_desc.SampleDesc.Count = 4;
 	depth_buffer_desc.Usage            = .DEFAULT;
 	depth_buffer_desc.BindFlags        = .DEPTH_STENCIL;
-	
+
 	ID3D11Device_CreateTexture2D(dev, *depth_buffer_desc, null, *depth_stencil_buffer);
 
 	depth_stencil_desc: D3D11_DEPTH_STENCIL_DESC;
@@ -76,20 +76,20 @@ create_depth_stencil :: () {
 	depth_stencil_desc.BackFace.StencilDepthFailOp  = .DECR;
 	depth_stencil_desc.BackFace.StencilPassOp       = .KEEP;
 	depth_stencil_desc.BackFace.StencilFunc         = .ALWAYS;
-	
+
 	ID3D11DeviceContext_OMSetDepthStencilState(devcon, depth_stencil_state, 0xFFFFFFFF);
-	
+
 	if depth_stencil_state then IUnknown_Release(depth_stencil_state);
 	ID3D11Device_CreateDepthStencilState(dev, *depth_stencil_desc, *depth_stencil_state);
-	
+
 	dsvDesc: D3D11_DEPTH_STENCIL_VIEW_DESC;
 	dsvDesc.Format = .DXGI_FORMAT_D32_FLOAT_S8X24_UINT;
 	dsvDesc.ViewDimension = .D3D11_DSV_DIMENSION_TEXTURE2DMS;
-	
+
 	if depth_stencil_view then IUnknown_Release(depth_stencil_view);
 	ID3D11Device_CreateDepthStencilView(dev, depth_stencil_buffer, *dsvDesc, *depth_stencil_view);
 	IUnknown_Release(depth_stencil_buffer);
-	
+
 	ID3D11DeviceContext_OMSetRenderTargets(devcon, 1, *back_buffer, depth_stencil_view);
 }
 
@@ -147,17 +147,17 @@ init_font :: () {
 	ID3D11Device_CreateTexture2D(dev, *desc, *init_data, *texture);
 
 	SRVDesc: D3D11_SHADER_RESOURCE_VIEW_DESC;
-	SRVDesc.Format = .DXGI_FORMAT_R8G8B8A8_UNORM;
-	SRVDesc.ViewDimension = .D3D11_SRV_DIMENSION_TEXTURE2D;
+	SRVDesc.Format = .R8G8B8A8_UNORM;
+	SRVDesc.ViewDimension = .TEXTURE2D;
 	SRVDesc.Texture2D.MipLevels = 1;
 	ID3D11Device_CreateShaderResourceView(dev, texture, *SRVDesc, *texture_resource_view);
 
 	sampler_desc: D3D11_SAMPLER_DESC;
 	sampler_desc.Filter = .MIN_MAG_MIP_POINT;
-	sampler_desc.AddressU = .D3D11_TEXTURE_ADDRESS_WRAP;
-	sampler_desc.AddressV = .D3D11_TEXTURE_ADDRESS_WRAP;
-	sampler_desc.AddressW = .D3D11_TEXTURE_ADDRESS_WRAP;
-	sampler_desc.ComparisonFunc = .D3D11_COMPARISON_NEVER;
+	sampler_desc.AddressU = .CLAMP;
+	sampler_desc.AddressV = .CLAMP;
+	sampler_desc.AddressW = .CLAMP;
+	sampler_desc.ComparisonFunc = .NEVER;
 	sampler_desc.MinLOD = 0;
 	sampler_desc.MaxLOD = FLOAT32_MAX;
 
@@ -194,14 +194,14 @@ init_graphics :: () {
 	ID3D11DeviceContext_RSSetState(devcon, rasterizer);
 
 	rtbd: D3D11_RENDER_TARGET_BLEND_DESC;
-	rtbd.BlendEnable            = xx true;
-	rtbd.SrcBlend               = .SRC_COLOR;
+	rtbd.BlendEnable            =  xx true;
+	rtbd.SrcBlend               = .SRC_ALPHA;
 	rtbd.DestBlend              = .INV_SRC_ALPHA;
 	rtbd.BlendOp                = .ADD;
 	rtbd.SrcBlendAlpha          = .ONE;
-	rtbd.DestBlendAlpha         = .ZERO;
 	rtbd.BlendOpAlpha           = .ADD;
-	rtbd.RenderTargetWriteMask  = xx (D3D11_COLOR_WRITE_ENABLE.ALL);
+	rtbd.DestBlendAlpha         = .ZERO;
+	rtbd.RenderTargetWriteMask  =  xx D3D11_COLOR_WRITE_ENABLE.ALL;
 
 	blend_desc: D3D11_BLEND_DESC;
 	blend_desc.AlphaToCoverageEnable = xx false;
@@ -272,8 +272,7 @@ finalize_drawing :: () {
     ID3D11DeviceContext_OMSetBlendState(devcon, null, null, 0xFFFFFFFF);
 	draw_buffer(*quad_buffer);
 
-	scales :: float.[1, 1, 1, 1];
-    ID3D11DeviceContext_OMSetBlendState(devcon, transparency, *scales, 0xFFFFFFFF);
+    ID3D11DeviceContext_OMSetBlendState(devcon, transparency, null, 0xFFFFFFFF);
 	draw_buffer(*font_buffer);
 
 	IDXGISwapChain_Present(swapchain, 0, 0);
@@ -404,7 +403,7 @@ depth_stencil_view: *ID3D11DepthStencilView;
 depth_stencil_buffer: *ID3D11Texture2D;
 depth_stencil_state: *ID3D11DepthStencilState;
 
-texture_data_file :: #run read_entire_file("src/joystick monospace.png");
+texture_data_file :: #run read_entire_file("src/engine/joystick monospace.png");
 
 texture_data: *u8;
 texture_width, texture_height, texture_channels: s32;
@@ -460,6 +459,6 @@ VS_OUTPUT VShader(float4 inPos : POSITION, float4 inCol : COLOR, float2 inTexCoo
 
 float4 PShader(VS_OUTPUT input) : SV_TARGET {
 	float4 f = ObjTexture.Sample(ObjSamplerState, input.TexCoord);
-    return f * float4(input.Color.xyz, 1);
+	return f * input.Color;
 }
 DONE

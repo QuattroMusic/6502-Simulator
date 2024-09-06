@@ -12,16 +12,8 @@ init_window :: (width: int, height: int, title: string) {
 	vp.running = true;
 }
 
-fetch_window_inputs :: () {
-	Input.update_window_events();
-	for Input.events_this_frame if it.type == .QUIT then vp.running = false;
-	
-	// if condition only because it's also called when moving the window
-	for Input.get_window_resizes() if it.width != vp.width || it.height != vp.height {
-		vp.width  = it.width;
-		vp.height = it.height;
-		resize_viewport();
-	}
+fetch_window_events :: () {
+	fetch_window_inputs();
 
 	lock_frame_rate();
 }
@@ -53,6 +45,10 @@ lock_frame_rate :: () {
     dt = (cast(float)(end_counter - last_counter)) / perf_count_frequency;
     last_counter = end_counter;
 	// Todo - maybe clamp delta_time if it's too high?
+}
+
+is_mouse_over_rect :: (pos: Vec2, size: Vec2) -> bool {
+	return (xx pos.x <= mouse_x) && (mouse_x < xx (pos.x + size.x)) && (xx pos.y <= mouse_y) && (mouse_y < xx (pos.y + size.y));
 }
 
 Viewport :: struct {

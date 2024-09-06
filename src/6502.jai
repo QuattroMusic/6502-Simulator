@@ -1,3 +1,7 @@
+Emulator_Windows :: struct {
+	
+}
+
 Status_Flags :: struct {
 	N, V, _, B, D, I, Z, C: bool;
 }
@@ -17,8 +21,11 @@ Emulator :: struct {
 	running: bool;
 	in_debug: bool;
 	thread_running: bool;
-	// compilation_successful: bool;
+	compilation_successful: bool;
 	cpu_thread: Thread;
+	
+	code_viewer_pos: Vec2;
+	code_viewer_size: Vec2;
 }
 
 Hz  :: (f: int) -> int { return f; }
