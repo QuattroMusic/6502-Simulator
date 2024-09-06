@@ -76,28 +76,33 @@ draw_program_memory :: () {
 }
 
 draw_program_registers :: () {
+	panel_internal :: (reg: string, val: $T, offset: Vec2, pos: Vec2, size: Vec2, layer: float) {
+		draw_panel(reg, offset + pos, size, layer);
+		
+		s := size_of(T);
+		
+		hex := formatInt(val, base = 16, minimum_digits = (ifx s == 1 then 2 else 4));
+		bin := formatInt(val, base =  2, minimum_digits = (ifx s == 1 then 8 else 16));
+		
+		draw_text(tprint("0x%", hex), offset + pos + .{10, 12}, 1, layer, WHITE);
+		draw_text(tprint("0b%", bin), offset + pos + .{10, 32}, 1, layer, WHITE);
+		draw_text(tprint("%",   val), offset + pos + .{10, 52}, 1, layer, WHITE);
+	}
+	
 	layer :: 1;
 	offset := Vec2.{vp.width + 20.0 - MIN_SCREEN_WIDTH / 2, vp.height + 70.0 - MIN_SCREEN_HEIGHT / 2};
 	
 	draw_panel("Registers", offset, .{MIN_SCREEN_WIDTH / 2 - 30, MIN_SCREEN_HEIGHT / 4 - 25}, layer);
-	{
-		draw_panel("A", offset + .{10, 15}, .{125, 70}, layer);
-	}
-	{
-		draw_panel("X", offset + .{145, 15}, .{125, 70}, layer);
-	}
-	{
-		draw_panel("Y", offset + .{280, 15}, .{125, 70}, layer);
-	}
-	{
-		draw_panel("Key", offset + .{415, 15}, .{85, 50}, layer);
-	}
-	{
-		draw_panel("PC", offset + .{10, 95}, .{210, 70}, layer);
-	}
-	{
-		draw_panel("S", offset + .{230, 95}, .{125, 70}, layer);
-	}
+
+	panel_internal("A", engine.A, offset, .{10, 15}, .{125, 70}, layer);
+	panel_internal("X", engine.X, offset, .{145, 15}, .{125, 70}, layer);
+	panel_internal("Y", engine.Y, offset, .{280, 15}, .{125, 70}, layer);
+	// {
+		// draw_panel("Key", offset + .{415, 15}, .{85, 50}, layer);
+	// }
+	
+	panel_internal("PC", engine.PC, offset, .{10, 95}, .{210, 70}, layer);
+	panel_internal("S", engine.S, offset, .{230, 95}, .{125, 70}, layer);
 	{
 		draw_panel("Executing", offset + .{365, 130}, .{135, 35}, layer);
 	}
