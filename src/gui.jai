@@ -79,10 +79,10 @@ draw_program_registers :: () {
 	panel_internal :: (reg: string, val: $T, offset: Vec2, pos: Vec2, size: Vec2, layer: float) {
 		draw_panel(reg, offset + pos, size, layer);
 		
-		s := size_of(T);
+		s :: size_of(T);
 		
-		hex := formatInt(val, base = 16, minimum_digits = (ifx s == 1 then 2 else 4));
-		bin := formatInt(val, base =  2, minimum_digits = (ifx s == 1 then 8 else 16));
+		hex := formatInt(val, base = 16, minimum_digits = (#ifx s == 1 then 2 else 4));
+		bin := formatInt(val, base =  2, minimum_digits = (#ifx s == 1 then 8 else 16));
 		
 		draw_text(tprint("0x%", hex), offset + pos + .{10, 12}, 1, layer, WHITE);
 		draw_text(tprint("0b%", bin), offset + pos + .{10, 32}, 1, layer, WHITE);
@@ -108,5 +108,82 @@ draw_program_registers :: () {
 	}
 	{
 		draw_panel("Flags", offset + .{510, 15}, .{150, 150}, layer);
+		draw_text("N:", offset + .{520, 25},  layer, 1, WHITE);
+		draw_text("V:", offset + .{520, 45},  layer, 1, WHITE);
+		draw_text("B:", offset + .{520, 65},  layer, 1, WHITE);
+		draw_text("D:", offset + .{520, 85},  layer, 1, WHITE);
+		draw_text("I:", offset + .{520, 105}, layer, 1, WHITE);
+		draw_text("Z:", offset + .{520, 125}, layer, 1, WHITE);
+		draw_text("C:", offset + .{520, 145}, layer, 1, WHITE);
+		using engine.flags;
+		draw_text(tprint("% / %", cast(u8)N, N), offset + .{545, 25},  layer, 1, ifx N then GREEN else RED);
+		draw_text(tprint("% / %", cast(u8)V, V), offset + .{545, 45},  layer, 1, ifx V then GREEN else RED);
+		draw_text(tprint("% / %", cast(u8)B, B), offset + .{545, 65},  layer, 1, ifx B then GREEN else RED);
+		draw_text(tprint("% / %", cast(u8)D, D), offset + .{545, 85},  layer, 1, ifx D then GREEN else RED);
+		draw_text(tprint("% / %", cast(u8)I, I), offset + .{545, 105}, layer, 1, ifx I then GREEN else RED);
+		draw_text(tprint("% / %", cast(u8)Z, Z), offset + .{545, 125}, layer, 1, ifx Z then GREEN else RED);
+		draw_text(tprint("% / %", cast(u8)C, C), offset + .{545, 145}, layer, 1, ifx C then GREEN else RED);
 	}
+}
+
+draw_program_debug :: () {
+	offset := Vec2.{vp.width + 20.0 - MIN_SCREEN_WIDTH / 2, vp.height - MIN_SCREEN_HEIGHT / 4 + 55.0};
+	
+	// draw_panel("Debug", offset, .{MIN_SCREEN_WIDTH / 2 - 450.0, MIN_SCREEN_HEIGHT / 4 - 65.0}, 1);
+	draw_panel("Debug", offset, .{MIN_SCREEN_WIDTH / 2 - 240.0, MIN_SCREEN_HEIGHT / 4 - 65.0}, 1);
+	
+	checkbox(*engine.in_debug, "Enable debug", offset + .{15, 15}, .{20, 20}, 1);
+	if engine.in_debug && engine.thread_running {
+		if button("Step", offset + .{170, 13}, .{60, 25}, 1, 1) {
+			next_instruction();
+		}
+	}
+	
+	draw_panel("Stack used", offset + .{10, 90}, .{200, 35}, 1);
+	stack_used := (255.0 - engine.S) / 255;
+	col: Col = stack_used * RED + (1 - stack_used) * GREEN;
+	
+	ff := formatFloat(stack_used * 100, trailing_width = 1, zero_removal = .NO);
+	
+	draw_text(tprint("%\% - % / 255B", ff, 255 - engine.S), offset + .{20, 103}, 1, 1, col);
+}
+
+draw_program_frequency :: () {
+	offset := Vec2.{vp.width - 210.0, vp.height - MIN_SCREEN_HEIGHT / 4 + 55.0};
+	draw_panel("Frequency", offset, .{200, MIN_SCREEN_HEIGHT / 4 - 65.0}, 1);
+	
+	checkbox(*engine.unlock, "unlock", offset + .{10, 15}, .{20, 20}, 1);
+	
+	str: string;
+	if !engine.unlock {
+		freq := engine.update_rate;
+		if freq < kHz(1) {
+			str = tprint("Freq: %Hz", freq);
+		} else if freq < MHz(1) {
+			str = tprint("Freq: %kHz", freq / 1_000);
+		} else if freq < GHz(1) {
+			str = tprint("Freq: %MHz", freq / 1_000_000);
+		} else {
+			str = tprint("Freq: %GHz", freq / 1_000_000_000);
+		}
+		
+		if button(.LEFT_ARROW, offset + .{130, 40}, .{20, 20}, 1, 1) && engine.update_rate > 1{
+			v := tprint("%", engine.update_rate);
+			if v[0] == {
+				case #char "1"; engine.update_rate /= 2;
+				case #char "2"; engine.update_rate /= 2;
+				case #char "5"; engine.update_rate = engine.update_rate / 5 * 2;
+			}
+		}
+		if button(.RIGHT_ARROW, offset + .{150, 40}, .{20, 20}, 1, 1) && engine.update_rate < GHz(10) {
+			v := tprint("%", engine.update_rate);
+			if v[0] == {
+				case #char "1"; engine.update_rate *= 2;
+				case #char "2"; engine.update_rate = engine.update_rate / 2 * 5;
+				case #char "5"; engine.update_rate *= 2;
+			}
+		}
+	}
+	
+	draw_text(str, offset + .{10, 45}, 1, 1, COLOR_TEXT_NORMAL);
 }

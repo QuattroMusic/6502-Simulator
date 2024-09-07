@@ -1,10 +1,11 @@
 #scope_file
-button_internal :: (pos: Vec2, size: Vec2, layer: float, $t: float) -> (bool, Col) {
-	Button_State :: enum {
-		NORMAL;
-		HOVER;
-		PRESSED;
-	}
+Button_State :: enum {
+	NORMAL;
+	HOVER;
+	PRESSED;
+}
+
+button_press :: (pos: Vec2, size: Vec2) -> (bool, Button_State) {
 	state := Button_State.NORMAL;
 
 	if is_mouse_over_rect(pos, size) {
@@ -17,6 +18,12 @@ button_internal :: (pos: Vec2, size: Vec2, layer: float, $t: float) -> (bool, Co
 		state = .PRESSED;
 		fire = released;
 	}
+
+	return fire, state;
+}
+
+button_internal :: (pos: Vec2, size: Vec2, layer: float, $t: float) -> (bool, Col) {
+	fire, state := button_press(pos, size);
 
 	bg_col: Col;
 	border_col: Col;
@@ -99,6 +106,32 @@ button :: (icon: Icon, pos: Vec2, size: Vec2, layer: float, $t: float) -> bool {
 	return fire;
 }
 
+checkbox :: (value: *bool, $$text: string, pos: Vec2, size: Vec2, layer: float) {
+	s := measure_text(text, 1);
+	
+	fire, state := button_press(pos, size + .{s.x + 12, 0});
+
+	bg_col: Col;
+	text_col: Col;
+	if state == {
+		case .NORMAL;
+			bg_col = COLOR_TEXT_NORMAL;
+			text_col = COLOR_TEXT_NORMAL;
+		case .HOVER;
+			bg_col = COLOR_TEXT_FOCUSED;
+			text_col = COLOR_TEXT_FOCUSED;
+		case .PRESSED;
+			bg_col = COLOR_BASE_PRESSED;
+			text_col = COLOR_TEXT_PRESSED;
+	}
+	
+	if value.* || state == .PRESSED then draw_rect(pos + .{4, 4}, size - .{8, 8}, layer, bg_col);
+	draw_rect_lines(pos, size, layer + 1, COLOR_LINE);
+	draw_text(text, pos + .{size.x + 8, (size.y - s.y) / 2}, layer, 1, text_col);
+	
+	if fire then value.* = !value.*;
+}
+
 draw_text :: (text: string, pos: Vec2, layer: float, scale: float, color: Col) {
 	x_pos: float;
 	y_pos: float;
@@ -156,10 +189,12 @@ draw_icon :: (icon: Icon, pos: Vec2, layer: float, $scale: float, color: Col) {
 
 get_icon_mapping :: (icon: Icon) -> (uv: Vec2) {
 	if #complete icon == {
-		case .REDUCE;   return .{176.0 / texture_width, 8.0 / texture_height};
-		case .MINIMIZE; return .{184.0 / texture_width, 8.0 / texture_height};
-		case .MAXIMIZE; return .{192.0 / texture_width, 8.0 / texture_height};
-		case .CLOSE;    return .{200.0 / texture_width, 8.0 / texture_height};
+		case .LEFT_ARROW;  return .{208.0 / texture_width, 0.0 / texture_height};
+		case .RIGHT_ARROW; return .{216.0 / texture_width, 0.0 / texture_height};
+		case .REDUCE;      return .{224.0 / texture_width, 0.0 / texture_height};
+		case .MINIMIZE;    return .{232.0 / texture_width, 0.0 / texture_height};
+		case .MAXIMIZE;    return .{240.0 / texture_width, 0.0 / texture_height};
+		case .CLOSE;       return .{248.0 / texture_width, 0.0 / texture_height};
 	}
 }
 
@@ -174,8 +209,8 @@ get_char_mapping :: (c: u8) -> (uv: Vec2) {
 		x: float = ((c - #char "A") * 8.0) / texture_width;
 		y: float = 0;
 		return .{x, y};
-	} else if c >= #char "0" && c <= #char "9" {
-		x: float = ((c - #char "0") * 8.0) / texture_width;
+	} else if c >= #char "!" && c <= #char "?" {
+		x: float = ((c - #char "!") * 8.0) / texture_width;
 		y: float = 8.0 / texture_height;
 		return .{x, y};
 	} else {
@@ -206,6 +241,8 @@ measure_text :: ($$text: string, $scale: float) -> Vec2 {
 }
 
 Icon :: enum {
+	LEFT_ARROW;
+	RIGHT_ARROW;
 	REDUCE;
 	MINIMIZE;
 	MAXIMIZE;
@@ -228,4 +265,6 @@ COLOR_LINE            :: #run Col.{129, 192, 208, 255} / 255;
 COLOR_BACKGROUND      :: #run Col.{  0,  34,  43, 255} / 255;
 COLOR_DEEP_BACKGROUND :: #run Col.{ 10,  10,  10, 255} / 255;
 
-WHITE :: Col.{1, 1, 1, 1};
+WHITE :: #run Col.{255, 255, 255, 255} / 255;
+GREEN :: #run Col.{ 35, 210,  30, 255} / 255;
+RED   :: #run Col.{210,  35,  30, 255} / 255;

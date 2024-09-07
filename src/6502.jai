@@ -16,7 +16,7 @@ Emulator :: struct {
 	flags: Status_Flags;
 	PC: u16;
 	unlock: bool;
-	update_rate := #run kHz(10);
+	update_rate: int = 10_000;
 	
 	running: bool;
 	in_debug: bool;
@@ -28,9 +28,10 @@ Emulator :: struct {
 	code_viewer_size: Vec2;
 }
 
-Hz  :: (f: int) -> int { return f; }
-kHz :: (f: int) -> int { return f * 1_000; }
-MHz :: (f: int) -> int { return f * 1_000_000; }
+Hz  :: (f: type_of(engine.update_rate)) -> type_of(engine.update_rate) { return f; }
+kHz :: (f: type_of(engine.update_rate)) -> type_of(engine.update_rate) { return f * 1_000; }
+MHz :: (f: type_of(engine.update_rate)) -> type_of(engine.update_rate) { return f * 1_000_000; }
+GHz :: (f: type_of(engine.update_rate)) -> type_of(engine.update_rate) { return f * 1_000_000_000; }
 
 bit :: (n: int, i: int) -> u8 { return cast(u8)((n >> i) & 1); }
 

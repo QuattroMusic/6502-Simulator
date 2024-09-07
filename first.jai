@@ -38,6 +38,8 @@ update_6502 :: () {
 	draw_code_viewer();
 	draw_program_memory();
 	draw_program_registers();
+	draw_program_debug();
+	draw_program_frequency();
 }
 
 main :: () {
