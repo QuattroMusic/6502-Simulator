@@ -23,13 +23,23 @@ draw_buttons_controls :: () {
 	t :: 1;
 	if !engine.thread_running {
 		if button("Compile and run", .{10, 40}, .{170, 25}, 1, t) {
-			log_info("Compile and run");
+			compile_program();
+			if engine.compilation_successful {
+				read_ROM("out.bin");  // Todo
+				cpu_reset();
+				cpu_start();
+			}
 		}
 		if button("Compile", .{190, 40}, .{100, 25}, 1, t) {
-			
+			compile_program();
+			if engine.compilation_successful {
+				read_ROM("out.bin");  // Todo
+				cpu_reset();
+			}
 		}
 		if engine.compilation_successful && button("Run", .{300, 40}, .{60, 25}, 1, t) {
-			
+			cpu_reset();
+			cpu_start();
 		}
 	} else {
 		// we're doing this just to update the variable the next cycle
