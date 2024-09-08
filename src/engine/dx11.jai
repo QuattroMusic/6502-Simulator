@@ -189,6 +189,7 @@ init_graphics :: () {
 	rasterizer_desc: D3D11_RASTERIZER_DESC;
 	rasterizer_desc.FillMode = .SOLID;
 	rasterizer_desc.CullMode = .FRONT;
+	rasterizer_desc.ScissorEnable = xx true;
 	ID3D11Device_CreateRasterizerState(dev, *rasterizer_desc, *rasterizer);
 
 	ID3D11DeviceContext_RSSetState(devcon, rasterizer);
@@ -226,8 +227,8 @@ set_viewport :: () {
 	viewport: D3D11_VIEWPORT;
 	viewport.TopLeftX = 0;
 	viewport.TopLeftY = 0;
-	viewport.Width  = xx vp.width;
-	viewport.Height = xx vp.height;
+	viewport.Width    = xx vp.width;
+	viewport.Height   = xx vp.height;
 	viewport.MinDepth = 0;
 	viewport.MaxDepth = 1;
 
@@ -239,42 +240,47 @@ begin_drawing :: () {
 	ID3D11DeviceContext_ClearDepthStencilView(devcon, depth_stencil_view, flags, 1, 0);
 }
 
-finalize_drawing :: () {
-	draw_buffer :: (data: *Buffer_Data) {
-		ID3D11DeviceContext_VSSetShader(devcon, data.VS, null, 0);
-		ID3D11DeviceContext_PSSetShader(devcon, data.PS, null, 0);
+draw_buffer :: (data: *Buffer_Data) {
+	if data.indices_count == 0 then return;
 
-		ID3D11DeviceContext_IASetInputLayout(devcon, data.layout);
+	ID3D11DeviceContext_VSSetShader(devcon, data.VS, null, 0);
+	ID3D11DeviceContext_PSSetShader(devcon, data.PS, null, 0);
 
-		size :: size_of(data.vertex_type);
+	ID3D11DeviceContext_IASetInputLayout(devcon, data.layout);
 
-		stride: u32 = size;
-		offset: u32 = 0;
-		ID3D11DeviceContext_IASetVertexBuffers(devcon, 0, 1, *data.VBuffer, *stride, *offset);
-		ID3D11DeviceContext_IASetIndexBuffer(devcon, data.IBuffer, .R32_UINT, 0);
+	size :: size_of(data.vertex_type);
 
-		// Todo - something more performant?
-		ms: D3D11_MAPPED_SUBRESOURCE;
-		ID3D11DeviceContext_Map(devcon, data.VBuffer, 0, .WRITE_DISCARD, 0, *ms);
-		memcpy(ms.pData, data.vertices_data, size * data.vertices_count);
-		ID3D11DeviceContext_Unmap(devcon, data.VBuffer, 0);
+	stride: u32 = size;
+	offset: u32 = 0;
+	ID3D11DeviceContext_IASetVertexBuffers(devcon, 0, 1, *data.VBuffer, *stride, *offset);
+	ID3D11DeviceContext_IASetIndexBuffer(devcon, data.IBuffer, .R32_UINT, 0);
 
-		ID3D11DeviceContext_Map(devcon, data.IBuffer, 0, .WRITE_DISCARD, 0, *ms);
-		memcpy(ms.pData, data.indices_data, size_of(u32) * data.indices_count);
-		ID3D11DeviceContext_Unmap(devcon, data.IBuffer, 0);
+	// Todo - something more performant?
+	ms: D3D11_MAPPED_SUBRESOURCE;
+	ID3D11DeviceContext_Map(devcon, data.VBuffer, 0, .WRITE_DISCARD, 0, *ms);
+	memcpy(ms.pData, data.vertices_data, size * data.vertices_count);
+	ID3D11DeviceContext_Unmap(devcon, data.VBuffer, 0);
 
-		ID3D11DeviceContext_DrawIndexed(devcon, data.indices_count, 0, 0);
+	ID3D11DeviceContext_Map(devcon, data.IBuffer, 0, .WRITE_DISCARD, 0, *ms);
+	memcpy(ms.pData, data.indices_data, size_of(u32) * data.indices_count);
+	ID3D11DeviceContext_Unmap(devcon, data.IBuffer, 0);
 
-		data.indices_count = 0;
-		data.vertices_count = 0;
-	}
+	ID3D11DeviceContext_DrawIndexed(devcon, data.indices_count, 0, 0);
 
+	data.indices_count = 0;
+	data.vertices_count = 0;
+}
+
+flush_buffers :: () {
     ID3D11DeviceContext_OMSetBlendState(devcon, null, null, 0xFFFFFFFF);
 	draw_buffer(*quad_buffer);
 
     ID3D11DeviceContext_OMSetBlendState(devcon, transparency, null, 0xFFFFFFFF);
 	draw_buffer(*font_buffer);
+}
 
+finalize_drawing :: () {
+	flush_buffers();
 	IDXGISwapChain_Present(swapchain, 0, 0);
 }
 
@@ -337,6 +343,30 @@ update_camera :: () {
 
 clear_background :: (col: Col) {
 	ID3D11DeviceContext_ClearRenderTargetView(devcon, back_buffer, *col.component);
+}
+
+set_drawing_area :: (pos: Vec2, size: Vec2) {
+	flush_buffers();
+
+	r: RECT;
+	r.left = xx pos.x;
+	r.top = xx pos.y;
+	r.right = xx (pos.x + size.x);
+	r.bottom = xx (pos.y + size.y);
+
+	ID3D11DeviceContext_RSSetScissorRects(devcon, 1, *r);
+}
+
+reset_drawing_area :: () {
+	flush_buffers();
+	
+	r: RECT;
+	r.left = 0;
+	r.right = 0;
+	r.right = xx vp.width;
+	r.bottom = xx vp.height;
+
+	ID3D11DeviceContext_RSSetScissorRects(devcon, 1, *r);
 }
 
 resize_viewport :: () {
