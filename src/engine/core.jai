@@ -1,5 +1,6 @@
 init_window :: (width: int, height: int, title: string) {
 	sleep_is_granular = (timeBeginPeriod(1) == TIMERR_NOERROR);
+	SetProcessDPIAware();
 
 	vp.window = WC.create_window(width, height, title, background_color_rgb = .[0, 0, 0]);
 	vp.width  = width;
