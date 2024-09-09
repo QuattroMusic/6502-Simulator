@@ -1,5 +1,6 @@
-Emulator_Windows :: struct {
-	
+General_UI :: struct {
+	memory_scrollbar_selected: bool;
+	memory_scrollbar_pos: float;
 }
 
 Status_Flags :: struct {
@@ -22,6 +23,9 @@ Emulator :: struct {
 	in_debug: bool;
 	thread_running: bool;
 	compilation_successful: bool;
+	
+	ui: General_UI;
+	
 	cpu_thread: Thread;
 	
 	code_viewer_pos: Vec2;

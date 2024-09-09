@@ -48,7 +48,7 @@ lock_frame_rate :: () {
 	// Todo - maybe clamp delta_time if it's too high?
 }
 
-is_mouse_over_rect :: (pos: Vec2, size: Vec2) -> bool {
+is_mouse_inside_rect :: (pos: Vec2, size: Vec2) -> bool {
 	return (xx pos.x <= mouse_x) && (mouse_x < xx (pos.x + size.x)) && (xx pos.y <= mouse_y) && (mouse_y < xx (pos.y + size.y));
 }
 

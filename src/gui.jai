@@ -61,6 +61,10 @@ draw_buttons_controls :: () {
 		}
 		engine.running = running;
 	}
+	
+	if button("Reset", .{370, 40}, .{80, 25}, 1, t) {
+		cpu_reset();
+	}
 }
 
 draw_code_viewer :: () {
@@ -75,14 +79,91 @@ draw_code_viewer :: () {
 	draw_rect(engine.code_viewer_pos, engine.code_viewer_size, 0, COLOR_BACKGROUND);
 }
 
+handle_memory_scrollbar :: (pos: Vec2, size: Vec2) {
+	// Todo - check if app is also focused
+	if is_mouse_inside_rect(pos, size) {
+		if mouse_dz {
+			amt := mouse_dz * (FONT_SIZE - 3) * 1;
+			engine.ui.memory_scrollbar_pos -= amt;
+		}
+	}
+	if is_mouse_pressed(0) && is_mouse_inside_rect(.{pos.x + size.x - 12, pos.y}, .{12, size.y}) {
+		engine.ui.memory_scrollbar_selected = true;
+	}
+	if engine.ui.memory_scrollbar_selected {
+		aspect_ratio := size.y / (2048 * (FONT_SIZE - 3));
+		bar_height := aspect_ratio * size.y;
+		engine.ui.memory_scrollbar_pos = (mouse_y - pos.y - bar_height / 2) / aspect_ratio;
+	}
+	
+	if is_mouse_released(0) && engine.ui.memory_scrollbar_selected {
+		engine.ui.memory_scrollbar_selected = false;
+	}
+	rows_on_screen := size.y / (FONT_SIZE - 3);
+	engine.ui.memory_scrollbar_pos = clamp(round_up(engine.ui.memory_scrollbar_pos, FONT_SIZE - 3), 0, ((2048 - rows_on_screen) * (FONT_SIZE - 3)));
+}
+
+draw_RAM_content :: (offset: Vec2, start: int, end: int, pos_y: float, height: float) {
+	for y: start..end {
+		hex := formatInt(y * 16, base = 16, minimum_digits = 4);
+		draw_text(tprint("0x%", hex), offset + .{5, xx (5 + y * (FONT_SIZE - 3))}, 2, 1, WHITE);
+		for x: 0..15 {
+			col := WHITE;
+			data := engine.RAM[y * 16 + x];
+			if 16 <= y && y < 32 {
+				col = ifx data then BLUE else PURPLE;
+			} else if 32 <= y && y < 632 {
+				col = ifx data then ORANGE else YELLOW;
+			} else if y == 632 && x <= 7 {
+				col = PINK;
+			} else if data {
+				col = GREEN;
+			}
+			
+			hex := formatInt(data, base = 16, minimum_digits = 2);
+			draw_text(tprint("%", hex), offset + .{75.0 + x * (2.25 * FONT_SIZE), 5.0 + y * (FONT_SIZE - 3)}, 2, 2, col);
+		}
+	}
+	
+	if is_mouse_pressed(0) then engine.S -= 1;
+	if is_mouse_pressed(1) then engine.S += 1;
+	
+	pos := offset.y + 213 + (cast(float)(engine.S / 16)) * (FONT_SIZE - 3);
+	if (pos_y - 20) <= pos && pos <= (pos_y + height) {
+		x := 74 + (cast(float)(engine.S % 16)) * (2.25 * FONT_SIZE);
+		y := 213 + (cast(float)(engine.S / 16)) * (FONT_SIZE - 3);
+		w := FONT_SIZE * 2 + 1;
+		h := FONT_SIZE + 1;
+		draw_rect_lines(offset + .{xx x, xx y}, .{xx w, xx h}, 3, RED, 2);
+	}
+}
+
 draw_program_memory :: () {
 	pos:  Vec2 = .{vp.width + 20.0 - MIN_SCREEN_WIDTH / 2, 74};
 	size: Vec2 = .{MIN_SCREEN_WIDTH / 2 - 30.0, vp.height - MIN_SCREEN_HEIGHT / 2 - 15.0};
+	
+	handle_memory_scrollbar(pos, size);
 	
 	draw_panel("Memory", pos, size, 2);
 	draw_rect(pos, size, 0, COLOR_BACKGROUND);
 	
 	draw_rect(pos, .{70, size.y}, 1, COLOR_BASE_NORMAL);
+	
+	set_drawing_area(pos, size);
+	
+	aspect_ratio := size.y / (2048 * (FONT_SIZE - 3));
+	bar_height := aspect_ratio * size.y;
+	
+	draw_rect(pos + .{size.x - 12, 0}, .{12, size.y}, 1, COLOR_BASE_NORMAL);
+	draw_rect(pos + .{size.x - 12, engine.ui.memory_scrollbar_pos * aspect_ratio}, .{12, bar_height}, 2, COLOR_BASE_FOCUSED);
+	
+	offset := pos + .{2, -engine.ui.memory_scrollbar_pos};
+	start: int = xx ((engine.ui.memory_scrollbar_pos - 15) / (FONT_SIZE - 3) + 1);
+	end: int = xx ((engine.ui.memory_scrollbar_pos + size.y - 15) / (FONT_SIZE - 3));
+	
+	draw_RAM_content(offset, start, end, pos.y, size.y);
+	
+	reset_drawing_area();
 }
 
 draw_program_registers :: () {

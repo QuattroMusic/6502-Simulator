@@ -8,7 +8,7 @@ Button_State :: enum {
 button_press :: (pos: Vec2, size: Vec2) -> (bool, Button_State) {
 	state := Button_State.NORMAL;
 
-	if is_mouse_over_rect(pos, size) {
+	if is_mouse_inside_rect(pos, size) {
 		state = .HOVER;
 	}
 
@@ -265,6 +265,11 @@ COLOR_LINE            :: #run Col.{129, 192, 208, 255} / 255;
 COLOR_BACKGROUND      :: #run Col.{  0,  34,  43, 255} / 255;
 COLOR_DEEP_BACKGROUND :: #run Col.{ 10,  10,  10, 255} / 255;
 
-WHITE :: #run Col.{255, 255, 255, 255} / 255;
-GREEN :: #run Col.{ 35, 210,  30, 255} / 255;
-RED   :: #run Col.{210,  35,  30, 255} / 255;
+WHITE  :: #run Col.{255, 255, 255, 255} / 255;
+GREEN  :: #run Col.{ 35, 210,  30, 255} / 255;
+RED    :: #run Col.{210,  35,  30, 255} / 255;
+PURPLE :: #run Col.{106,  13, 173, 255} / 255;
+BLUE   :: #run Col.{ 20,  35, 210, 255} / 255;
+ORANGE :: #run Col.{255, 103,   0, 255} / 255;
+YELLOW :: #run Col.{238, 210,   2, 255} / 255;
+PINK   :: #run Col.{255, 110, 199, 255} / 255;

@@ -10,6 +10,7 @@ fetch_window_inputs :: () {
 	}
 
 	mouse_x, mouse_y = WC.get_mouse_pointer_position(vp.window, right_handed = false);
+	mouse_dz = Input.mouse_delta_z / 120;
 }
 
 is_mouse_pressed :: ($key: int) -> bool {
@@ -47,3 +48,4 @@ is_mouse_released :: ($key: int) -> bool {
 
 mouse_x: int;
 mouse_y: int;
+mouse_dz: int;

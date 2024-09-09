@@ -79,7 +79,7 @@ LOG_INTRINSICS :: false;
 
 ROM_SIZE      :: 32 * 1024;
 RAM_SIZE      :: 32 * 1024;
-FONT_SIZE     :: 18;
+FONT_SIZE     :: 16;
 HEADER_HEIGHT :: 35;
 
 MEMORY_INPUT_ADDRESS  :: 0x2780;
@@ -131,5 +131,6 @@ WC    :: #import "Window_Creation";
 #load "src/memory.jai";
 #load "src/intrinsics.jai";
 #load "src/gui.jai";
+#load "src/utils.jai";
 
 #load "tests.jai";
