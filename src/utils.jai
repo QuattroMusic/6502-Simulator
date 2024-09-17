@@ -8,3 +8,7 @@ round_up :: (n: float, base: float) -> float {
 	}
 	return n;
 }
+
+print :: (v: Any) {
+	print("%\n", v);
+}
