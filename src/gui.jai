@@ -114,7 +114,7 @@ handle_memory_scrollbar :: (pos: Vec2, size: Vec2) {
 draw_RAM_content :: (offset: Vec2, start: int, end: int, pos_y: float, height: float) {
 	for y: start..end {
 		hex := formatInt(y * 16, base = 16, minimum_digits = 4);
-		draw_text(tprint("%:", hex), offset + .{4, 9.0 + y * 16}, 2, 1, WHITE);
+		draw_text(tprint("%:", hex), offset + .{4, 9.0 + y * 16}, 2, 1, COLOR_TEXT_NORMAL);
 		for x: 0..15 {
 			col := WHITE;
 			data := engine.RAM[y * 16 + x];
@@ -178,9 +178,9 @@ draw_program_registers :: () {
 		hex := formatInt(val, base = 16, minimum_digits = (#ifx s == 1 then 2 else 4));
 		bin := formatInt(val, base =  2, minimum_digits = (#ifx s == 1 then 8 else 16));
 
-		draw_text(tprint("0x%", hex), offset + pos + .{10, 12}, 1, layer, WHITE);
-		draw_text(tprint("0b%", bin), offset + pos + .{10, 32}, 1, layer, WHITE);
-		draw_text(tprint("%",   val), offset + pos + .{10, 52}, 1, layer, WHITE);
+		draw_text(tprint("0x%", hex), offset + pos + .{10, 12}, layer, 1, WHITE);
+		draw_text(tprint("0b%", bin), offset + pos + .{10, 32}, layer, 1, WHITE);
+		draw_text(tprint("%",   val), offset + pos + .{10, 52}, layer, 1, WHITE);
 	}
 
 	layer :: 1;

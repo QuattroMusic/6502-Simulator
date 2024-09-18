@@ -253,28 +253,40 @@ Icon :: enum {
 	CLOSE;
 }
 
-COLOR_BORDER_NORMAL   :: #run Col.{ 39, 116, 134, 255} / 255;
+// COLOR_BORDER_NORMAL   :: #run Col.{ 39, 116, 134, 255} / 255;
 COLOR_BORDER_FOCUSED  :: #run Col.{130, 205, 224, 255} / 255;
 COLOR_BORDER_PRESSED  :: #run Col.{235, 118,  48, 255} / 255;
 COLOR_BORDER_DISABLED :: #run Col.{ 19,  75,  90, 255} / 255;
-COLOR_BASE_NORMAL     :: #run Col.{  2,  70,  88, 255} / 255;
-COLOR_BASE_FOCUSED    :: #run Col.{ 50, 153, 180, 255} / 255;
+// COLOR_BASE_NORMAL     :: #run Col.{  2,  70,  88, 255} / 255;
+// COLOR_BASE_FOCUSED    :: #run Col.{ 50, 153, 180, 255} / 255;
 COLOR_BASE_PRESSED    :: #run Col.{255, 188,  81, 255} / 255;
 COLOR_BASE_DISABLED   :: #run Col.{  2,  49,  61, 255} / 255;
-COLOR_TEXT_NORMAL     :: #run Col.{ 81, 191, 211, 255} / 255;
+// COLOR_TEXT_NORMAL     :: #run Col.{ 81, 191, 211, 255} / 255;
 COLOR_TEXT_FOCUSED    :: #run Col.{182, 225, 234, 255} / 255;
 COLOR_TEXT_PRESSED    :: #run Col.{216, 111,  54, 255} / 255;
 COLOR_TEXT_DISABLED   :: #run Col.{ 23,  80,  95, 255} / 255;
-COLOR_LINE            :: #run Col.{129, 192, 208, 255} / 255;
-COLOR_BACKGROUND      :: #run Col.{  0,  34,  43, 255} / 255;
-COLOR_DEEP_BACKGROUND :: #run Col.{ 10,  10,  10, 255} / 255;
+// COLOR_LINE            :: #run Col.{129, 192, 208, 255} / 255;
+// COLOR_BACKGROUND      :: #run Col.{  0,  34,  43, 255} / 255;
+// COLOR_DEEP_BACKGROUND :: #run Col.{ 10,  10,  10, 255} / 255;
 
-WHITE  :: #run Col.{255, 255, 255, 255} / 255;
+COLOR_BORDER_NORMAL   :: #run Col.{ 202, 128, 35, 255} / 255;
+COLOR_BASE_NORMAL     :: #run Col.{ 84, 47, 21, 255} / 255;
+COLOR_BASE_FOCUSED    :: #run Col.{ 202, 128, 35, 255} / 255;
+COLOR_TEXT_NORMAL     :: #run Col.{ 246, 151, 48, 255} / 255;
+COLOR_LINE            :: #run Col.{ 254, 170, 55, 255} / 255;
+COLOR_BACKGROUND      :: #run Col.{  49,  30,  16, 255} / 255;
+COLOR_DEEP_BACKGROUND :: #run Col.{ 14,  10,  5, 255} / 255;
+
+WHITE  :: #run Col.{240, 240, 240, 255} / 255;
 GREEN  :: #run Col.{ 35, 210,  30, 255} / 255;
 RED    :: #run Col.{210,  35,  30, 255} / 255;
-PURPLE :: #run Col.{106,  13, 173, 255} / 255;
-BLUE   :: #run Col.{ 20,  35, 210, 255} / 255;
-ORANGE :: #run Col.{255, 103,   0, 255} / 255;
-YELLOW :: #run Col.{238, 210,   2, 255} / 255;
+PURPLE :: #run Col.{130, 102, 193, 255} / 255;
+BLUE   :: #run Col.{ 20,  90, 210, 255} / 255;
+// ORANGE :: #run Col.{255, 123,  10, 255} / 255;
+ORANGE :: #run Col.{221, 119, 17, 255} / 255;
+YELLOW :: #run Col.{238, 210,   5, 255} / 255;
 PINK   :: #run Col.{255, 110, 199, 255} / 255;
-GRAY   :: #run Col.{140, 140, 140, 255} / 255;
+GRAY   :: #run Col.{110, 110, 110, 255} / 255;
+BLUE2 :: #run Col.{64, 104, 200, 255} / 255;
+AMBER :: #run Col.{234, 191, 21, 255} / 255;
+PURPLE2 :: #run Col.{130, 102, 193, 255} / 255;

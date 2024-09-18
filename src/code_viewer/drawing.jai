@@ -1,5 +1,19 @@
 draw_line_count_bar :: () {
+	w := get_width_of_line_count_bar();
+	off := engine.cv.pos;
 	
+	draw_rect(off, .{w, engine.cv.size.y}, 1, COLOR_BASE_NORMAL);
+	
+	start: int = xx engine.cv.scrollbar_pos / 16;
+	end: int = xx (engine.cv.scrollbar_pos + engine.cv.size.y + 10) / 16;
+	
+	for start..end - 1 {
+		if it == engine.cv.rows_length.count then return;
+		
+		y := off.y + 10 + it * 16 - engine.cv.scrollbar_pos;
+		fmt := formatInt(it + 1, minimum_digits = engine.cv.row_digits, padding = #char " ");
+		draw_text(tprint("%", fmt), .{off.x + 8, y}, 2, 1, COLOR_TEXT_NORMAL);
+	}
 }
 
 draw_scrollbars :: () {
@@ -18,10 +32,10 @@ draw_scrollbars :: () {
 
 draw_colored_text :: () {
 	off := engine.cv.pos;
-	off.x += get_width_of_line_count_bar() + 1;
-	off.y += 10 - engine.cv.scrollbar_pos;
+	off.x += get_width_of_line_count_bar() + 4;
+	off.y += 5 - engine.cv.scrollbar_pos;
 	
-	start: int = xx (engine.cv.scrollbar_pos - 10) / 16;
+	start: int = xx engine.cv.scrollbar_pos / 16;
 	end: int = xx (engine.cv.scrollbar_pos + engine.cv.size.y + 10) / 16;
 	
 	for engine.cv.text_line {
@@ -35,19 +49,18 @@ draw_colored_text :: () {
 			y := off.y + it * 16;
 			x := off.x + column * 16;
 			str := string.{length, engine.cv.content.data + index};
-			draw_text(str, .{x, y}, 2, 2, color);
-			// text: string, pos: Vec2, layer: float, scale: float, color: Col
+			draw_text(str, .{x, y}, 1, 2, color);
 		}
 	}
 }
 
 parse_token :: (t: Color_Tokens) -> Col {
 	if t == {
-		case .INSTRUCTION; return PURPLE;
+		case .INSTRUCTION; return PURPLE2;
 		case .COMMENT;     return GRAY;
-		case .NUMBER;      return BLUE;
+		case .NUMBER;      return BLUE2;
 		case .DOTDIR;      return ORANGE;
-		case .LABEL;       return YELLOW;
+		case .LABEL;       return AMBER;
 		case .STRING;      return GREEN;
 		case .TEXT;        return WHITE;
 	}

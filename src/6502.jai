@@ -163,7 +163,8 @@ next_instruction :: () {
 
 compile_program :: () {
 	// Todo - format input and output
-	fmt := tprint("data\\vasm6502_oldstyle.exe -Fbin -o \"out.bin\" -dotdir \"test.s\"");
+	path := get_absolute_path(engine.cv.file_name,, temp);
+	fmt := tprint("data\\vasm6502_old.exe -Fbin -o \"out.bin\" -dotdir \"%\"", path);
 	res := run_command(..break_command_into_strings(fmt));
 	engine.compilation_successful = false;
 	if res.exit_code != 0 then return;  // Todo - handle better this

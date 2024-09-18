@@ -1,4 +1,5 @@
-; simple program that gives a random 8bit number
+; simple program that generates
+; a random 8bit number
 
 max = $ff
 
@@ -7,8 +8,8 @@ setup:
     lda #100 ; set initial state
     ldx #0
 
-generate_rnd: ; giving 'a' reg as the seed
-    ; and 'x' reg as place to store the value
+generate_rnd: ; giving 'a' as the seed
+    ; and 'x' reg as pointer in RAM
     beq do_xor
     asl
     bcc no_xor

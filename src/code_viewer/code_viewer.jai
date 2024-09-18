@@ -9,7 +9,7 @@ handle_scrollbar :: () {
 	
 	if is_mouse_inside_rect(pos, size) {
 		if mouse_dz {
-			amt := mouse_dz * 16;
+			amt := mouse_dz * 16 * 3;
 			engine.cv.scrollbar_pos -= amt;
 		}
 	}
