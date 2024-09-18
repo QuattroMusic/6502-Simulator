@@ -270,12 +270,12 @@ COLOR_TEXT_DISABLED   :: #run Col.{ 23,  80,  95, 255} / 255;
 // COLOR_DEEP_BACKGROUND :: #run Col.{ 10,  10,  10, 255} / 255;
 
 COLOR_BORDER_NORMAL   :: #run Col.{ 202, 128, 35, 255} / 255;
-COLOR_BASE_NORMAL     :: #run Col.{ 84, 47, 21, 255} / 255;
+COLOR_BASE_NORMAL     :: #run Col.{  50,  50, 50, 255} / 255;
 COLOR_BASE_FOCUSED    :: #run Col.{ 202, 128, 35, 255} / 255;
 COLOR_TEXT_NORMAL     :: #run Col.{ 246, 151, 48, 255} / 255;
 COLOR_LINE            :: #run Col.{ 254, 170, 55, 255} / 255;
-COLOR_BACKGROUND      :: #run Col.{  49,  30,  16, 255} / 255;
-COLOR_DEEP_BACKGROUND :: #run Col.{ 14,  10,  5, 255} / 255;
+COLOR_BACKGROUND      :: #run Col.{  30,  30, 30, 255} / 255;
+COLOR_DEEP_BACKGROUND :: #run Col.{  10,  10,  5, 255} / 255;
 
 WHITE  :: #run Col.{240, 240, 240, 255} / 255;
 GREEN  :: #run Col.{ 35, 210,  30, 255} / 255;
