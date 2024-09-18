@@ -12,3 +12,21 @@ round_up :: (n: float, base: float) -> float {
 print :: (v: Any) {
 	print("%\n", v);
 }
+
+round_number_power_of_2 :: (n: type_of(Resizable_Array.count)) -> type_of(Resizable_Array.count) {
+	out: type_of(Resizable_Array.count);
+	out = 32;  // min size
+	while out < n {
+		out *= 2;
+	}
+	return out;
+}
+
+count_digits :: (x: u32) -> u32 {
+	n: u32 = 1;
+	while x / 10 {
+		x /= 10;
+		n += 1;
+	}
+	return n;
+}

@@ -72,11 +72,19 @@ draw_code_viewer :: () {
 	// Todo - for the scissoring effect, take a look at this
 	// https://stackoverflow.com/questions/53287628/directx-11-render-to-specific-area
 
-	engine.code_viewer_pos = offset;
-	engine.code_viewer_size = .{vp.width - MIN_SCREEN_WIDTH / 2.0 + 30, vp.height - 84.0};
+	engine.cv.pos = offset;
+	engine.cv.size = .{vp.width - MIN_SCREEN_WIDTH / 2.0 + 30, vp.height - 84.0};
 
-	draw_panel("test", engine.code_viewer_pos, engine.code_viewer_size, 1);
-	draw_rect(engine.code_viewer_pos, engine.code_viewer_size, 0, COLOR_BACKGROUND);
+	draw_panel(engine.cv.file_name, engine.cv.pos, engine.cv.size, 1);
+	draw_rect(engine.cv.pos, engine.cv.size, 0, COLOR_BACKGROUND);
+	
+	handle_scrollbar();
+	
+	set_drawing_area(offset, engine.cv.size); {
+		draw_colored_text();
+		draw_line_count_bar();
+		draw_scrollbars();
+	} reset_drawing_area();
 }
 
 handle_memory_scrollbar :: (pos: Vec2, size: Vec2) {
@@ -146,21 +154,19 @@ draw_program_memory :: () {
 
 	draw_rect(pos, .{46, size.y}, 1, COLOR_BASE_NORMAL);
 
-	set_drawing_area(pos, size);
+	set_drawing_area(pos, size); {
+		aspect_ratio := size.y / (2048 * 16);
+		bar_height := aspect_ratio * size.y;
 
-	aspect_ratio := size.y / (2048 * 16);
-	bar_height := aspect_ratio * size.y;
+		draw_rect(pos + .{size.x - 12, 0}, .{12, size.y}, 1, COLOR_BASE_NORMAL);
+		draw_rect(pos + .{size.x - 12, engine.ui.memory_scrollbar_pos * aspect_ratio}, .{12, bar_height}, 2, COLOR_BASE_FOCUSED);
 
-	draw_rect(pos + .{size.x - 12, 0}, .{12, size.y}, 1, COLOR_BASE_NORMAL);
-	draw_rect(pos + .{size.x - 12, engine.ui.memory_scrollbar_pos * aspect_ratio}, .{12, bar_height}, 2, COLOR_BASE_FOCUSED);
+		offset := pos + .{2, -engine.ui.memory_scrollbar_pos};
+		start: int = xx ((engine.ui.memory_scrollbar_pos) / 16);
+		end: int = xx ((engine.ui.memory_scrollbar_pos + size.y - 24) / 16);
 
-	offset := pos + .{2, -engine.ui.memory_scrollbar_pos};
-	start: int = xx ((engine.ui.memory_scrollbar_pos) / 16);
-	end: int = xx ((engine.ui.memory_scrollbar_pos + size.y - 24) / 16);
-
-	draw_RAM_content(offset, start, end, pos.y, size.y);
-
-	reset_drawing_area();
+		draw_RAM_content(offset, start, end, pos.y, size.y);
+	} reset_drawing_area();
 }
 
 draw_program_registers :: () {

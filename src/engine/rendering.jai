@@ -213,8 +213,12 @@ get_char_mapping :: (c: u8) -> (uv: Vec2) {
 		x: float = ((c - #char "!") * 8.0) / texture_width;
 		y: float = 8.0 / texture_height;
 		return .{x, y};
+	} else if c == #char "_" {
+		x: float = 248.0 / texture_width;
+		y: float = 8.0 / texture_height;
+		return .{x, y};
 	} else {
-		assert(false);
+		assert(false, "unable to get mapping of character %", string.{1, *c});
 	}
 	return .{0, 0};
 }
@@ -273,3 +277,4 @@ BLUE   :: #run Col.{ 20,  35, 210, 255} / 255;
 ORANGE :: #run Col.{255, 103,   0, 255} / 255;
 YELLOW :: #run Col.{238, 210,   2, 255} / 255;
 PINK   :: #run Col.{255, 110, 199, 255} / 255;
+GRAY   :: #run Col.{140, 140, 140, 255} / 255;

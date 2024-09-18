@@ -43,7 +43,9 @@ update_6502 :: () {
 }
 
 main :: () {
-	init_window(MIN_SCREEN_WIDTH, MIN_SCREEN_HEIGHT, "6502 Simulator");
+	init_window(MIN_SCREEN_WIDTH, MIN_SCREEN_HEIGHT, "");
+	
+	init_code_viewer("Random number.s");
 	
 	while vp.running {
 		fetch_window_events();
@@ -125,6 +127,9 @@ WC    :: #import "Window_Creation";
 #load "src/engine/input.jai";
 #load "src/engine/rendering.jai";
 #load "src/engine/logging.jai";
+
+#load "src/code_viewer/drawing.jai";
+#load "src/code_viewer/code_viewer.jai";
 
 #load "src/6502.jai";
 #load "src/memory.jai";

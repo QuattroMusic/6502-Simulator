@@ -3,6 +3,36 @@ General_UI :: struct {
 	memory_scrollbar_pos: float;
 }
 
+Color_Tokens :: enum u8 {
+	INSTRUCTION;
+	COMMENT;
+	NUMBER;
+	DOTDIR;
+	LABEL;
+	STRING;
+	TEXT;
+}
+
+Code_Viewer :: struct {
+	pos: Vec2;
+	size: Vec2;
+	
+	scrollbar_selected: bool;
+	scrollbar_pos: float;
+	row_digits: u32;
+	
+	content:     [..] u8;
+	rows_length: [..] u32;
+	file_name: string;
+	
+	// coloring, stored as SoA
+	text_index:  [..] u32;
+	text_length: [..] u32;
+	text_line:   [..] u32;
+	text_column: [..] u32;
+	text_color:  [..] Color_Tokens;
+}
+
 Status_Flags :: struct {
 	N, V, _, B, D, I, Z, C: bool;
 }
@@ -16,6 +46,8 @@ Emulator :: struct {
 	S: u8 = 0xFF;
 	flags: Status_Flags;
 	PC: u16;
+	
+	// Todo - pack up
 	unlock: bool;
 	update_rate: int = 10_000;
 	
@@ -24,12 +56,11 @@ Emulator :: struct {
 	thread_running: bool;
 	compilation_successful: bool;
 	
+	// Todo - make those globals
 	ui: General_UI;
+	cv: Code_Viewer;
 	
 	cpu_thread: Thread;
-	
-	code_viewer_pos: Vec2;
-	code_viewer_size: Vec2;
 }
 
 Hz  :: (f: type_of(engine.update_rate)) -> type_of(engine.update_rate) { return f; }
