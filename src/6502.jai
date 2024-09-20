@@ -51,6 +51,8 @@ Emulator :: struct {
 	unlock: bool;
 	update_rate: int = 10_000;
 	
+	last_counter: s64;
+	
 	running: bool;
 	in_debug: bool;
 	thread_running: bool;
@@ -141,7 +143,7 @@ cpu_init :: () {
 cpu_start :: () {
 	threaded_func :: (t: *Thread) -> s64 {
 		while engine.thread_running {
-			// lock_frame_rate();
+			if !engine.unlock then lock_frame_rate_6502();
 			if engine.running && !engine.in_debug then next_instruction();
 		}
 		return 0;
@@ -153,6 +155,23 @@ cpu_start :: () {
 		thread_init(*engine.cpu_thread, threaded_func);
 		thread_start(*engine.cpu_thread);
 	}
+}
+
+lock_frame_rate_6502 :: () {
+    target_s: float = 1.0 / engine.update_rate;
+    seconds_elapsed_for_frame: float = (cast(float)(read_os_timer() - engine.last_counter)) / perf_count_frequency;
+    if seconds_elapsed_for_frame < target_s {
+        if sleep_is_granular {
+            sleep_ms := 1000.0 * target_s - seconds_elapsed_for_frame - 1;
+            if sleep_ms > 0 then Sleep(xx sleep_ms);
+        }
+        while seconds_elapsed_for_frame < target_s {
+            seconds_elapsed_for_frame = (cast(float)(read_os_timer() - engine.last_counter)) / perf_count_frequency;
+        }
+    }
+    end_counter: s64;
+    QueryPerformanceCounter(*end_counter);
+    engine.last_counter = end_counter;
 }
 
 next_instruction :: () {

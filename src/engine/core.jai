@@ -25,11 +25,6 @@ deinit_window :: () {
 }
 
 lock_frame_rate :: () {
-	read_os_timer :: () -> s64 {
-        timer: s64;
-        QueryPerformanceCounter(*timer);
-        return timer;
-    }
     target_s: float = 1.0 / target_frame_rate;
     seconds_elapsed_for_frame: float = (cast(float)(read_os_timer() - last_counter)) / perf_count_frequency;
     if seconds_elapsed_for_frame < target_s {
@@ -46,6 +41,12 @@ lock_frame_rate :: () {
     dt = (cast(float)(end_counter - last_counter)) / perf_count_frequency;
     last_counter = end_counter;
 	// Todo - maybe clamp delta_time if it's too high?
+}
+
+read_os_timer :: () -> s64 {
+	timer: s64;
+	QueryPerformanceCounter(*timer);
+	return timer;
 }
 
 is_mouse_inside_rect :: (pos: Vec2, size: Vec2) -> bool {
