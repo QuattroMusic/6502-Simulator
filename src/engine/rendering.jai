@@ -22,7 +22,7 @@ button_press :: (pos: Vec2, size: Vec2) -> (bool, Button_State) {
 	return fire, state;
 }
 
-button_internal :: (pos: Vec2, size: Vec2, layer: float, $t: float) -> (bool, Col) {
+button_internal :: (pos: Vec2, size: Vec2, layer: f32, $t: f32) -> (bool, Col) {
 	fire, state := button_press(pos, size);
 
 	bg_col: Col;
@@ -30,16 +30,16 @@ button_internal :: (pos: Vec2, size: Vec2, layer: float, $t: float) -> (bool, Co
 	text_col: Col;
 	if state == {
 		case .NORMAL;
-			bg_col = COLOR_BASE_NORMAL;
-			border_col = COLOR_BORDER_NORMAL;
+			bg_col = COLOR_WIDGET_BG;
+			border_col = COLOR_WIDGET_BORDER;
 			text_col = COLOR_TEXT_NORMAL;
 		case .HOVER;
-			bg_col = COLOR_BASE_FOCUSED;
-			border_col = COLOR_BORDER_FOCUSED;
-			text_col = COLOR_TEXT_FOCUSED;
+			bg_col = COLOR_WIDGET_BG_HOVERED;
+			border_col = COLOR_WIDGET_BORDER_HOVERED;
+			text_col = COLOR_TEXT_HOVERED;
 		case .PRESSED;
-			bg_col = COLOR_BASE_PRESSED;
-			border_col = COLOR_BORDER_PRESSED;
+			bg_col = COLOR_WIDGET_BG_PRESSED;
+			border_col = COLOR_WIDGET_BORDER_PRESSED;
 			text_col = COLOR_TEXT_PRESSED;
 	}
 
@@ -50,7 +50,7 @@ button_internal :: (pos: Vec2, size: Vec2, layer: float, $t: float) -> (bool, Co
 }
 
 #scope_export
-draw_rect :: (pos: Vec2, size: Vec2, layer: float, col: Col) {
+draw_rect :: (pos: Vec2, size: Vec2, layer: f32, col: Col) {
 	vert_count := quad_buffer.vertices_count;
 
 	vertices_add(*quad_buffer, .{pos.x         , pos.y         , layer, col.component});
@@ -66,7 +66,7 @@ draw_rect :: (pos: Vec2, size: Vec2, layer: float, col: Col) {
 	indices_add(*quad_buffer, vert_count + 3);
 }
 
-draw_panel :: ($$text: string, pos: Vec2, size: Vec2, layer: float) {
+draw_panel :: ($$text: string, pos: Vec2, size: Vec2, layer: f32) {
 	p :: 4;
 
 	draw_rect(pos, .{p, 1}, layer, COLOR_LINE);
@@ -81,14 +81,14 @@ draw_panel :: ($$text: string, pos: Vec2, size: Vec2, layer: float) {
 	draw_rect(pos + .{p + 8 + m.x, 0}, .{size.x - p - 8 - m.x, 1}, layer, COLOR_LINE);
 }
 
-draw_rect_lines :: (pos: Vec2, size: Vec2, layer: float, col: Col, t: float = 1) {
+draw_rect_lines :: (pos: Vec2, size: Vec2, layer: f32, col: Col, t: f32 = 1) {
 	draw_rect(pos, .{size.x, t}, layer, col);
 	draw_rect(pos, .{t, size.y}, layer, col);
 	draw_rect(pos + .{size.x - t, 0}, .{t, size.y}, layer, col);
 	draw_rect(pos + .{0, size.y - t}, .{size.x, t}, layer, col);
 }
 
-button :: ($$text: string, pos: Vec2, size: Vec2, layer: float, $t: float) -> bool {
+button :: ($$text: string, pos: Vec2, size: Vec2, layer: f32, $t: f32) -> bool {
 	fire, text_col := button_internal(pos, size, layer, t);
 	
 	s := measure_text(text, t);
@@ -97,7 +97,7 @@ button :: ($$text: string, pos: Vec2, size: Vec2, layer: float, $t: float) -> bo
 	return fire;
 }
 
-button :: (icon: Icon, pos: Vec2, size: Vec2, layer: float, $t: float) -> bool {
+button :: (icon: Icon, pos: Vec2, size: Vec2, layer: f32, $t: f32) -> bool {
 	fire, icon_col := button_internal(pos, size, layer, t);
 	
 	s :: Vec2.{8.0 * t, 8.0 * t};
@@ -106,7 +106,7 @@ button :: (icon: Icon, pos: Vec2, size: Vec2, layer: float, $t: float) -> bool {
 	return fire;
 }
 
-checkbox :: (value: *bool, $$text: string, pos: Vec2, size: Vec2, layer: float) {
+checkbox :: (value: *bool, $$text: string, pos: Vec2, size: Vec2, layer: f32) {
 	s := measure_text(text, 1);
 	
 	fire, state := button_press(pos, size + .{s.x + 12, 0});
@@ -115,13 +115,13 @@ checkbox :: (value: *bool, $$text: string, pos: Vec2, size: Vec2, layer: float) 
 	text_col: Col;
 	if state == {
 		case .NORMAL;
-			bg_col = COLOR_TEXT_NORMAL;
+			bg_col = COLOR_WIDGET_BG_HOVERED;
 			text_col = COLOR_TEXT_NORMAL;
 		case .HOVER;
-			bg_col = COLOR_TEXT_FOCUSED;
-			text_col = COLOR_TEXT_FOCUSED;
+			bg_col = COLOR_WIDGET_BG_HOVERED;
+			text_col = COLOR_TEXT_HOVERED;
 		case .PRESSED;
-			bg_col = COLOR_BASE_PRESSED;
+			bg_col = COLOR_WIDGET_BG_PRESSED;
 			text_col = COLOR_TEXT_PRESSED;
 	}
 	
@@ -132,9 +132,9 @@ checkbox :: (value: *bool, $$text: string, pos: Vec2, size: Vec2, layer: float) 
 	if fire then value.* = !value.*;
 }
 
-draw_text :: (text: string, pos: Vec2, layer: float, scale: float, color: Col) {
-	x_pos: float;
-	y_pos: float;
+draw_text :: (text: string, pos: Vec2, layer: f32, scale: f32, color: Col) {
+	x_pos: f32;
+	y_pos: f32;
 
 	uv_x := 8.0 / texture_width;
 	uv_y := 8.0 / texture_height;
@@ -164,7 +164,7 @@ draw_text :: (text: string, pos: Vec2, layer: float, scale: float, color: Col) {
 	}
 }
 
-draw_icon :: (icon: Icon, pos: Vec2, layer: float, $scale: float, color: Col) {
+draw_icon :: (icon: Icon, pos: Vec2, layer: f32, $scale: f32, color: Col) {
 	uv := get_icon_mapping(icon);
 
 	vert_count := font_buffer.vertices_count;
@@ -202,20 +202,20 @@ get_char_mapping :: (c: u8) -> (uv: Vec2) {
 	// since the font is monospace, we don't need to return the size, it's always the same
 
 	if c >= #char "a" && c <= #char "z" {
-		x: float = ((c - #char "a") * 8.0) / texture_width;
-		y: float = 0;
+		x: f32 = ((c - #char "a") * 8.0) / texture_width;
+		y: f32 = 0;
 		return .{x, y};
 	} else if c >= #char "A" && c <= #char "Z" {
-		x: float = ((c - #char "A") * 8.0) / texture_width;
-		y: float = 0;
+		x: f32 = ((c - #char "A") * 8.0) / texture_width;
+		y: f32 = 0;
 		return .{x, y};
 	} else if c >= #char "!" && c <= #char "?" {
-		x: float = ((c - #char "!") * 8.0) / texture_width;
-		y: float = 8.0 / texture_height;
+		x: f32 = ((c - #char "!") * 8.0) / texture_width;
+		y: f32 = 8.0 / texture_height;
 		return .{x, y};
 	} else if c == #char "_" {
-		x: float = 248.0 / texture_width;
-		y: float = 8.0 / texture_height;
+		x: f32 = 248.0 / texture_width;
+		y: f32 = 8.0 / texture_height;
 		return .{x, y};
 	} else {
 		assert(false, "unable to get mapping of character %", string.{1, *c});
@@ -223,11 +223,11 @@ get_char_mapping :: (c: u8) -> (uv: Vec2) {
 	return .{0, 0};
 }
 
-measure_text :: ($$text: string, $scale: float) -> Vec2 {
-	_internal :: (t: string, s: float) -> Vec2 {
-		w: float;
-		max_w: float;
-		h: float = 8.0 * s;
+measure_text :: ($$text: string, $scale: f32) -> Vec2 {
+	_internal :: (t: string, s: f32) -> Vec2 {
+		w: f32;
+		max_w: f32;
+		h: f32 = 8.0 * s;
 		for cast([]u8) t {
 			if it == #char "\n" {
 				max_w = max(w, max_w);
@@ -244,6 +244,32 @@ measure_text :: ($$text: string, $scale: float) -> Vec2 {
 	else                  { return      _internal(text, scale); }
 }
 
+draw_vertical_slider :: (pos: Vec2, size: Vec2, layer: f32, value: *f32) {
+	draw_rect(.{pos.x + size.x / 2 - 1, pos.y}, .{2, size.y}, layer, .{0, 0, 0, 255});
+	
+	if is_mouse_down(0) && is_mouse_inside_rect(.{pos.x, pos.y - 4}, .{size.x, size.y + 8}) {
+		value.* = clamp((cast(f32)mouse_y - pos.y) / size.y, 0, 1);
+	}
+	
+	pos_y := pos.y + value.* * size.y;
+	
+	draw_rect(.{pos.x, pos_y - 4}, .{size.x, 8}, layer + 1, RED);
+}
+
+draw_color_picker :: (pos: Vec2, layer: f32, col: *Col) {
+	draw_rect(.{pos.x, pos.y}, .{200, 240}, 7, WHITE);
+	draw_vertical_slider(.{20 + pos.x, 20 + pos.y}, .{20, 200}, 8, *col.x);
+	draw_vertical_slider(.{50 + pos.x, 20 + pos.y}, .{20, 200}, 8, *col.y);
+	draw_vertical_slider(.{80 + pos.x, 20 + pos.y}, .{20, 200}, 8, *col.z);
+
+	draw_text(tprint("%", floor(col.x * 255)), .{200 - 80 + pos.x, 300 - 280 + pos.y}, 8, 2, RED);
+	draw_text(tprint("%", floor(col.y * 255)), .{200 - 80 + pos.x, 320 - 280 + pos.y}, 8, 2, GREEN);
+	draw_text(tprint("%", floor(col.z * 255)), .{200 - 80 + pos.x, 340 - 280 + pos.y}, 8, 2, BLUE);
+
+	draw_rect(.{198 - 80 + pos.x, 368 - 280 + pos.y}, .{24, 24}, 8, .{0, 0, 0, 255});
+	draw_rect(.{200 - 80 + pos.x, 370 - 280 + pos.y}, .{20, 20}, 9, col);
+}
+
 Icon :: enum {
 	LEFT_ARROW;
 	RIGHT_ARROW;
@@ -253,33 +279,25 @@ Icon :: enum {
 	CLOSE;
 }
 
-// COLOR_BORDER_NORMAL   :: #run Col.{ 39, 116, 134, 255} / 255;
-COLOR_BORDER_FOCUSED  :: #run Col.{130, 205, 224, 255} / 255;
-COLOR_BORDER_PRESSED  :: #run Col.{235, 118,  48, 255} / 255;
-COLOR_BORDER_DISABLED :: #run Col.{ 19,  75,  90, 255} / 255;
-// COLOR_BASE_NORMAL     :: #run Col.{  2,  70,  88, 255} / 255;
-// COLOR_BASE_FOCUSED    :: #run Col.{ 50, 153, 180, 255} / 255;
-COLOR_BASE_PRESSED    :: #run Col.{255, 188,  81, 255} / 255;
-COLOR_BASE_DISABLED   :: #run Col.{  2,  49,  61, 255} / 255;
-// COLOR_TEXT_NORMAL     :: #run Col.{ 81, 191, 211, 255} / 255;
-COLOR_TEXT_FOCUSED    :: #run Col.{182, 225, 234, 255} / 255;
-COLOR_TEXT_PRESSED    :: #run Col.{216, 111,  54, 255} / 255;
-COLOR_TEXT_DISABLED   :: #run Col.{ 23,  80,  95, 255} / 255;
-// COLOR_LINE            :: #run Col.{129, 192, 208, 255} / 255;
-// COLOR_BACKGROUND      :: #run Col.{  0,  34,  43, 255} / 255;
-// COLOR_DEEP_BACKGROUND :: #run Col.{ 10,  10,  10, 255} / 255;
+COLOR_WIDGET_BG             :: #run Col.{  54,  50,  46, 255 } / 255;
+COLOR_WIDGET_BG_HOVERED     :: #run Col.{ 188, 126,  59, 255 } / 255;
+COLOR_WIDGET_BG_PRESSED     :: #run Col.{ 246, 164,  76, 255 } / 255;
+COLOR_WIDGET_BORDER         :: #run Col.{ 202, 128,  35, 255 } / 255;
+COLOR_WIDGET_BORDER_HOVERED :: #run Col.{  49,  43,  40, 255 } / 255;
+COLOR_WIDGET_BORDER_PRESSED :: #run Col.{  80,  77,  73, 255 } / 255;
 
-COLOR_BORDER_NORMAL   :: #run Col.{ 202, 128, 35, 255} / 255;
-COLOR_BASE_NORMAL     :: #run Col.{  50,  50, 50, 255} / 255;
-COLOR_BASE_FOCUSED    :: #run Col.{ 202, 128, 35, 255} / 255;
-COLOR_TEXT_NORMAL     :: #run Col.{ 246, 151, 48, 255} / 255;
-COLOR_LINE            :: #run Col.{ 254, 170, 55, 255} / 255;
-COLOR_BACKGROUND      :: #run Col.{  30,  30, 30, 255} / 255;
-COLOR_DEEP_BACKGROUND :: #run Col.{  10,  10,  5, 255} / 255;
+COLOR_TEXT_NORMAL     :: #run Col.{ 246, 151,  48, 255 } / 255;
+COLOR_TEXT_HOVERED    :: #run Col.{ 216, 210, 206, 255 } / 255;
+COLOR_TEXT_PRESSED    :: #run Col.{ 104,  95,  93, 255 } / 255;
 
-WHITE  :: #run Col.{240, 240, 240, 255} / 255;
-GREEN  :: #run Col.{ 35, 210,  30, 255} / 255;
-RED    :: #run Col.{210,  35,  30, 255} / 255;
+COLOR_BACKGROUND      :: #run Col.{  32,  30,  28, 255 } / 255;
+COLOR_DEEP_BACKGROUND :: #run Col.{  10,  10,   5, 255 } / 255;
+
+COLOR_LINE            :: #run Col.{ 254, 170,  55, 255 } / 255;
+
+WHITE  :: #run Col.{240, 240, 220, 255} / 255;
+GREEN  :: #run Col.{ 59, 187,  20, 255} / 255;
+RED    :: #run Col.{191,  45,  31, 255} / 255;
 PURPLE :: #run Col.{130, 102, 193, 255} / 255;
 BLUE   :: #run Col.{ 20,  90, 210, 255} / 255;
 // ORANGE :: #run Col.{255, 123,  10, 255} / 255;

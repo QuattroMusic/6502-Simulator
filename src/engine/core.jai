@@ -25,20 +25,20 @@ deinit_window :: () {
 }
 
 lock_frame_rate :: () {
-    target_s: float = 1.0 / target_frame_rate;
-    seconds_elapsed_for_frame: float = (cast(float)(read_os_timer() - last_counter)) / perf_count_frequency;
+    target_s: f32 = 1.0 / target_frame_rate;
+    seconds_elapsed_for_frame: f32 = (cast(f32)(read_os_timer() - last_counter)) / perf_count_frequency;
     if seconds_elapsed_for_frame < target_s {
         if sleep_is_granular {
             sleep_ms := 1000.0 * target_s - seconds_elapsed_for_frame - 1;
             if sleep_ms > 0 then Sleep(xx sleep_ms);
         }
         while seconds_elapsed_for_frame < target_s {
-            seconds_elapsed_for_frame = (cast(float)(read_os_timer() - last_counter)) / perf_count_frequency;
+            seconds_elapsed_for_frame = (cast(f32)(read_os_timer() - last_counter)) / perf_count_frequency;
         }
     }
     end_counter: s64;
     QueryPerformanceCounter(*end_counter);
-    dt = (cast(float)(end_counter - last_counter)) / perf_count_frequency;
+    dt = (cast(f32)(end_counter - last_counter)) / perf_count_frequency;
     last_counter = end_counter;
 	// Todo - maybe clamp delta_time if it's too high?
 }
@@ -66,4 +66,4 @@ sleep_is_granular: bool;
 perf_count_frequency: s64;
 last_counter: s64;
 target_frame_rate := 120;
-dt: float;
+dt: f32;

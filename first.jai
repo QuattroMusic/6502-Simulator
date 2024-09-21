@@ -47,6 +47,8 @@ main :: () {
 	
 	init_code_viewer("Random number.s");
 	
+	col: Col;
+	
 	while vp.running {
 		fetch_window_events();
 		
@@ -97,10 +99,12 @@ MIN_SCREEN_HEIGHT :: 800;
 APP_MAJOR_VERSION :: 0;
 APP_MINOR_VERSION :: 1;
 
-Vec2 :: #type Vector2;
-Vec3 :: #type Vector3;
-Vec4 :: #type Vector4;
-Col  :: #type Vector4;
+Vec2 :: Vector2;
+Vec3 :: Vector3;
+Vec4 :: Vector4;
+Col  :: Vector4;
+f32  :: float32;
+f64  :: float64;
 
 #import "Basic";
 #import "Math";

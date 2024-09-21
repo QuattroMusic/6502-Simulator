@@ -8,13 +8,13 @@ draw_header :: () {
 	draw_text("6502 Simulator", .{10, 4}, 1, 3, WHITE);
 
 	// Todo - use this only after disabling windows header
-	/*if button(.CLOSE, .{cast(float)vp.width - h, 0}, .{h, h}, 1, 2) {
+	/*if button(.CLOSE, .{cast(f32)vp.width - h, 0}, .{h, h}, 1, 2) {
 		exit(0);
 	}
-	if button(.MAXIMIZE, .{cast(float)vp.width - h * 2, 0}, .{h, h}, 1, 2) {
+	if button(.MAXIMIZE, .{cast(f32)vp.width - h * 2, 0}, .{h, h}, 1, 2) {
 		// Todo - switch between maximize and minimize
 	}
-	if button(.REDUCE, .{cast(float)vp.width - h * 3, 0}, .{h, h}, 1, 2) {
+	if button(.REDUCE, .{cast(f32)vp.width - h * 3, 0}, .{h, h}, 1, 2) {
 
 	}*/
 }
@@ -111,7 +111,7 @@ handle_memory_scrollbar :: (pos: Vec2, size: Vec2) {
 	engine.ui.memory_scrollbar_pos = clamp(round_up(engine.ui.memory_scrollbar_pos, 16), 0, (2048.0 - rows_on_screen) * 16);
 }
 
-draw_RAM_content :: (offset: Vec2, start: int, end: int, pos_y: float, height: float) {
+draw_RAM_content :: (offset: Vec2, start: int, end: int, pos_y: f32, height: f32) {
 	for y: start..end {
 		hex := formatInt(y * 16, base = 16, minimum_digits = 4);
 		draw_text(tprint("%:", hex), offset + .{4, 9.0 + y * 16}, 2, 1, COLOR_TEXT_NORMAL);
@@ -133,10 +133,10 @@ draw_RAM_content :: (offset: Vec2, start: int, end: int, pos_y: float, height: f
 		}
 	}
 
-	pos := offset.y + 276 + (cast(float)(engine.S / 16)) * 16;
+	pos := offset.y + 276 + (cast(f32)(engine.S / 16)) * 16;
 	if (pos_y + 20) <= pos && pos < (pos_y + height) {
-		x := 50 + (cast(float)(engine.S % 16)) * (2.25 * 16);
-		y := 260 + (cast(float)(engine.S / 16)) * (16);
+		x := 50 + (cast(f32)(engine.S % 16)) * (2.25 * 16);
+		y := 260 + (cast(f32)(engine.S / 16)) * (16);
 		w := 16 * 2 + 2;
 		h := 18;
 		draw_rect_lines(offset + .{xx x, xx y}, .{xx w, xx h}, 3, RED, 2);
@@ -152,14 +152,14 @@ draw_program_memory :: () {
 	draw_panel("Memory", pos, size, 2);
 	draw_rect(pos, size, 0, COLOR_BACKGROUND);
 
-	draw_rect(pos, .{46, size.y}, 1, COLOR_BASE_NORMAL);
+	draw_rect(pos, .{46, size.y}, 1, COLOR_WIDGET_BG);
 
 	set_drawing_area(pos, size); {
 		aspect_ratio := size.y / (2048 * 16);
 		bar_height := aspect_ratio * size.y;
 
-		draw_rect(pos + .{size.x - 12, 0}, .{12, size.y}, 1, COLOR_BASE_NORMAL);
-		draw_rect(pos + .{size.x - 12, engine.ui.memory_scrollbar_pos * aspect_ratio}, .{12, bar_height}, 2, COLOR_BASE_FOCUSED);
+		draw_rect(pos + .{size.x - 12, 0}, .{12, size.y}, 1, COLOR_WIDGET_BG);
+		draw_rect(pos + .{size.x - 12, engine.ui.memory_scrollbar_pos * aspect_ratio}, .{12, bar_height}, 2, COLOR_WIDGET_BORDER);
 
 		offset := pos + .{2, -engine.ui.memory_scrollbar_pos};
 		start: int = xx ((engine.ui.memory_scrollbar_pos) / 16);
@@ -170,7 +170,7 @@ draw_program_memory :: () {
 }
 
 draw_program_registers :: () {
-	panel_internal :: (reg: string, val: $T, offset: Vec2, pos: Vec2, size: Vec2, layer: float) {
+	panel_internal :: (reg: string, val: $T, offset: Vec2, pos: Vec2, size: Vec2, layer: f32) {
 		draw_panel(reg, offset + pos, size, layer);
 
 		s :: size_of(T);

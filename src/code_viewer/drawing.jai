@@ -2,7 +2,7 @@ draw_line_count_bar :: () {
 	w := get_width_of_line_count_bar();
 	off := engine.cv.pos;
 	
-	draw_rect(off, .{w, engine.cv.size.y}, 1, COLOR_BASE_NORMAL);
+	draw_rect(off, .{w, engine.cv.size.y}, 1, COLOR_WIDGET_BG);
 	
 	start: int = xx engine.cv.scrollbar_pos / 16;
 	end: int = xx (engine.cv.scrollbar_pos + engine.cv.size.y + 10) / 16;
@@ -22,12 +22,12 @@ draw_scrollbars :: () {
 	scr_pos := engine.cv.scrollbar_pos;
 	amt := engine.cv.rows_length.count;
 	
-	draw_rect(.{pos.x + size.x - 12, pos.y}, .{12, size.y}, 1, COLOR_BASE_NORMAL);
+	draw_rect(.{pos.x + size.x - 12, pos.y}, .{12, size.y}, 1, COLOR_WIDGET_BG);
 	
 	aspect_ratio := size.y / (size.y + (amt - 1) * 16);
 	bar_height := aspect_ratio * size.y;
 	
-	draw_rect(.{pos.x + size.x - 12, pos.y + scr_pos * aspect_ratio}, .{12, bar_height}, 2, COLOR_BASE_FOCUSED);
+	draw_rect(.{pos.x + size.x - 12, pos.y + scr_pos * aspect_ratio}, .{12, bar_height}, 2, COLOR_WIDGET_BORDER);
 }
 
 draw_colored_text :: () {

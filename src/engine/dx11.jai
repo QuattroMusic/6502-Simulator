@@ -402,14 +402,14 @@ quad_buffer: Buffer_Data(Vertex);
 font_buffer: Buffer_Data(Tex_Vertex);
 
 Vertex :: struct {
-	x, y, z: float;
-	col: [4] float;
+	x, y, z: f32;
+	col: [4] f32;
 }
 
 Tex_Vertex :: struct {
-	x, y, z: float;
-	col: [4] float;
-	uv: [2] float;
+	x, y, z: f32;
+	col: [4] f32;
+	uv: [2] f32;
 }
 
 camera: Matrix4;

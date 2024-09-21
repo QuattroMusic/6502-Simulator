@@ -1,4 +1,4 @@
-round_up :: (n: float, base: float) -> float {
+round_up :: (n: f32, base: f32) -> f32 {
 	if base != 0 && n != 0 {
 		sign := ifx n > 0 then 1 else -1;
 		n *= sign;

@@ -1,4 +1,4 @@
-get_width_of_line_count_bar :: () -> float {
+get_width_of_line_count_bar :: () -> f32 {
 	return (engine.cv.row_digits + 1.0) * 8 + 5;
 }
 
