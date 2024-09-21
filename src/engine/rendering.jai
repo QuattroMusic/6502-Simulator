@@ -66,6 +66,18 @@ draw_rect :: (pos: Vec2, size: Vec2, layer: f32, col: Col) {
 	indices_add(*quad_buffer, vert_count + 3);
 }
 
+draw_triangle :: (p1: Vec2, p2: Vec2, p3: Vec2, layer: f32, col: Col) {
+	vert_count := quad_buffer.vertices_count;
+	
+	vertices_add(*quad_buffer, .{p1.x, p1.y, layer, col.component});
+	vertices_add(*quad_buffer, .{p2.x, p2.y, layer, col.component});
+	vertices_add(*quad_buffer, .{p3.x, p3.y, layer, col.component});
+	
+	indices_add(*quad_buffer, vert_count + 1);
+	indices_add(*quad_buffer, vert_count    );
+	indices_add(*quad_buffer, vert_count + 2);
+}
+
 draw_panel :: ($$text: string, pos: Vec2, size: Vec2, layer: f32) {
 	p :: 4;
 

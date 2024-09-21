@@ -7,16 +7,15 @@ draw_header :: () {
 
 	draw_text("6502 Simulator", .{10, 4}, 1, 3, WHITE);
 
-	// Todo - use this only after disabling windows header
-	/*if button(.CLOSE, .{cast(f32)vp.width - h, 0}, .{h, h}, 1, 2) {
-		exit(0);
+	if button(.CLOSE, .{cast(f32)vp.width - h, 0}, .{h, h}, 1, 2) {
+		vp.running = false;
 	}
 	if button(.MAXIMIZE, .{cast(f32)vp.width - h * 2, 0}, .{h, h}, 1, 2) {
 		// Todo - switch between maximize and minimize
 	}
 	if button(.REDUCE, .{cast(f32)vp.width - h * 3, 0}, .{h, h}, 1, 2) {
 
-	}*/
+	}
 }
 
 draw_buttons_controls :: () {

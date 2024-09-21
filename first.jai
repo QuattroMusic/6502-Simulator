@@ -1,15 +1,14 @@
-// pressed_pos: Vec2;
-// enable_movement := false;
+pressed_pos: Vec2;
+pressed_size: Vec2;
+enable_movement := false;
+enable_resizing := false;
+
+_user32 :: #system_library "User32";
+MoveWindow :: (hWnd: *void, x: s32, y: s32, nWidth: s32, nHeight: s32, bRepaint: s32) #foreign _user32;
 
 handle_viewport_movement :: () {
-	// Todo - use this only after disabling windows header
-	/*_user32 :: #system_library "User32";
-	MoveWindow :: (hWnd: WC.Window_Type, x: s32, y: s32, nWidth: s32, nHeight: s32, bRepaint: s32) #foreign _user32;
-	RECT :: struct { left, top, right, bottom: s32; };
-	GetWindowRect :: (hwnd: WC.Window_Type, rect: *RECT) -> s32 #foreign _user32;
-
 	if is_mouse_pressed(0) {
-		if is_mouse_over_rect(.{0, 0}, .{vp.width - HEADER_HEIGHT * 3.0, HEADER_HEIGHT}) {
+		if is_mouse_inside_rect(.{0, 0}, .{vp.width - HEADER_HEIGHT * 3.0, HEADER_HEIGHT}) {
 			pressed_pos.x = xx mouse_x;
 			// Todo - if maximized
 			pressed_pos.y = xx mouse_y;
@@ -18,20 +17,60 @@ handle_viewport_movement :: () {
 	}
 	if enable_movement {
 		r: RECT;
+		pos: POINT;
 		GetWindowRect(vp.window, *r);
-		delta := Vec2.{xx mouse_x, xx mouse_y} - pressed_pos;
+		GetCursorPos(*pos);
+		
+		delta := Vec2.{xx (pos.x - r.left), xx (pos.y - r.top)} - pressed_pos;
 		w := r.right - r.left;
 		h := r.bottom - r.top;
-		
 		MoveWindow(vp.window, xx (r.left + delta.x), xx (r.top + delta.y), w, h, xx true);
 	}
 	if is_mouse_released(0) {
 		enable_movement = false;
-	}*/
+	}
+}
+
+handle_viewport_resize :: () {
+	if is_mouse_pressed(0) {
+		if is_mouse_inside_rect(.{xx (vp.width - 20), xx (vp.height - 20)}, .{20, 20}) {
+			r: RECT;
+			GetWindowRect(vp.window, *r);
+			pressed_pos.x = xx mouse_x;
+			pressed_pos.y = xx mouse_y;
+			pressed_size.x = xx (r.right - r.left);
+			pressed_size.y = xx (r.bottom - r.top);
+			enable_resizing = true;
+		}
+	}
+	if enable_resizing {
+		r: RECT = ---;
+		pos: POINT = ---;
+		GetWindowRect(vp.window, *r);
+		GetCursorPos(*pos);
+
+		dx := pos.x - pressed_pos.x - r.left;
+		dy := pos.y - pressed_pos.y - r.top;
+		
+		vx := dx + pressed_size.x;
+		vy := dy + pressed_size.y;
+		
+		vx = max(vx, MIN_SCREEN_WIDTH);
+		vy = max(vy, MIN_SCREEN_HEIGHT);
+		
+		MoveWindow(vp.window, r.left, r.top, xx vx, xx vy, xx true);
+	}
+	if is_mouse_released(0) then enable_resizing = false;
+	
+	p1 := Vec2.{xx vp.width, xx vp.height};
+	p2 := Vec2.{xx (vp.width - 20), xx vp.height};
+	p3 := Vec2.{xx vp.width, xx (vp.height - 20)};
+	draw_triangle(p1, p2, p3, 10, COLOR_LINE);
 }
 
 update_6502 :: () {
 	handle_viewport_movement();
+	handle_viewport_resize();
 
 	draw_header();
 	draw_buttons_controls();
@@ -60,7 +99,8 @@ main :: () {
 	col: Col;
 	
 	while vp.running {
-		fetch_window_events();
+		fetch_window_inputs();
+		lock_frame_rate();
 		
 		draw_one_frame();
 	}

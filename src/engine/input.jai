@@ -11,6 +11,16 @@ fetch_window_inputs :: () {
 	}
 }
 
+reset_input :: () {
+	enable_movement = false;
+	enable_resizing = false;
+	
+	mouse_dz = 0;
+	
+	memset(input_button_states.data, 0, size_of(type_of(input_button_states)));
+	memset(input_button_states_old.data, 0, size_of(type_of(input_button_states_old)));
+}
+
 is_mouse_pressed  :: (key: int) -> bool { return  input_button_states[0] && !input_button_states_old[0]; }
 is_mouse_down     :: (key: int) -> bool { return  input_button_states[0] &&  input_button_states_old[0]; }
 is_mouse_released :: (key: int) -> bool { return !input_button_states[0] &&  input_button_states_old[0]; }

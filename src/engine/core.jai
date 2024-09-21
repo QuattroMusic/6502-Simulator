@@ -14,12 +14,6 @@ init_window :: (width: s32, height: s32) {
 	vp.running = true;
 }
 
-fetch_window_events :: () {
-	fetch_window_inputs();
-
-	lock_frame_rate();
-}
-
 deinit_window :: () {
 	deinit_rendering();
 	timeEndPeriod(1);
@@ -96,10 +90,10 @@ create_window :: (width: s32, height: s32) -> *void {
 	y := (monitor_height - height) / 2;
 	
 	r := RECT.{x, y, x + width, y + height};
-	AdjustWindowRect(*r, WS_OVERLAPPEDWINDOW, xx false);
+	AdjustWindowRect(*r, window_style, xx false);
 	
 	t := to_c_string("",, temp);
-	win := CreateWindowExA(0, class_name, t, WS_OVERLAPPEDWINDOW, r.left, r.top, r.right - r.left, r.bottom - r.top, null, null, null, null);
+	win := CreateWindowExA(0, class_name, t, window_style, r.left, r.top, r.right - r.left, r.bottom - r.top, null, null, null, null);
 	
 	ShowWindow(win, SW_SHOW);
 	
@@ -107,17 +101,19 @@ create_window :: (width: s32, height: s32) -> *void {
 }
 
 EventsManager :: (hwnd: *void, msg: u32, wparam: u64, lparam: s64) -> s64 #c_call {
+	ctx: Context;
+	push_context,defer_pop ctx;
+	
 	if msg == {
 		case WM_CLOSE; #through;
 		case WM_QUIT;  vp.running = false;
+		case WM_KILLFOCUS; reset_input();
 		case WM_SIZE;
 			w := lparam & 0xFFFF;
 			h := (lparam >> 16) & 0xFFFF;
 			vp.width = w;
 			vp.height = h;
 			// Todo - hande restore, minimize and maximize
-			ctx: Context;
-			push_context,defer_pop ctx;
 			if vp.running {
 				resize_viewport();
 				draw_one_frame();
@@ -142,6 +138,8 @@ Viewport :: struct {
 	width, height: int;
 	running: bool;
 }
+
+window_style :: WS_POPUP;
 
 vp: Viewport;
 engine: Emulator;
