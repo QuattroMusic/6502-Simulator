@@ -1,51 +1,23 @@
 fetch_window_inputs :: () {
-	Input.update_window_events();
-	for Input.events_this_frame if it.type == .QUIT then vp.running = false;
+	memcpy(input_button_states_old.data, input_button_states.data, size_of(type_of(input_button_states)));
+	mouse_dz = 0;
 	
-	// if condition only because it's also called when moving the window
-	for Input.get_window_resizes() if it.width != vp.width || it.height != vp.height {
-		vp.width  = it.width;
-		vp.height = it.height;
-		resize_viewport();
+	while true {
+		msg: MSG;
+		if !PeekMessageA(*msg, null, 0, 0, 1) then break;
+		
+		TranslateMessage(*msg);
+		DispatchMessageA(*msg);
 	}
-
-	mouse_x, mouse_y = WC.get_mouse_pointer_position(vp.window, right_handed = false);
-	mouse_dz = Input.mouse_delta_z / 120;
 }
 
-is_mouse_pressed :: ($key: int) -> bool {
-	     #if key == 0 state := Input.input_button_states[Input.Key_Code.MOUSE_BUTTON_LEFT];
-	else #if key == 1 state := Input.input_button_states[Input.Key_Code.MOUSE_BUTTON_RIGHT];
-	else #if key == 2 state := Input.input_button_states[Input.Key_Code.MOUSE_BUTTON_MIDDLE];
-	else #assert(false);
-	
-	comb :: (Input.Key_Current_State.DOWN | Input.Key_Current_State.START);
-	
-	return state == comb;
-}
-
-is_mouse_down :: ($key: int) -> bool {
-	     #if key == 0 state := Input.input_button_states[Input.Key_Code.MOUSE_BUTTON_LEFT];
-	else #if key == 1 state := Input.input_button_states[Input.Key_Code.MOUSE_BUTTON_RIGHT];
-	else #if key == 2 state := Input.input_button_states[Input.Key_Code.MOUSE_BUTTON_MIDDLE];
-	else #assert(false);
-	
-	comb :: Input.Key_Current_State.DOWN;
-	
-	return state == comb;
-}
-
-is_mouse_released :: ($key: int) -> bool {
-	     #if key == 0 state := Input.input_button_states[Input.Key_Code.MOUSE_BUTTON_LEFT];
-	else #if key == 1 state := Input.input_button_states[Input.Key_Code.MOUSE_BUTTON_RIGHT];
-	else #if key == 2 state := Input.input_button_states[Input.Key_Code.MOUSE_BUTTON_MIDDLE];
-	else #assert(false);
-	
-	comb :: (Input.Key_Current_State.DOWN | Input.Key_Current_State.END);
-	
-	return state == comb;
-}
+is_mouse_pressed  :: (key: int) -> bool { return  input_button_states[0] && !input_button_states_old[0]; }
+is_mouse_down     :: (key: int) -> bool { return  input_button_states[0] &&  input_button_states_old[0]; }
+is_mouse_released :: (key: int) -> bool { return !input_button_states[0] &&  input_button_states_old[0]; }
 
 mouse_x: int;
 mouse_y: int;
 mouse_dz: int;
+
+input_button_states: [3]bool;
+input_button_states_old: [3]bool;

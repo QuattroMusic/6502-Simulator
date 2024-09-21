@@ -42,8 +42,18 @@ update_6502 :: () {
 	draw_program_frequency();
 }
 
+draw_one_frame :: () {
+	begin_drawing();
+	clear_background(COLOR_DEEP_BACKGROUND);
+	
+	update_6502();
+
+	finalize_drawing();
+	reset_temporary_storage();
+}
+
 main :: () {
-	init_window(MIN_SCREEN_WIDTH, MIN_SCREEN_HEIGHT, "");
+	init_window(MIN_SCREEN_WIDTH, MIN_SCREEN_HEIGHT);
 	
 	init_code_viewer("Random number.s");
 	
@@ -52,13 +62,7 @@ main :: () {
 	while vp.running {
 		fetch_window_events();
 		
-		begin_drawing();
-		clear_background(COLOR_DEEP_BACKGROUND);
-		
-		update_6502();
-		
-		finalize_drawing();
-		reset_temporary_storage();
+		draw_one_frame();
 	}
 	deinit_window();
 
@@ -122,9 +126,6 @@ f64  :: float64;
 	case .WINDOWS; #import "Windows";
 	case; #assert(false);
 }
-
-Input :: #import "Input";
-WC    :: #import "Window_Creation";
 
 #load "src/engine/core.jai";
 #load "src/engine/dx11.jai";

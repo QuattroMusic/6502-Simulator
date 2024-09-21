@@ -7,27 +7,27 @@ init_rendering :: () {
 
 deinit_rendering :: () {
 	release_buffer :: (buff: Buffer_Data) {
-		IUnknown_Release(buff.layout);
-		IUnknown_Release(buff.VS);
-		IUnknown_Release(buff.PS);
-		IUnknown_Release(buff.VBuffer);
-		IUnknown_Release(buff.IBuffer);
+		if buff.layout then IUnknown_Release(buff.layout);
+		if buff.VS then IUnknown_Release(buff.VS);
+		if buff.PS then IUnknown_Release(buff.PS);
+		if buff.VBuffer then IUnknown_Release(buff.VBuffer);
+		if buff.IBuffer then IUnknown_Release(buff.IBuffer);
 	}
 
 	release_buffer(quad_buffer);
 	release_buffer(font_buffer);
 
-	IUnknown_Release(camera_buffer);
+	if camera_buffer then IUnknown_Release(camera_buffer);
 
-	IUnknown_Release(rasterizer);
+	if rasterizer then IUnknown_Release(rasterizer);
 
-	IUnknown_Release(depth_stencil_view);
-	IUnknown_Release(depth_stencil_buffer);
+	if depth_stencil_view then IUnknown_Release(depth_stencil_view);
+	if depth_stencil_buffer then IUnknown_Release(depth_stencil_buffer);
 
-	IUnknown_Release(swapchain);
-	IUnknown_Release(back_buffer);
-	IUnknown_Release(dev);
-	IUnknown_Release(devcon);
+	if swapchain then IUnknown_Release(swapchain);
+	if back_buffer then IUnknown_Release(back_buffer);
+	if dev then IUnknown_Release(dev);
+	if devcon then IUnknown_Release(devcon);
 }
 
 init_d3d :: () {
@@ -81,15 +81,15 @@ create_depth_stencil :: () {
 
 	if depth_stencil_state then IUnknown_Release(depth_stencil_state);
 	ID3D11Device_CreateDepthStencilState(dev, *depth_stencil_desc, *depth_stencil_state);
-
+	
 	dsvDesc: D3D11_DEPTH_STENCIL_VIEW_DESC;
 	dsvDesc.Format = .DXGI_FORMAT_D32_FLOAT_S8X24_UINT;
 	dsvDesc.ViewDimension = .D3D11_DSV_DIMENSION_TEXTURE2DMS;
 
 	if depth_stencil_view then IUnknown_Release(depth_stencil_view);
 	ID3D11Device_CreateDepthStencilView(dev, depth_stencil_buffer, *dsvDesc, *depth_stencil_view);
-	IUnknown_Release(depth_stencil_buffer);
-
+	if depth_stencil_buffer then IUnknown_Release(depth_stencil_buffer);
+	
 	ID3D11DeviceContext_OMSetRenderTargets(devcon, 1, *back_buffer, depth_stencil_view);
 }
 
@@ -373,7 +373,6 @@ resize_viewport :: () {
 	ID3D11DeviceContext_OMSetRenderTargets(devcon, 0, null, null);
 	IUnknown_Release(back_buffer);
 	IDXGISwapChain_ResizeBuffers(swapchain, 0, 0, 0, .DXGI_FORMAT_UNKNOWN, 0);
-
 	set_render_target();
 	set_viewport();
 	update_camera();
@@ -433,7 +432,7 @@ depth_stencil_view: *ID3D11DepthStencilView;
 depth_stencil_buffer: *ID3D11Texture2D;
 depth_stencil_state: *ID3D11DepthStencilState;
 
-texture_data_file :: #run read_entire_file("src/engine/joystick monospace.png");
+texture_data_file :: #run read_entire_file("src/engine/6502.png");
 
 texture_data: *u8;
 texture_width, texture_height, texture_channels: s32;
