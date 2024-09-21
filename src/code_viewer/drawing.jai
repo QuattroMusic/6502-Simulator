@@ -1,26 +1,26 @@
 draw_line_count_bar :: () {
 	w := get_width_of_line_count_bar();
-	off := engine.cv.pos;
+	off := viewer.pos;
 	
-	draw_rect(off, .{w, engine.cv.size.y}, 1, COLOR_WIDGET_BG);
+	draw_rect(off, .{w, viewer.size.y}, 1, COLOR_WIDGET_BG);
 	
-	start: int = xx engine.cv.scrollbar_pos / 16;
-	end: int = xx (engine.cv.scrollbar_pos + engine.cv.size.y + 10) / 16;
+	start: int = xx viewer.scrollbar_pos / 16;
+	end: int = xx (viewer.scrollbar_pos + viewer.size.y + 10) / 16;
 	
 	for start..end - 1 {
-		if it == engine.cv.rows_length.count then return;
+		if it == viewer.rows_length.count then return;
 		
-		y := off.y + 10 + it * 16 - engine.cv.scrollbar_pos;
-		fmt := formatInt(it + 1, minimum_digits = engine.cv.row_digits, padding = #char " ");
+		y := off.y + 10 + it * 16 - viewer.scrollbar_pos;
+		fmt := formatInt(it + 1, minimum_digits = viewer.row_digits, padding = #char " ");
 		draw_text(tprint("%", fmt), .{off.x + 8, y}, 2, 1, COLOR_TEXT_NORMAL);
 	}
 }
 
 draw_scrollbars :: () {
-	pos := engine.cv.pos;
-	size := engine.cv.size;
-	scr_pos := engine.cv.scrollbar_pos;
-	amt := engine.cv.rows_length.count;
+	pos := viewer.pos;
+	size := viewer.size;
+	scr_pos := viewer.scrollbar_pos;
+	amt := viewer.rows_length.count;
 	
 	draw_rect(.{pos.x + size.x - 12, pos.y}, .{12, size.y}, 1, COLOR_WIDGET_BG);
 	
@@ -31,24 +31,24 @@ draw_scrollbars :: () {
 }
 
 draw_colored_text :: () {
-	off := engine.cv.pos;
+	off := viewer.pos;
 	off.x += get_width_of_line_count_bar() + 4;
-	off.y += 5 - engine.cv.scrollbar_pos;
+	off.y += 5 - viewer.scrollbar_pos;
 	
-	start: int = xx engine.cv.scrollbar_pos / 16;
-	end: int = xx (engine.cv.scrollbar_pos + engine.cv.size.y + 10) / 16;
+	start: int = xx viewer.scrollbar_pos / 16;
+	end: int = xx (viewer.scrollbar_pos + viewer.size.y + 10) / 16;
 	
-	for engine.cv.text_line {
+	for viewer.text_line {
 		if it == end then break;  // no need to check forward
 		if start <= it && it <= end {
-			index  := engine.cv.text_index[it_index];
-			length := engine.cv.text_length[it_index];
-			column := engine.cv.text_column[it_index];
-			color  := parse_token(engine.cv.text_color[it_index]);
+			index  := viewer.text_index[it_index];
+			length := viewer.text_length[it_index];
+			column := viewer.text_column[it_index];
+			color  := parse_token(viewer.text_color[it_index]);
 			
 			y := off.y + it * 16;
 			x := off.x + column * 16;
-			str := string.{length, engine.cv.content.data + index};
+			str := string.{length, viewer.content.data + index};
 			draw_text(str, .{x, y}, 1, 2, color);
 		}
 	}
@@ -70,7 +70,7 @@ parse_token :: (t: Color_Tokens) -> Col {
 
 init_code_viewer_coloring :: () {
 	idx: u32;
-	for engine.cv.rows_length {
+	for viewer.rows_length {
 		code_viewer_coloring_parse_line(it_index, idx, it);
 		idx += it + 1;
 	}
@@ -78,20 +78,20 @@ init_code_viewer_coloring :: () {
 
 code_viewer_coloring_parse_line :: (line: s64, idx: u32, len: s64) {
 	add_new_color_token :: (idx: s64, len: s64, line: s64, col: s64, tok: Color_Tokens) {
-		array_add(*engine.cv.text_index,  xx idx);
-		array_add(*engine.cv.text_length, xx len);
-		array_add(*engine.cv.text_line,   xx line);
-		array_add(*engine.cv.text_column, xx col);
-		array_add(*engine.cv.text_color,  tok);
+		array_add(*viewer.text_index,  xx idx);
+		array_add(*viewer.text_length, xx len);
+		array_add(*viewer.text_line,   xx line);
+		array_add(*viewer.text_column, xx col);
+		array_add(*viewer.text_color,  tok);
 	}
 	
 	label_len: u32;
 	it := 0;
 	while it < len {
 		defer it += 1;
-		c := engine.cv.content[idx + it];
+		c := viewer.content[idx + it];
 		if c == #char " " then continue;
-		else if (it + 2) < len && is_an_instruction(engine.cv.content.data + idx + it) {
+		else if (it + 2) < len && is_an_instruction(viewer.content.data + idx + it) {
 			add_new_color_token(idx + it, 3, line, it, .INSTRUCTION);
 			it += 3;
 		} else if c == #char ";" {
@@ -122,7 +122,7 @@ eat_until_whitespace :: (idx: u32, i: u32, len: u32) -> u32 {
 	length: u32;
 	while i < len && c != #char " " {
 		i += 1;
-		c = engine.cv.content[idx + i];
+		c = viewer.content[idx + i];
 		length += 1;
 	}
 	return length;
@@ -132,7 +132,7 @@ is_word_a_label :: (idx: u32, label_len: *u32) -> bool {
 	c: u8;
 	off: u32;
 	while c != #char " " && c != #char "\n" {
-		c = engine.cv.content[idx + off];
+		c = viewer.content[idx + off];
 		off += 1;
 		if c == #char ":" {
 			label_len.* = off - 1;

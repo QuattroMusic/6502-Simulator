@@ -34,7 +34,14 @@ Code_Viewer :: struct {
 }
 
 Status_Flags :: struct {
-	N, V, _, B, D, I, Z, C: bool;
+	N, V, B, D, I, Z, C: bool;
+}
+
+Metrics :: struct {
+	update_rate: int = 10_000;
+	last_counter: s64;
+	
+	unlock: bool;
 }
 
 Emulator :: struct {
@@ -44,31 +51,26 @@ Emulator :: struct {
 	X: u8;
 	Y: u8;
 	S: u8 = 0xFF;
-	flags: Status_Flags;
 	PC: u16;
-	
-	// Todo - pack up
-	unlock: bool;
-	update_rate: int = 10_000;
-	
-	last_counter: s64;
-	
-	running: bool;
-	in_debug: bool;
-	thread_running: bool;
 	compilation_successful: bool;
 	
-	// Todo - make those globals
-	ui: General_UI;
-	cv: Code_Viewer;
+	flags: Status_Flags;
 	
 	cpu_thread: Thread;
+	metrics: Metrics;
+	
+	running: bool;
+	debug: bool;
+	thread_running: bool;  // could be `true` when 6502 is paused
 }
 
-Hz  :: (f: type_of(engine.update_rate)) -> type_of(engine.update_rate) { return f; }
-kHz :: (f: type_of(engine.update_rate)) -> type_of(engine.update_rate) { return f * 1_000; }
-MHz :: (f: type_of(engine.update_rate)) -> type_of(engine.update_rate) { return f * 1_000_000; }
-GHz :: (f: type_of(engine.update_rate)) -> type_of(engine.update_rate) { return f * 1_000_000_000; }
+ui: General_UI;
+viewer: Code_Viewer;
+
+Hz  :: (f: type_of(engine.metrics.update_rate)) -> type_of(engine.metrics.update_rate) { return f; }
+kHz :: (f: type_of(engine.metrics.update_rate)) -> type_of(engine.metrics.update_rate) { return f * 1_000; }
+MHz :: (f: type_of(engine.metrics.update_rate)) -> type_of(engine.metrics.update_rate) { return f * 1_000_000; }
+GHz :: (f: type_of(engine.metrics.update_rate)) -> type_of(engine.metrics.update_rate) { return f * 1_000_000_000; }
 
 bit :: (n: int, i: int) -> u8 { return cast(u8)((n >> i) & 1); }
 
@@ -143,8 +145,8 @@ cpu_init :: () {
 cpu_start :: () {
 	threaded_func :: (t: *Thread) -> s64 {
 		while engine.thread_running {
-			if !engine.unlock then lock_frame_rate_6502();
-			if engine.running && !engine.in_debug then next_instruction();
+			if !engine.metrics.unlock then lock_frame_rate_6502();
+			if engine.running && !engine.debug then next_instruction();
 		}
 		return 0;
 	}
@@ -158,20 +160,20 @@ cpu_start :: () {
 }
 
 lock_frame_rate_6502 :: () {
-    target_s: f32 = 1.0 / engine.update_rate;
-    seconds_elapsed_for_frame: f32 = (cast(f32)(read_os_timer() - engine.last_counter)) / perf_count_frequency;
+    target_s: f32 = 1.0 / engine.metrics.update_rate;
+    seconds_elapsed_for_frame: f32 = (cast(f32)(read_os_timer() - engine.metrics.last_counter)) / perf_count_frequency;
     if seconds_elapsed_for_frame < target_s {
         if sleep_is_granular {
             sleep_ms := 1000.0 * target_s - seconds_elapsed_for_frame - 1;
             if sleep_ms > 0 then Sleep(xx sleep_ms);
         }
         while seconds_elapsed_for_frame < target_s {
-            seconds_elapsed_for_frame = (cast(f32)(read_os_timer() - engine.last_counter)) / perf_count_frequency;
+            seconds_elapsed_for_frame = (cast(f32)(read_os_timer() - engine.metrics.last_counter)) / perf_count_frequency;
         }
     }
     end_counter: s64;
     QueryPerformanceCounter(*end_counter);
-    engine.last_counter = end_counter;
+    engine.metrics.last_counter = end_counter;
 }
 
 next_instruction :: () {
@@ -182,7 +184,7 @@ next_instruction :: () {
 
 compile_program :: () {
 	// Todo - format input and output
-	path := get_absolute_path(engine.cv.file_name,, temp);
+	path := get_absolute_path(viewer.file_name,, temp);
 	fmt := tprint("data\\vasm6502_old.exe -Fbin -o \"out.bin\" -dotdir \"%\"", path);
 	res := run_command(..break_command_into_strings(fmt));
 	engine.compilation_successful = false;

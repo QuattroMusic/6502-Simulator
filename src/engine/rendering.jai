@@ -282,7 +282,7 @@ Icon :: enum {
 COLOR_WIDGET_BG             :: #run Col.{  54,  50,  46, 255 } / 255;
 COLOR_WIDGET_BG_HOVERED     :: #run Col.{ 188, 126,  59, 255 } / 255;
 COLOR_WIDGET_BG_PRESSED     :: #run Col.{ 246, 164,  76, 255 } / 255;
-COLOR_WIDGET_BORDER         :: #run Col.{ 202, 128,  35, 255 } / 255;
+COLOR_WIDGET_BORDER         :: #run Col.{ 196, 126,  43, 255 } / 255;
 COLOR_WIDGET_BORDER_HOVERED :: #run Col.{  49,  43,  40, 255 } / 255;
 COLOR_WIDGET_BORDER_PRESSED :: #run Col.{  80,  77,  73, 255 } / 255;
 

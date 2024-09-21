@@ -44,7 +44,7 @@ draw_buttons_controls :: () {
 	} else {
 		// we're doing this just to update the variable the next cycle
 		running := engine.running;
-		if !engine.in_debug {
+		if !engine.debug {
 			if engine.running {
 				if button("Pause", .{100, 40}, .{80, 25}, 1, t) {
 					running = false;
@@ -72,15 +72,15 @@ draw_code_viewer :: () {
 	// Todo - for the scissoring effect, take a look at this
 	// https://stackoverflow.com/questions/53287628/directx-11-render-to-specific-area
 
-	engine.cv.pos = offset;
-	engine.cv.size = .{vp.width - MIN_SCREEN_WIDTH / 2.0 + 30, vp.height - 84.0};
+	viewer.pos = offset;
+	viewer.size = .{vp.width - MIN_SCREEN_WIDTH / 2.0 + 30, vp.height - 84.0};
 
-	draw_panel(engine.cv.file_name, engine.cv.pos, engine.cv.size, 1);
-	draw_rect(engine.cv.pos, engine.cv.size, 0, COLOR_BACKGROUND);
+	draw_panel(viewer.file_name, viewer.pos, viewer.size, 1);
+	draw_rect(viewer.pos, viewer.size, 0, COLOR_BACKGROUND);
 	
 	handle_scrollbar();
 	
-	set_drawing_area(offset, engine.cv.size); {
+	set_drawing_area(offset, viewer.size); {
 		draw_colored_text();
 		draw_line_count_bar();
 		draw_scrollbars();
@@ -92,23 +92,23 @@ handle_memory_scrollbar :: (pos: Vec2, size: Vec2) {
 	if is_mouse_inside_rect(pos, size) {
 		if mouse_dz {
 			amt := mouse_dz * 16;
-			engine.ui.memory_scrollbar_pos -= amt;
+			ui.memory_scrollbar_pos -= amt;
 		}
 	}
 	if is_mouse_pressed(0) && is_mouse_inside_rect(.{pos.x + size.x - 12, pos.y}, .{12, size.y}) {
-		engine.ui.memory_scrollbar_selected = true;
+		ui.memory_scrollbar_selected = true;
 	}
-	if engine.ui.memory_scrollbar_selected {
+	if ui.memory_scrollbar_selected {
 		aspect_ratio := size.y / (2048 * 16);
 		bar_height := aspect_ratio * size.y;
-		engine.ui.memory_scrollbar_pos = (mouse_y - pos.y - bar_height / 2) / aspect_ratio;
+		ui.memory_scrollbar_pos = (mouse_y - pos.y - bar_height / 2) / aspect_ratio;
 	}
 
-	if is_mouse_released(0) && engine.ui.memory_scrollbar_selected {
-		engine.ui.memory_scrollbar_selected = false;
+	if is_mouse_released(0) && ui.memory_scrollbar_selected {
+		ui.memory_scrollbar_selected = false;
 	}
 	rows_on_screen := floor((size.y - 8) / 16);
-	engine.ui.memory_scrollbar_pos = clamp(round_up(engine.ui.memory_scrollbar_pos, 16), 0, (2048.0 - rows_on_screen) * 16);
+	ui.memory_scrollbar_pos = clamp(round_up(ui.memory_scrollbar_pos, 16), 0, (2048.0 - rows_on_screen) * 16);
 }
 
 draw_RAM_content :: (offset: Vec2, start: int, end: int, pos_y: f32, height: f32) {
@@ -159,11 +159,11 @@ draw_program_memory :: () {
 		bar_height := aspect_ratio * size.y;
 
 		draw_rect(pos + .{size.x - 12, 0}, .{12, size.y}, 1, COLOR_WIDGET_BG);
-		draw_rect(pos + .{size.x - 12, engine.ui.memory_scrollbar_pos * aspect_ratio}, .{12, bar_height}, 2, COLOR_WIDGET_BORDER);
+		draw_rect(pos + .{size.x - 12, ui.memory_scrollbar_pos * aspect_ratio}, .{12, bar_height}, 2, COLOR_WIDGET_BORDER);
 
-		offset := pos + .{2, -engine.ui.memory_scrollbar_pos};
-		start: int = xx ((engine.ui.memory_scrollbar_pos) / 16);
-		end: int = xx ((engine.ui.memory_scrollbar_pos + size.y - 24) / 16);
+		offset := pos + .{2, -ui.memory_scrollbar_pos};
+		start: int = xx ((ui.memory_scrollbar_pos) / 16);
+		end: int = xx ((ui.memory_scrollbar_pos + size.y - 24) / 16);
 
 		draw_RAM_content(offset, start, end, pos.y, size.y);
 	} reset_drawing_area();
@@ -226,8 +226,8 @@ draw_program_debug :: () {
 	// draw_panel("Debug", offset, .{MIN_SCREEN_WIDTH / 2 - 450.0, MIN_SCREEN_HEIGHT / 4 - 65.0}, 1);
 	draw_panel("Debug", offset, .{MIN_SCREEN_WIDTH / 2 - 270.0, MIN_SCREEN_HEIGHT / 4 - 65.0}, 1);
 
-	checkbox(*engine.in_debug, "Enable debug", offset + .{15, 15}, .{20, 20}, 1);
-	if engine.in_debug && engine.thread_running {
+	checkbox(*engine.debug, "Enable debug", offset + .{15, 15}, .{20, 20}, 1);
+	if engine.debug && engine.thread_running {
 		if button("Step", offset + .{170, 13}, .{60, 25}, 1, 1) {
 			next_instruction();
 		}
@@ -246,11 +246,11 @@ draw_program_frequency :: () {
 	offset := Vec2.{vp.width - 210.0, vp.height - MIN_SCREEN_HEIGHT / 4 + 55.0};
 	draw_panel("Frequency", offset, .{200, MIN_SCREEN_HEIGHT / 4 - 65.0}, 1);
 
-	checkbox(*engine.unlock, "unlock", offset + .{10, 15}, .{20, 20}, 1);
+	checkbox(*engine.metrics.unlock, "unlock", offset + .{10, 15}, .{20, 20}, 1);
 
 	str: string;
-	if !engine.unlock {
-		freq := engine.update_rate;
+	if !engine.metrics.unlock {
+		freq := engine.metrics.update_rate;
 		if freq < kHz(1) {
 			str = tprint("Freq: %Hz", freq);
 		} else if freq < MHz(1) {
@@ -261,20 +261,20 @@ draw_program_frequency :: () {
 			str = tprint("Freq: %GHz", freq / 1_000_000_000);
 		}
 
-		if button(.LEFT_ARROW, offset + .{130, 40}, .{20, 20}, 1, 1) && engine.update_rate > 1{
-			v := tprint("%", engine.update_rate);
+		if button(.LEFT_ARROW, offset + .{130, 40}, .{20, 20}, 1, 1) && engine.metrics.update_rate > 1{
+			v := tprint("%", engine.metrics.update_rate);
 			if v[0] == {
-				case #char "1"; engine.update_rate /= 2;
-				case #char "2"; engine.update_rate /= 2;
-				case #char "5"; engine.update_rate = engine.update_rate / 5 * 2;
+				case #char "1"; engine.metrics.update_rate /= 2;
+				case #char "2"; engine.metrics.update_rate /= 2;
+				case #char "5"; engine.metrics.update_rate = engine.metrics.update_rate / 5 * 2;
 			}
 		}
-		if button(.RIGHT_ARROW, offset + .{150, 40}, .{20, 20}, 1, 1) && engine.update_rate < GHz(10) {
-			v := tprint("%", engine.update_rate);
+		if button(.RIGHT_ARROW, offset + .{150, 40}, .{20, 20}, 1, 1) && engine.metrics.update_rate < GHz(10) {
+			v := tprint("%", engine.metrics.update_rate);
 			if v[0] == {
-				case #char "1"; engine.update_rate *= 2;
-				case #char "2"; engine.update_rate = engine.update_rate / 2 * 5;
-				case #char "5"; engine.update_rate *= 2;
+				case #char "1"; engine.metrics.update_rate *= 2;
+				case #char "2"; engine.metrics.update_rate = engine.metrics.update_rate / 2 * 5;
+				case #char "5"; engine.metrics.update_rate *= 2;
 			}
 		}
 	}
