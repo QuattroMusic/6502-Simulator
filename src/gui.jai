@@ -7,14 +7,23 @@ draw_header :: () {
 
 	draw_text("6502 Simulator", .{10, 4}, 1, 3, WHITE);
 
-	if button(.CLOSE, .{cast(f32)vp.width - h, 0}, .{h, h}, 1, 2) {
-		vp.running = false;
+	if button(.REDUCE, .{cast(f32)vp.width - h * 3, 0}, .{h, h}, 1, 2) {
+		if !vp.reduced {
+			ShowWindow(vp.window, SW_MINIMIZE);
+		}
+		vp.reduced = !vp.reduced;
 	}
 	if button(.MAXIMIZE, .{cast(f32)vp.width - h * 2, 0}, .{h, h}, 1, 2) {
-		// Todo - switch between maximize and minimize
+		if !vp.maximized {
+			ShowWindow(vp.window, SW_MAXIMIZE);
+		} else {
+			ShowWindow(vp.window, SW_RESTORE);
+		}
+		
+		vp.maximized = !vp.maximized;
 	}
-	if button(.REDUCE, .{cast(f32)vp.width - h * 3, 0}, .{h, h}, 1, 2) {
-
+	if button(.CLOSE, .{cast(f32)vp.width - h, 0}, .{h, h}, 1, 2) {
+		vp.running = false;
 	}
 }
 

@@ -2,7 +2,6 @@ init_window :: (width: s32, height: s32) {
 	sleep_is_granular = (timeBeginPeriod(1) == TIMERR_NOERROR);
 	SetProcessDPIAware();
 
-	// vp.window = WC.create_window(width, height, title, background_color_rgb = .[0, 0, 0]);
 	vp.window = create_window(width, height);
 	vp.width  = width;
 	vp.height = height;
@@ -17,6 +16,29 @@ init_window :: (width: s32, height: s32) {
 deinit_window :: () {
 	deinit_rendering();
 	timeEndPeriod(1);
+}
+
+resize_window :: (w: s32, h: s32) {
+	r: RECT;
+	GetWindowRect(vp.window, *r);
+	
+	MoveWindow(vp.window, r.left, r.top, w, h, xx true);
+}
+
+set_window_pos :: (x: s32, y: s32) {
+	r: RECT;
+	GetWindowRect(vp.window, *r);
+	
+	w := r.right - r.left;
+	h := r.bottom - r.top;
+	
+	MoveWindow(vp.window, x, y, w, h, xx true);
+}
+
+get_monitor_size :: () -> (w: s32, h: s32) {
+	w := GetSystemMetrics(0);
+	h := GetSystemMetrics(1);
+	return w, h;
 }
 
 lock_frame_rate :: () {
@@ -107,16 +129,16 @@ EventsManager :: (hwnd: *void, msg: u32, wparam: u64, lparam: s64) -> s64 #c_cal
 	if msg == {
 		case WM_CLOSE; #through;
 		case WM_QUIT;  vp.running = false;
+		case WM_SETFOCUS; vp.reduced = false;
 		case WM_KILLFOCUS; reset_input();
 		case WM_SIZE;
-			w := lparam & 0xFFFF;
-			h := (lparam >> 16) & 0xFFFF;
+			w := cast,trunc(s32)(lparam & 0xFFFF);
+			h := cast,trunc(s32)((lparam >> 16) & 0xFFFF);
 			vp.width = w;
 			vp.height = h;
-			// Todo - hande restore, minimize and maximize
 			if vp.running {
 				resize_viewport();
-				draw_one_frame();
+				// draw_one_frame();
 			}
 		case WM_MOUSEMOVE;
 			mouse_x =  lparam        & 0xFFFF;
@@ -135,8 +157,10 @@ EventsManager :: (hwnd: *void, msg: u32, wparam: u64, lparam: s64) -> s64 #c_cal
 
 Viewport :: struct {
 	window: *void;
-	width, height: int;
+	width, height: s32;
 	running: bool;
+	reduced: bool;
+	maximized: bool;
 }
 
 window_style :: WS_POPUP;

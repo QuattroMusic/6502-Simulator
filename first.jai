@@ -8,19 +8,25 @@ MoveWindow :: (hWnd: *void, x: s32, y: s32, nWidth: s32, nHeight: s32, bRepaint:
 
 handle_viewport_movement :: () {
 	if is_mouse_pressed(0) {
+		// minus 3 * HEIGHT because a button has the size of that, so, 3 buttons
 		if is_mouse_inside_rect(.{0, 0}, .{vp.width - HEADER_HEIGHT * 3.0, HEADER_HEIGHT}) {
 			pressed_pos.x = xx mouse_x;
-			// Todo - if maximized
+			if vp.maximized {
+				w := vp.width;
+				ShowWindow(vp.window, SW_RESTORE);
+				vp.maximized = false;
+				pressed_pos.x = cast(f32)mouse_x / (w + 3 * HEADER_HEIGHT) * vp.width;
+			}
 			pressed_pos.y = xx mouse_y;
 			enable_movement = true;
 		}
 	}
 	if enable_movement {
-		r: RECT;
-		pos: POINT;
+		r: RECT = ---;
+		pos: POINT = ---;
 		GetWindowRect(vp.window, *r);
 		GetCursorPos(*pos);
-		
+
 		delta := Vec2.{xx (pos.x - r.left), xx (pos.y - r.top)} - pressed_pos;
 		w := r.right - r.left;
 		h := r.bottom - r.top;
@@ -44,6 +50,11 @@ handle_viewport_resize :: () {
 		}
 	}
 	if enable_resizing {
+		if vp.maximized {
+			ShowWindow(vp.window, SW_RESTORE);
+			vp.maximized = false;
+		}
+
 		r: RECT = ---;
 		pos: POINT = ---;
 		GetWindowRect(vp.window, *r);
@@ -51,17 +62,17 @@ handle_viewport_resize :: () {
 
 		dx := pos.x - pressed_pos.x - r.left;
 		dy := pos.y - pressed_pos.y - r.top;
-		
+
 		vx := dx + pressed_size.x;
 		vy := dy + pressed_size.y;
-		
+
 		vx = max(vx, MIN_SCREEN_WIDTH);
 		vy = max(vy, MIN_SCREEN_HEIGHT);
-		
+
 		MoveWindow(vp.window, r.left, r.top, xx vx, xx vy, xx true);
 	}
 	if is_mouse_released(0) then enable_resizing = false;
-	
+
 	p1 := Vec2.{xx vp.width, xx vp.height};
 	p2 := Vec2.{xx (vp.width - 20), xx vp.height};
 	p3 := Vec2.{xx vp.width, xx (vp.height - 20)};
@@ -82,35 +93,37 @@ update_6502 :: () {
 }
 
 draw_one_frame :: () {
-	begin_drawing();
-	clear_background(COLOR_DEEP_BACKGROUND);
-	
-	update_6502();
+	if !vp.reduced {
+		begin_drawing();
+		clear_background(COLOR_DEEP_BACKGROUND);
 
-	finalize_drawing();
+		update_6502();
+
+		finalize_drawing();
+	}
 	reset_temporary_storage();
 }
 
 main :: () {
 	init_window(MIN_SCREEN_WIDTH, MIN_SCREEN_HEIGHT);
-	
+
 	init_code_viewer("Random number.s");
-	
+
 	col: Col;
-	
+
 	while vp.running {
 		fetch_window_inputs();
 		lock_frame_rate();
-		
+
 		draw_one_frame();
 	}
 	deinit_window();
 
 	// read_ROM("Random number.bin");
-	
+
 	// cpu_reset();
 	// cpu_start();
-	
+
 	// while engine.running {}
 	// for 0..255 {
 		// print("% ", engine.RAM[it]);
@@ -131,7 +144,7 @@ HEADER_HEIGHT :: 35;
 
 MEMORY_INPUT_ADDRESS  :: 0x2780;
 MEMORY_YEAR_ADDRESS   :: 0x2781;
-MEMORY_MONTH_ADDRESS  :: 0x2783;  
+MEMORY_MONTH_ADDRESS  :: 0x2783;
 MEMORY_DAY_ADDRESS    :: 0x2784;
 MEMORY_HOUR_ADDRESS   :: 0x2785;
 MEMORY_MINUTE_ADDRESS :: 0x2786;

@@ -7,9 +7,9 @@ init_rendering :: () {
 
 deinit_rendering :: () {
 	release_buffer :: (buff: Buffer_Data) {
-		if buff.layout then IUnknown_Release(buff.layout);
-		if buff.VS then IUnknown_Release(buff.VS);
-		if buff.PS then IUnknown_Release(buff.PS);
+		if buff.layout  then IUnknown_Release(buff.layout);
+		if buff.VS      then IUnknown_Release(buff.VS);
+		if buff.PS      then IUnknown_Release(buff.PS);
 		if buff.VBuffer then IUnknown_Release(buff.VBuffer);
 		if buff.IBuffer then IUnknown_Release(buff.IBuffer);
 	}
@@ -21,13 +21,13 @@ deinit_rendering :: () {
 
 	if rasterizer then IUnknown_Release(rasterizer);
 
-	if depth_stencil_view then IUnknown_Release(depth_stencil_view);
+	if depth_stencil_view   then IUnknown_Release(depth_stencil_view);
 	if depth_stencil_buffer then IUnknown_Release(depth_stencil_buffer);
 
-	if swapchain then IUnknown_Release(swapchain);
+	if swapchain   then IUnknown_Release(swapchain);
 	if back_buffer then IUnknown_Release(back_buffer);
-	if dev then IUnknown_Release(dev);
-	if devcon then IUnknown_Release(devcon);
+	if dev         then IUnknown_Release(dev);
+	if devcon      then IUnknown_Release(devcon);
 }
 
 init_d3d :: () {
@@ -373,6 +373,7 @@ resize_viewport :: () {
 	ID3D11DeviceContext_OMSetRenderTargets(devcon, 0, null, null);
 	IUnknown_Release(back_buffer);
 	IDXGISwapChain_ResizeBuffers(swapchain, 0, 0, 0, .DXGI_FORMAT_UNKNOWN, 0);
+	
 	set_render_target();
 	set_viewport();
 	update_camera();
