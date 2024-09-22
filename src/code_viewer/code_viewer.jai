@@ -42,9 +42,10 @@ calculate_rows_length :: () {
 }
 
 init_code_viewer :: (path: string) {
-	viewer.file_name = path;
-	
-	// Todo - check if file exists
+	viewer.file_path = copy_string(path);
+	viewer.file_name = split_from_right(viewer.file_path, #char "\\");
+
+	// Todo - maybe check if file exists
 	file := file_open(path, for_writing = false);
 	size := file_length(file);
 	
@@ -56,11 +57,23 @@ init_code_viewer :: (path: string) {
 	
 	file_close(*file);
 	
-	// Todo - remove '\t'
+	// Todo - remove '\t', or find a way to implement them
 	
 	calculate_rows_length();
 	
 	viewer.row_digits = count_digits(xx viewer.rows_length.count);
 	
 	init_code_viewer_coloring();
+}
+
+deinit_code_viewer :: () {
+	array_reset(*viewer.rows_length);
+	array_reset(*viewer.content);
+	free(viewer.file_path);
+	deinit_code_viewer_coloring();
+}
+
+handle_dropped_file :: (file: string) {
+	deinit_code_viewer();
+	init_code_viewer(file);
 }

@@ -230,7 +230,7 @@ get_char_mapping :: (c: u8) -> (uv: Vec2) {
 		y: f32 = 8.0 / texture_height;
 		return .{x, y};
 	} else {
-		assert(false, "unable to get mapping of character %", string.{1, *c});
+		assert(false, "unable to get mapping of character (% - %)", string.{1, *c}, c);
 	}
 	return .{0, 0};
 }

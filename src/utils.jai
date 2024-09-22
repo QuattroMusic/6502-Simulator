@@ -30,3 +30,26 @@ count_digits :: (x: u32) -> u32 {
 	}
 	return n;
 }
+
+split_from_right :: (s: string, c: u8) -> right: string {
+	out: string;
+	amt := s.count;
+	
+	while amt > 0 {
+		amt -= 1;
+		
+		if s[amt] == c {
+			out.count = s.count - amt - 1;
+			out.data = s.data + amt + 1;
+			return out;
+		}
+	}
+	
+	return s;
+}
+
+string_length :: (d: *u8) -> s64 {
+	it: int;
+	while d[it] it += 1;
+	return it;
+}

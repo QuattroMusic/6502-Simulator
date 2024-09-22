@@ -76,6 +76,14 @@ init_code_viewer_coloring :: () {
 	}
 }
 
+deinit_code_viewer_coloring :: () {
+	array_reset(*viewer.text_index);
+	array_reset(*viewer.text_length);
+	array_reset(*viewer.text_line);
+	array_reset(*viewer.text_column);
+	array_reset(*viewer.text_color);
+}
+
 code_viewer_coloring_parse_line :: (line: s64, idx: u32, len: s64) {
 	add_new_color_token :: (idx: s64, len: s64, line: s64, col: s64, tok: Color_Tokens) {
 		array_add(*viewer.text_index,  xx idx);

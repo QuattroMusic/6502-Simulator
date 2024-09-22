@@ -77,8 +77,6 @@ draw_buttons_controls :: () {
 
 draw_code_viewer :: () {
 	offset :: Vec2.{10, 74};
-	// Todo - for the scissoring effect, take a look at this
-	// https://stackoverflow.com/questions/53287628/directx-11-render-to-specific-area
 
 	viewer.pos = offset;
 	viewer.size = .{vp.width - MIN_SCREEN_WIDTH / 2.0 + 30, vp.height - 84.0};

@@ -23,7 +23,8 @@ Code_Viewer :: struct {
 	
 	content:     [..] u8;
 	rows_length: [..] u32;
-	file_name: string;
+	file_path:   string;
+	file_name:   string;  // this is a view
 	
 	// coloring, stored as SoA
 	text_index:  [..] u32;
@@ -184,8 +185,9 @@ next_instruction :: () {
 
 compile_program :: () {
 	// Todo - format input and output
-	path := get_absolute_path(viewer.file_name,, temp);
+	path := get_absolute_path(viewer.file_path,, temp);
 	fmt := tprint("data\\vasm6502_old.exe -Fbin -o \"out.bin\" -dotdir \"%\"", path);
+
 	res := run_command(..break_command_into_strings(fmt));
 	engine.compilation_successful = false;
 	if res.exit_code != 0 then return;  // Todo - handle better this

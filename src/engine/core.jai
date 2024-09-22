@@ -5,7 +5,7 @@ init_window :: (width: s32, height: s32) {
 	vp.window = create_window(width, height);
 	vp.width  = width;
 	vp.height = height;
-	
+
 	init_rendering();
 
 	QueryPerformanceFrequency(*perf_count_frequency);
@@ -21,17 +21,17 @@ deinit_window :: () {
 resize_window :: (w: s32, h: s32) {
 	r: RECT;
 	GetWindowRect(vp.window, *r);
-	
+
 	MoveWindow(vp.window, r.left, r.top, w, h, xx true);
 }
 
 set_window_pos :: (x: s32, y: s32) {
 	r: RECT;
 	GetWindowRect(vp.window, *r);
-	
+
 	w := r.right - r.left;
 	h := r.bottom - r.top;
-	
+
 	MoveWindow(vp.window, x, y, w, h, xx true);
 }
 
@@ -73,7 +73,7 @@ is_mouse_inside_rect :: (pos: Vec2, size: Vec2) -> bool {
 create_window :: (width: s32, height: s32) -> *void {
 	_ole32 :: #system_library "Ole32";
 	_user32 :: #system_library "user32";
-	
+
 	WNDCLASSEXA :: struct {
 		cbSize:        u32;
 		style:         u32;
@@ -88,14 +88,14 @@ create_window :: (width: s32, height: s32) -> *void {
 		lpszClassName: *u8;
 		hIconSm:       *void;
 	}
-	
+
 	CoInitialize :: (reserved: *void) -> s32 #foreign _ole32;
 	RegisterClassExA :: (lpwcx: *WNDCLASSEXA) -> s16 #foreign _user32;
-	
+
 	CoInitialize(null);
-	
+
 	class_name := to_c_string("6502 Window",, temp);
-	
+
 	info: WNDCLASSEXA;
 	info.cbSize = size_of(WNDCLASSEXA);
 	info.lpfnWndProc = xx EventsManager;
@@ -103,29 +103,31 @@ create_window :: (width: s32, height: s32) -> *void {
 	info.lpszClassName = class_name;
 	info.hCursor = LoadCursorA(null, IDC_ARROW);
 	info.hbrBackground = CreateSolidBrush(0);
-	
+
 	RegisterClassExA(*info);
-	
+
 	monitor_width := GetSystemMetrics(0);
 	monitor_height := GetSystemMetrics(1);
 	x := (monitor_width - width) / 2;
 	y := (monitor_height - height) / 2;
-	
+
 	r := RECT.{x, y, x + width, y + height};
 	AdjustWindowRect(*r, window_style, xx false);
-	
+
 	t := to_c_string("",, temp);
 	win := CreateWindowExA(0, class_name, t, window_style, r.left, r.top, r.right - r.left, r.bottom - r.top, null, null, null, null);
-	
+
+	DragAcceptFiles(win, xx true);  // enable drop file on window
+
 	ShowWindow(win, SW_SHOW);
-	
+
 	return win;
 }
 
 EventsManager :: (hwnd: *void, msg: u32, wparam: u64, lparam: s64) -> s64 #c_call {
 	ctx: Context;
 	push_context,defer_pop ctx;
-	
+
 	if msg == {
 		case WM_CLOSE; #through;
 		case WM_QUIT;  vp.running = false;
@@ -150,6 +152,20 @@ EventsManager :: (hwnd: *void, msg: u32, wparam: u64, lparam: s64) -> s64 #c_cal
 		case WM_MBUTTONDOWN; input_button_states[2] = true;
 		case WM_MBUTTONUP;   input_button_states[2] = false;
 		case WM_MOUSEWHEEL;  mouse_dz = cast,trunc(s16)(wparam >> 16) / 120;
+		case WM_DROPFILES;
+			_shell32 :: #system_library "Shell32";
+			DragQueryFileA :: (data: *void, idx: u32, name: *u8, length: u32) -> u32 #foreign _shell32;
+
+			data := cast(HDROP)wparam;
+			defer DragFinish(data);
+
+			amt := DragQueryFileA(data, 0xFFFFFFFF, null, 0);  // fetch the dropped file amount
+			if amt > 1 then return DefWindowProcA(hwnd, msg, wparam, lparam);
+
+			buff: [MAX_PATH]u8;
+			DragQueryFileA(data, 0, buff.data, buff.count);
+			len := string_length(buff.data);
+			handle_dropped_file(string.{len, buff.data});
 	}
 
 	return DefWindowProcA(hwnd, msg, wparam, lparam);
