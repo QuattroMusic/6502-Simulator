@@ -98,7 +98,7 @@ draw_one_frame :: () {
 		clear_background(COLOR_DEEP_BACKGROUND);
 
 		update_6502();
-
+		
 		finalize_drawing();
 	}
 	reset_temporary_storage();

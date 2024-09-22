@@ -295,6 +295,7 @@ flush_buffers :: () {
 finalize_drawing :: () {
 	flush_buffers();
 	IDXGISwapChain_Present(swapchain, 0, 0);
+	widget_uuid = 0;
 }
 
 vertices_add :: (using buff: *Buffer_Data, val: buff.vertex_type) {

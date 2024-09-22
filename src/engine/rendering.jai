@@ -5,25 +5,31 @@ Button_State :: enum {
 	PRESSED;
 }
 
-button_press :: (pos: Vec2, size: Vec2) -> (bool, Button_State) {
+button_press :: (pos: Vec2, size: Vec2, id: u32) -> (bool, Button_State) {
 	state := Button_State.NORMAL;
-
+	
 	if is_mouse_inside_rect(pos, size) {
+		if is_mouse_pressed(0) then widget_selected = id;
+		
 		state = .HOVER;
+		if widget_selected != id then return false, state;
 	}
 
 	released := is_mouse_released(0);
 	fire := false;
-	if state == .HOVER && (is_mouse_down(0) || released) {
-		state = .PRESSED;
-		fire = released;
+	if state == .HOVER {
+		
+		if is_mouse_down(0) || released {
+			state = .PRESSED;
+			fire = released;
+		}
 	}
 
 	return fire, state;
 }
 
-button_internal :: (pos: Vec2, size: Vec2, layer: f32, $t: f32) -> (bool, Col) {
-	fire, state := button_press(pos, size);
+button_internal :: (pos: Vec2, size: Vec2, layer: f32, $t: f32, id: u32) -> (bool, Col) {
+	fire, state := button_press(pos, size, id);
 
 	bg_col: Col;
 	border_col: Col;
@@ -41,6 +47,7 @@ button_internal :: (pos: Vec2, size: Vec2, layer: f32, $t: f32) -> (bool, Col) {
 			bg_col = COLOR_WIDGET_BG_PRESSED;
 			border_col = COLOR_WIDGET_BORDER_PRESSED;
 			text_col = COLOR_TEXT_PRESSED;
+			// widget_selected = widget_uuid
 	}
 
 	draw_rect(pos, size, layer, bg_col);
@@ -101,7 +108,8 @@ draw_rect_lines :: (pos: Vec2, size: Vec2, layer: f32, col: Col, t: f32 = 1) {
 }
 
 button :: ($$text: string, pos: Vec2, size: Vec2, layer: f32, $t: f32) -> bool {
-	fire, text_col := button_internal(pos, size, layer, t);
+	widget_uuid += 1;
+	fire, text_col := button_internal(pos, size, layer, t, widget_uuid);
 	
 	s := measure_text(text, t);
 	draw_text(text, pos + size / 2 - s / 2, layer + 1, t, text_col);
@@ -110,7 +118,8 @@ button :: ($$text: string, pos: Vec2, size: Vec2, layer: f32, $t: f32) -> bool {
 }
 
 button :: (icon: Icon, pos: Vec2, size: Vec2, layer: f32, $t: f32) -> bool {
-	fire, icon_col := button_internal(pos, size, layer, t);
+	widget_uuid += 1;
+	fire, icon_col := button_internal(pos, size, layer, t, widget_uuid);
 	
 	s :: Vec2.{8.0 * t, 8.0 * t};
 	
@@ -119,9 +128,10 @@ button :: (icon: Icon, pos: Vec2, size: Vec2, layer: f32, $t: f32) -> bool {
 }
 
 checkbox :: (value: *bool, $$text: string, pos: Vec2, size: Vec2, layer: f32) {
+	widget_uuid += 1;
 	s := measure_text(text, 1);
 	
-	fire, state := button_press(pos, size + .{s.x + 12, 0});
+	fire, state := button_press(pos, size + .{s.x + 12, 0}, widget_uuid);
 
 	bg_col: Col;
 	text_col: Col;
@@ -257,13 +267,17 @@ measure_text :: ($$text: string, $scale: f32) -> Vec2 {
 }
 
 draw_step_hslider :: (pos: Vec2, size: Vec2, layer: f32, amt: s32, value: *int) {
+	widget_uuid += 1;
 	draw_rect(.{pos.x, pos.y + size.y / 2 - 1}, .{size.x, 2}, layer, COLOR_LINE);
 	
 	col := COLOR_WIDGET_BG;
 	
 	if is_mouse_inside_rect(.{pos.x - 4, pos.y}, .{size.x + 8, size.y}) {
 		col = COLOR_WIDGET_BG_HOVERED;
-		if is_mouse_down(0) {
+		if is_mouse_pressed(0) then widget_selected = widget_uuid;
+		
+		
+		if is_mouse_down(0) && widget_selected == widget_uuid {
 			value.* = xx clamp((cast(f32)mouse_x - pos.x) / (size.x) * amt, 0, xx (amt - 1));
 			col = COLOR_WIDGET_BG_PRESSED;
 		}
@@ -278,18 +292,6 @@ draw_step_hslider :: (pos: Vec2, size: Vec2, layer: f32, amt: s32, value: *int) 
 	draw_rect(.{pos_x - 4, pos.y}, .{8, size.y}, layer + 2, col);
 }
 
-/*
-	draw_rect(.{pos.x + size.x / 2 - 1, pos.y}, .{2, size.y}, layer, .{0, 0, 0, 255});
-	
-	if is_mouse_down(0) && is_mouse_inside_rect(.{pos.x, pos.y - 4}, .{size.x, size.y + 8}) {
-		value.* = clamp((cast(f32)mouse_y - pos.y) / size.y, 0, 1);
-	}
-	
-	pos_y := pos.y + value.* * size.y;
-	
-	draw_rect(.{pos.x, pos_y - 4}, .{size.x, 8}, layer + 1, RED);
-*/
-
 Icon :: enum {
 	LEFT_ARROW;
 	RIGHT_ARROW;
@@ -298,6 +300,9 @@ Icon :: enum {
 	MAXIMIZE;
 	CLOSE;
 }
+
+widget_uuid: u32;
+widget_selected: u32;
 
 COLOR_WIDGET_BG             :: #run Col.{  54,  50,  46, 255 } / 255;
 COLOR_WIDGET_BG_HOVERED     :: #run Col.{ 188, 126,  59, 255 } / 255;
