@@ -126,22 +126,35 @@ init_shaders :: () {
 }
 
 init_font :: () {
-	texture_data = stbi_load_from_memory(texture_data_file.data, texture_data_file.count, *texture_width, *texture_height, *texture_channels, 0);
-	assert(texture_data != null);
+	mem := cast(*u8)alloc(texture_width * texture_height * texture_channels,, temp);
+
+	off: int;
+	for texture_data {
+		v := it;
+		for 0..63 {
+			x := ifx (v >> (63 - it)) & 1 then 255 else 0;
+			
+			mem[it * 4     + off] = xx x;
+			mem[it * 4 + 1 + off] = xx x;
+			mem[it * 4 + 2 + off] = xx x;
+			mem[it * 4 + 3 + off] = xx x;
+		}
+		off += 64 * 4;
+	}
 
 	desc: D3D11_TEXTURE2D_DESC;
-	desc.Width  = xx texture_width;
-	desc.Height = xx texture_height;
-	desc.MipLevels = 1;
-	desc.ArraySize = 1;
-	desc.Format = .R8G8B8A8_UNORM;
+	desc.Width            = xx texture_width;
+	desc.Height           = xx texture_height;
+	desc.MipLevels        = 1;
+	desc.ArraySize        = 1;
+	desc.Format           = .R8G8B8A8_UNORM;
 	desc.SampleDesc.Count = 1;
-	desc.Usage = .IMMUTABLE;
-	desc.BindFlags = .SHADER_RESOURCE;
+	desc.Usage            = .IMMUTABLE;
+	desc.BindFlags        = .SHADER_RESOURCE;
 
 	init_data: D3D11_SUBRESOURCE_DATA;
-	init_data.pSysMem = texture_data;
-	init_data.SysMemPitch = xx ((texture_width * 32 + 7) / 8);
+	init_data.pSysMem = mem;
+	init_data.SysMemPitch = xx (texture_width * 4);
 	init_data.SysMemSlicePitch = xx ((cast(u32)init_data.SysMemPitch) * cast(u32)texture_height);
 
 	ID3D11Device_CreateTexture2D(dev, *desc, *init_data, *texture);
@@ -433,11 +446,50 @@ depth_stencil_view: *ID3D11DepthStencilView;
 depth_stencil_buffer: *ID3D11Texture2D;
 depth_stencil_state: *ID3D11DepthStencilState;
 
-texture_data_file :: #run read_entire_file("src/engine/6502.png");
+texture_data :: u64.[
+	0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 
+	0x38fc3cf8fefe3ec6, 0x7e06c6c0c6c67cfc, 0x7cfc787ec6c6c6c6, 0x66fe0c60003e7e42, 
+	0x6cc666ccc0c060c6, 0x1806ccc0eee6c6c6, 0xc6c6cc18c6c6c6ee, 0x660e1c70007e4224, 
+	0xc6c6c0c6c0c0c0c6, 0x1806d8c0fef6c6c6, 0xc6c6c018c6c6d67c, 0x661c34587e464218, 
+	0xc6fcc0c6fcfccefe, 0x1806f0c0fefec6c6, 0xc6ce7c18c6eefe38, 0x3c38644c7e464218, 
+	0xfec6c0c6c0c0c6c6, 0x1806f8c0d6dec6fc, 0xdef80618c67cfe7c, 0x1870345800464224, 
+	0xc6c666ccc0c066c6, 0x18c6dcc0c6cec6c0, 0xccdcc618c638eeee, 0x18e01c70007c7e42, 
+	0xc6fc3cf8fec03ec6, 0x7e7ccefec6c67cc0, 0x7ace7c187c10c6c6, 0x18fe0c6000000000, 
+	0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 
+	0x1c6c001000203030, 0x6000000000000238, 0x187c7e1cfc3cfe78, 0x7c00600c00603800, 
+	0x1c6c283cc4503060, 0x302810000000044c, 0x38c60c3cc060c6c4, 0xc660601800304c00, 
+	0x38247c60c8501060, 0x30101000000008c6, 0x180e186cfcc00ce4, 0xc66000307e180c00, 
+	0x3048283810202060, 0x307c7c607c0010c6, 0x183c3ccc06fc1878, 0x7e006060000c1800, 
+	0x20007c0c20540060, 0x30101060000020c6, 0x187806fe06c6309e, 0x066060307e181000, 
+	0x000028784cc80060, 0x3028102000604064, 0x18e0c60cc6c63086, 0x0c60201800300000, 
+	0x800000108c740030, 0x6000004000608038, 0x7efe7c0c7c7c307c, 0x7800400c0060107e
+];
+texture_width    :: 256;
+texture_height   :: 16;
+texture_channels :: 4;  // Todo - is there a way to only have one channel? afterall it's just 0 or 255
+/*  // used to compress from the image to data
+temp: []u64;
+temp.data = xx texture_data;
+temp.count = texture_width * texture_height / 64;
 
-texture_data: *u8;
-texture_width, texture_height, texture_channels: s32;
+print(temp.count);
+print(texture_height);
+print(texture_width);
+temp: [..]u8;
+for 0..texture_width * texture_height * 4 - 1 if it % 4 == 0 then array_add(*temp, texture_data[it]);
 
+temp2: [..]u64;
+out: s64;
+while out < temp.count {
+	v: u64;
+	for 0..63 {
+		v |= (cast(u64)temp[out] & 1) << (63 - it);
+		out += 1;
+	}
+	print("%, ", formatInt(v, base = 16));
+}
+print(temp.count);
+*/
 #scope_file
 quad_shader :: #string DONE
 cbuffer cp_per_object {

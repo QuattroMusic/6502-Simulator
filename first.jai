@@ -109,8 +109,6 @@ main :: () {
 
 	init_code_viewer("Random number.s");
 
-	col: Col;
-
 	while vp.running {
 		fetch_window_inputs();
 		lock_frame_rate();
@@ -167,7 +165,6 @@ f64  :: float64;
 #import "Math";
 #import "File";
 #import "Thread";
-#import "stb_image";
 #import "Process";
 
 #import "d3d11";
