@@ -21,9 +21,9 @@ reset_input :: () {
 	memset(input_button_states_old.data, 0, size_of(type_of(input_button_states_old)));
 }
 
-is_mouse_pressed  :: (key: int) -> bool { return  input_button_states[0] && !input_button_states_old[0]; }
-is_mouse_down     :: (key: int) -> bool { return  input_button_states[0] &&  input_button_states_old[0]; }
-is_mouse_released :: (key: int) -> bool { return !input_button_states[0] &&  input_button_states_old[0]; }
+is_mouse_pressed  :: (key: int) -> bool { return  input_button_states[key] && !input_button_states_old[key]; }
+is_mouse_down     :: (key: int) -> bool { return  input_button_states[key] &&  input_button_states_old[key]; }
+is_mouse_released :: (key: int) -> bool { return !input_button_states[key] &&  input_button_states_old[key]; }
 
 mouse_x: int;
 mouse_y: int;
