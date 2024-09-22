@@ -19,7 +19,7 @@ draw_header :: () {
 		} else {
 			ShowWindow(vp.window, SW_RESTORE);
 		}
-		
+
 		vp.maximized = !vp.maximized;
 	}
 	if button(.CLOSE, .{cast(f32)vp.width - h, 0}, .{h, h}, 1, 2) {
@@ -83,9 +83,9 @@ draw_code_viewer :: () {
 
 	draw_panel(viewer.file_name, viewer.pos, viewer.size, 1);
 	draw_rect(viewer.pos, viewer.size, 0, COLOR_BACKGROUND);
-	
+
 	handle_scrollbar();
-	
+
 	set_drawing_area(offset, viewer.size); {
 		draw_colored_text();
 		draw_line_count_bar();
@@ -257,33 +257,21 @@ draw_program_frequency :: () {
 	str: string;
 	if !engine.metrics.unlock {
 		freq := engine.metrics.update_rate;
-		if freq < kHz(1) {
-			str = tprint("Freq: %Hz", freq);
-		} else if freq < MHz(1) {
-			str = tprint("Freq: %kHz", freq / 1_000);
-		} else if freq < GHz(1) {
-			str = tprint("Freq: %MHz", freq / 1_000_000);
-		} else {
-			str = tprint("Freq: %GHz", freq / 1_000_000_000);
-		}
+		if freq < kHz(1)      str = tprint("%Hz",  freq);
+		else if freq < MHz(1) str = tprint("%kHz", freq / 1_000);
+		else if freq < GHz(1) str = tprint("%MHz", freq / 1_000_000);
+		else                  str = tprint("%GHz", freq / 1_000_000_000);
 
-		if button(.LEFT_ARROW, offset + .{130, 40}, .{20, 20}, 1, 1) && engine.metrics.update_rate > 1{
-			v := tprint("%", engine.metrics.update_rate);
-			if v[0] == {
-				case #char "1"; engine.metrics.update_rate /= 2;
-				case #char "2"; engine.metrics.update_rate /= 2;
-				case #char "5"; engine.metrics.update_rate = engine.metrics.update_rate / 5 * 2;
-			}
-		}
-		if button(.RIGHT_ARROW, offset + .{150, 40}, .{20, 20}, 1, 1) && engine.metrics.update_rate < GHz(10) {
-			v := tprint("%", engine.metrics.update_rate);
-			if v[0] == {
-				case #char "1"; engine.metrics.update_rate *= 2;
-				case #char "2"; engine.metrics.update_rate = engine.metrics.update_rate / 2 * 5;
-				case #char "5"; engine.metrics.update_rate *= 2;
-			}
-		}
+		freqs :: #run int.[
+			1,          2,      5,      10,      20,      50,      100,      200,      500,
+			kHz(1), kHz(2), kHz(5), kHz(10), kHz(20), kHz(50), kHz(100), kHz(200), kHz(500),
+			MHz(1), MHz(2), MHz(5), MHz(10), MHz(20), MHz(50), MHz(100), MHz(200), MHz(500), GHz(1)
+		];
+
+		found, idx := array_find(freqs, freq);
+		draw_step_hslider(offset + .{20, 50}, .{160, 20}, 2, freqs.count, *idx);
+		engine.metrics.update_rate = freqs[idx];
 	}
 
-	draw_text(str, offset + .{10, 45}, 1, 1, COLOR_TEXT_NORMAL);
+	draw_text(str, offset + .{140, 22}, 1, 1, COLOR_TEXT_NORMAL);
 }

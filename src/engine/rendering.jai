@@ -256,7 +256,29 @@ measure_text :: ($$text: string, $scale: f32) -> Vec2 {
 	else                  { return      _internal(text, scale); }
 }
 
-draw_vertical_slider :: (pos: Vec2, size: Vec2, layer: f32, value: *f32) {
+draw_step_hslider :: (pos: Vec2, size: Vec2, layer: f32, amt: s32, value: *int) {
+	draw_rect(.{pos.x, pos.y + size.y / 2 - 1}, .{size.x, 2}, layer, COLOR_LINE);
+	
+	col := COLOR_WIDGET_BG;
+	
+	if is_mouse_inside_rect(.{pos.x - 4, pos.y}, .{size.x + 8, size.y}) {
+		col = COLOR_WIDGET_BG_HOVERED;
+		if is_mouse_down(0) {
+			value.* = xx clamp((cast(f32)mouse_x - pos.x) / (size.x) * amt, 0, xx (amt - 1));
+			col = COLOR_WIDGET_BG_PRESSED;
+		}
+	}
+	
+	for 0..(amt) / 3 {
+		x := cast(f32)(it * 3) / (amt - 1) * size.x;
+		draw_rect(.{pos.x + x - 1, pos.y + size.y / 2 - size.y / 4}, .{2, size.y / 2}, layer + 1, COLOR_WIDGET_BORDER);
+	}
+	
+	pos_x := pos.x + cast(f32)value.* / (amt - 1) * size.x;
+	draw_rect(.{pos_x - 4, pos.y}, .{8, size.y}, layer + 2, col);
+}
+
+/*
 	draw_rect(.{pos.x + size.x / 2 - 1, pos.y}, .{2, size.y}, layer, .{0, 0, 0, 255});
 	
 	if is_mouse_down(0) && is_mouse_inside_rect(.{pos.x, pos.y - 4}, .{size.x, size.y + 8}) {
@@ -266,21 +288,7 @@ draw_vertical_slider :: (pos: Vec2, size: Vec2, layer: f32, value: *f32) {
 	pos_y := pos.y + value.* * size.y;
 	
 	draw_rect(.{pos.x, pos_y - 4}, .{size.x, 8}, layer + 1, RED);
-}
-
-draw_color_picker :: (pos: Vec2, layer: f32, col: *Col) {
-	draw_rect(.{pos.x, pos.y}, .{200, 240}, 7, WHITE);
-	draw_vertical_slider(.{20 + pos.x, 20 + pos.y}, .{20, 200}, 8, *col.x);
-	draw_vertical_slider(.{50 + pos.x, 20 + pos.y}, .{20, 200}, 8, *col.y);
-	draw_vertical_slider(.{80 + pos.x, 20 + pos.y}, .{20, 200}, 8, *col.z);
-
-	draw_text(tprint("%", floor(col.x * 255)), .{200 - 80 + pos.x, 300 - 280 + pos.y}, 8, 2, RED);
-	draw_text(tprint("%", floor(col.y * 255)), .{200 - 80 + pos.x, 320 - 280 + pos.y}, 8, 2, GREEN);
-	draw_text(tprint("%", floor(col.z * 255)), .{200 - 80 + pos.x, 340 - 280 + pos.y}, 8, 2, BLUE);
-
-	draw_rect(.{198 - 80 + pos.x, 368 - 280 + pos.y}, .{24, 24}, 8, .{0, 0, 0, 255});
-	draw_rect(.{200 - 80 + pos.x, 370 - 280 + pos.y}, .{20, 20}, 9, col);
-}
+*/
 
 Icon :: enum {
 	LEFT_ARROW;
