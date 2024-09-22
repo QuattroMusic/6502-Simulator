@@ -275,12 +275,13 @@ draw_step_hslider :: (pos: Vec2, size: Vec2, layer: f32, amt: s32, value: *int) 
 	if is_mouse_inside_rect(.{pos.x - 4, pos.y}, .{size.x + 8, size.y}) {
 		col = COLOR_WIDGET_BG_HOVERED;
 		if is_mouse_pressed(0) then widget_selected = widget_uuid;
-		
-		
-		if is_mouse_down(0) && widget_selected == widget_uuid {
-			value.* = xx clamp((cast(f32)mouse_x - pos.x) / (size.x) * amt, 0, xx (amt - 1));
-			col = COLOR_WIDGET_BG_PRESSED;
-		}
+	}
+	
+	if is_mouse_released(0) then widget_selected = 0;
+	
+	if widget_selected == widget_uuid {
+		value.* = xx clamp((cast(f32)mouse_x - pos.x) / (size.x) * amt, 0, xx (amt - 1));
+		col = COLOR_WIDGET_BG_PRESSED;
 	}
 	
 	for 0..(amt) / 3 {
