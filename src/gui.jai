@@ -79,7 +79,7 @@ draw_code_viewer :: () {
 	offset :: Vec2.{10, 74};
 
 	viewer.pos = offset;
-	viewer.size = .{vp.width - MIN_SCREEN_WIDTH / 2.0 + 30, vp.height - 84.0};
+	viewer.size = .{vp.width - MIN_SCREEN_WIDTH / 2.0 + 20, vp.height - 84.0};
 
 	draw_panel(viewer.file_name, viewer.pos, viewer.size, 1);
 	draw_rect(viewer.pos, viewer.size, 0, COLOR_BACKGROUND);
@@ -120,7 +120,7 @@ handle_memory_scrollbar :: (pos: Vec2, size: Vec2) {
 draw_RAM_content :: (offset: Vec2, start: int, end: int, pos_y: f32, height: f32) {
 	for y: start..end {
 		hex := formatInt(y * 16, base = 16, minimum_digits = 4);
-		draw_text(tprint("%:", hex), offset + .{4, 9.0 + y * 16}, 2, 1, COLOR_TEXT_NORMAL);
+		draw_text(tprint("%:", hex), offset + .{5, 9.0 + y * 16}, 2, 1, COLOR_TEXT_NORMAL);
 		for x: 0..15 {
 			col := WHITE;
 			data := engine.RAM[y * 16 + x];
@@ -135,13 +135,13 @@ draw_RAM_content :: (offset: Vec2, start: int, end: int, pos_y: f32, height: f32
 			}
 
 			hex := formatInt(data, base = 16, minimum_digits = 2);
-			draw_text(tprint("%", hex), offset + .{52.0 + x * (2.25 * 16), 4.0 + y * 16}, 2, 2, col);
+			draw_text(tprint("%", hex), offset + .{55.0 + x * (32 + 4), 4.0 + y * 16}, 2, 2, col);
 		}
 	}
 
 	pos := offset.y + 276 + (cast(f32)(engine.S / 16)) * 16;
 	if (pos_y + 20) <= pos && pos < (pos_y + height) {
-		x := 50 + (cast(f32)(engine.S % 16)) * (2.25 * 16);
+		x := 53 + (cast(f32)(engine.S % 16)) * (32 + 4);
 		y := 260 + (cast(f32)(engine.S / 16)) * (16);
 		w := 16 * 2 + 2;
 		h := 18;
@@ -150,15 +150,15 @@ draw_RAM_content :: (offset: Vec2, start: int, end: int, pos_y: f32, height: f32
 }
 
 draw_program_memory :: () {
-	pos:  Vec2 = .{vp.width + 50.0 - MIN_SCREEN_WIDTH / 2, 74};
-	size: Vec2 = .{MIN_SCREEN_WIDTH / 2 - 60.0, vp.height - MIN_SCREEN_HEIGHT / 2 - 15.0};
+	pos:  Vec2 = .{vp.width + 40.0 - MIN_SCREEN_WIDTH / 2, 74};
+	size: Vec2 = .{MIN_SCREEN_WIDTH / 2 - 50.0, vp.height - MIN_SCREEN_HEIGHT / 2.0 + 10};
 
 	handle_memory_scrollbar(pos, size);
 
 	draw_panel("Memory", pos, size, 2);
 	draw_rect(pos, size, 0, COLOR_BACKGROUND);
 
-	draw_rect(pos, .{46, size.y}, 1, COLOR_WIDGET_BG);
+	draw_rect(pos, .{48, size.y}, 1, COLOR_WIDGET_BG);
 
 	set_drawing_area(pos, size); {
 		aspect_ratio := size.y / (2048 * 16);
@@ -184,53 +184,60 @@ draw_program_registers :: () {
 		hex := formatInt(val, base = 16, minimum_digits = (#ifx s == 1 then 2 else 4));
 		bin := formatInt(val, base =  2, minimum_digits = (#ifx s == 1 then 8 else 16));
 
-		draw_text(tprint("0x%", hex), offset + pos + .{10, 12}, layer, 1, WHITE);
-		draw_text(tprint("0b%", bin), offset + pos + .{10, 32}, layer, 1, WHITE);
-		draw_text(tprint("%",   val), offset + pos + .{10, 52}, layer, 1, WHITE);
+		draw_text(tprint("0x%", hex), offset + pos + .{9, 8}, layer, 2, WHITE);
+		draw_text(tprint("0b%", bin), offset + pos + .{9, 30}, layer, 2, WHITE);
+		draw_text(tprint("%",   val), offset + pos + .{9, 52}, layer, 2, WHITE);
 	}
 
 	layer :: 1;
-	offset := Vec2.{vp.width + 50.0 - MIN_SCREEN_WIDTH / 2, vp.height + 70.0 - MIN_SCREEN_HEIGHT / 2};
+	offset := Vec2.{vp.width + 40.0 - MIN_SCREEN_WIDTH / 2, vp.height + 95.0 - MIN_SCREEN_HEIGHT / 2};
 
-	draw_panel("Registers", offset, .{MIN_SCREEN_WIDTH / 2 - 60, MIN_SCREEN_HEIGHT / 4 - 25}, layer);
+	draw_panel("Registers", offset, .{MIN_SCREEN_WIDTH / 2 - 50, MIN_SCREEN_HEIGHT / 4 - 10}, layer);
 
-	panel_internal("A", engine.A, offset, .{10, 15}, .{125, 70}, layer);
-	panel_internal("X", engine.X, offset, .{145, 15}, .{125, 70}, layer);
-	panel_internal("Y", engine.Y, offset, .{280, 15}, .{125, 70}, layer);
+	panel_internal("A", engine.A, offset, .{ 10, 15}, .{176, 76}, layer);
+	panel_internal("X", engine.X, offset, .{196, 15}, .{176, 76}, layer);
+	panel_internal("Y", engine.Y, offset, .{382, 15}, .{176, 76}, layer);
 	// {
 		// draw_panel("Key", offset + .{415, 15}, .{85, 50}, layer);
 	// }
 
-	panel_internal("PC", engine.PC, offset, .{10, 95}, .{210, 70}, layer);
-	panel_internal("S", engine.S, offset, .{230, 95}, .{125, 70}, layer);
+	panel_internal("PC", engine.PC, offset, .{ 10, 104}, .{305, 76}, layer);
+	panel_internal("S", engine.S, offset,   .{382, 104}, .{175, 76}, layer);
 	{
-		draw_panel("Executing", offset + .{365, 130}, .{135, 35}, layer);
+		// draw_panel("Executing", offset + .{365, 130}, .{135, 35}, layer);
 	}
 	{
-		draw_panel("Flags", offset + .{510, 15}, .{120, 150}, layer);
-		draw_text("N:", offset + .{520, 25},  layer, 1, WHITE);
-		draw_text("V:", offset + .{520, 45},  layer, 1, WHITE);
-		draw_text("B:", offset + .{520, 65},  layer, 1, WHITE);
-		draw_text("D:", offset + .{520, 85},  layer, 1, WHITE);
-		draw_text("I:", offset + .{520, 105}, layer, 1, WHITE);
-		draw_text("Z:", offset + .{520, 125}, layer, 1, WHITE);
-		draw_text("C:", offset + .{520, 145}, layer, 1, WHITE);
+		x :: 570;
+		draw_panel("Flags", offset + .{x, 15}, .{68, 165}, layer);
+		draw_text("N:", offset + .{x + 9,  25},  layer, 2, WHITE);
+		draw_text("V:", offset + .{x + 9,  45 + 2},  layer, 2, WHITE);
+		draw_text("B:", offset + .{x + 9,  65 + 4},  layer, 2, WHITE);
+		draw_text("D:", offset + .{x + 9,  85 + 6},  layer, 2, WHITE);
+		draw_text("I:", offset + .{x + 9, 105 + 8}, layer, 2, WHITE);
+		draw_text("Z:", offset + .{x + 9, 125 + 10}, layer, 2, WHITE);
+		draw_text("C:", offset + .{x + 9, 145 + 12}, layer, 2, WHITE);
 		using engine.flags;
-		draw_text(tprint("% / %", cast(u8)N, N), offset + .{545, 25},  layer, 1, ifx N then GREEN else RED);
-		draw_text(tprint("% / %", cast(u8)V, V), offset + .{545, 45},  layer, 1, ifx V then GREEN else RED);
-		draw_text(tprint("% / %", cast(u8)B, B), offset + .{545, 65},  layer, 1, ifx B then GREEN else RED);
-		draw_text(tprint("% / %", cast(u8)D, D), offset + .{545, 85},  layer, 1, ifx D then GREEN else RED);
-		draw_text(tprint("% / %", cast(u8)I, I), offset + .{545, 105}, layer, 1, ifx I then GREEN else RED);
-		draw_text(tprint("% / %", cast(u8)Z, Z), offset + .{545, 125}, layer, 1, ifx Z then GREEN else RED);
-		draw_text(tprint("% / %", cast(u8)C, C), offset + .{545, 145}, layer, 1, ifx C then GREEN else RED);
+		
+		fmtBool :: (v: bool) -> string {
+			str := tprint("%", v);
+			return string.{1, str.data};
+		}
+		
+		draw_text(tprint("%", cast(u8)N), offset + .{x + 45, 25},  layer, 2, ifx N then GREEN else RED);
+		draw_text(tprint("%", cast(u8)V), offset + .{x + 45, 45 + 2},  layer, 2, ifx V then GREEN else RED);
+		draw_text(tprint("%", cast(u8)B), offset + .{x + 45, 65 + 4},  layer, 2, ifx B then GREEN else RED);
+		draw_text(tprint("%", cast(u8)D), offset + .{x + 45, 85 + 6},  layer, 2, ifx D then GREEN else RED);
+		draw_text(tprint("%", cast(u8)I), offset + .{x + 45, 105 + 8}, layer, 2, ifx I then GREEN else RED);
+		draw_text(tprint("%", cast(u8)Z), offset + .{x + 45, 125 + 10}, layer, 2, ifx Z then GREEN else RED);
+		draw_text(tprint("%", cast(u8)C), offset + .{x + 45, 145 + 12}, layer, 2, ifx C then GREEN else RED);
 	}
 }
 
 draw_program_debug :: () {
-	offset := Vec2.{vp.width + 50.0 - MIN_SCREEN_WIDTH / 2, vp.height - MIN_SCREEN_HEIGHT / 4 + 55.0};
+	offset := Vec2.{vp.width + 40.0 - MIN_SCREEN_WIDTH / 2, vp.height - MIN_SCREEN_HEIGHT / 4 + 95.0};
 
 	// draw_panel("Debug", offset, .{MIN_SCREEN_WIDTH / 2 - 450.0, MIN_SCREEN_HEIGHT / 4 - 65.0}, 1);
-	draw_panel("Debug", offset, .{MIN_SCREEN_WIDTH / 2 - 270.0, MIN_SCREEN_HEIGHT / 4 - 65.0}, 1);
+	draw_panel("Debug", offset, .{MIN_SCREEN_WIDTH / 2 - 260.0, MIN_SCREEN_HEIGHT / 4 - 105.0}, 1);
 
 	checkbox(*engine.debug, "Enable debug", offset + .{15, 15}, .{20, 20}, 1);
 	if engine.debug && engine.thread_running {
@@ -239,39 +246,38 @@ draw_program_debug :: () {
 		}
 	}
 
-	draw_panel("Stack used", offset + .{10, 90}, .{200, 35}, 1);
+	draw_panel("Stack used", offset + .{10, 50}, .{170, 35}, 1);
 	stack_used := (255.0 - engine.S) / 255;
 	col: Col = stack_used * RED + (1 - stack_used) * GREEN;
 
 	ff := formatFloat(stack_used * 100, trailing_width = 1, zero_removal = .NO);
 
-	draw_text(tprint("%\% - % / 255B", ff, 255 - engine.S), offset + .{20, 103}, 1, 1, col);
+	draw_text(tprint("%\% - % / 255B", ff, 255 - engine.S), offset + .{20, 63}, 1, 1, col);
 }
 
 draw_program_frequency :: () {
-	offset := Vec2.{vp.width - 210.0, vp.height - MIN_SCREEN_HEIGHT / 4 + 55.0};
-	draw_panel("Frequency", offset, .{200, MIN_SCREEN_HEIGHT / 4 - 65.0}, 1);
+	offset := Vec2.{vp.width - 210.0, vp.height - MIN_SCREEN_HEIGHT / 4 + 95.0};
+	draw_panel("Frequency", offset, .{200, MIN_SCREEN_HEIGHT / 4 - 105.0}, 1);
 
-	checkbox(*engine.metrics.unlock, "unlock", offset + .{10, 15}, .{20, 20}, 1);
+	checkbox(*engine.metrics.unlock, "free", offset + .{10, 15}, .{20, 20}, 1);
 
 	str: string;
-	if !engine.metrics.unlock {
-		freq := engine.metrics.update_rate;
-		if freq < kHz(1)      str = tprint("%Hz",  freq);
-		else if freq < MHz(1) str = tprint("%kHz", freq / 1_000);
-		else if freq < GHz(1) str = tprint("%MHz", freq / 1_000_000);
-		else                  str = tprint("%GHz", freq / 1_000_000_000);
+	freq := engine.metrics.update_rate;
+	
+	if freq < kHz(1)      str = tprint(" %Hz",  formatInt(freq / 1,            minimum_digits = 3, padding = #char " "));
+	else if freq < MHz(1) str = tprint("%kHz", formatInt(freq / 1_000,         minimum_digits = 3, padding = #char " "));
+	else if freq < GHz(1) str = tprint("%MHz", formatInt(freq / 1_000_000,     minimum_digits = 3, padding = #char " "));
+	else                  str = tprint("%GHz", formatInt(freq / 1_000_000_000, minimum_digits = 3, padding = #char " "));
 
-		freqs :: #run int.[
-			1,          2,      5,      10,      20,      50,      100,      200,      500,
-			kHz(1), kHz(2), kHz(5), kHz(10), kHz(20), kHz(50), kHz(100), kHz(200), kHz(500),
-			MHz(1), MHz(2), MHz(5), MHz(10), MHz(20), MHz(50), MHz(100), MHz(200), MHz(500), GHz(1)
-		];
+	freqs :: #run int.[
+		1,          2,      5,      10,      20,      50,      100,      200,      500,
+		kHz(1), kHz(2), kHz(5), kHz(10), kHz(20), kHz(50), kHz(100), kHz(200), kHz(500),
+		MHz(1), MHz(2), MHz(5), MHz(10), MHz(20), MHz(50), MHz(100), MHz(200), MHz(500), GHz(1)
+	];
 
-		found, idx := array_find(freqs, freq);
-		draw_step_hslider(offset + .{20, 50}, .{160, 20}, 2, freqs.count, *idx);
-		engine.metrics.update_rate = freqs[idx];
-	}
+	found, idx := array_find(freqs, freq);
+	draw_step_hslider(offset + .{20, 55}, .{160, 20}, 2, freqs.count, *idx, disabled = engine.metrics.unlock);
+	engine.metrics.update_rate = freqs[idx];
 
-	draw_text(str, offset + .{140, 22}, 1, 1, COLOR_TEXT_NORMAL);
+	draw_text(str, offset + .{90, 16}, 1, 2, ifx engine.metrics.unlock then GRAY else COLOR_TEXT_NORMAL);
 }

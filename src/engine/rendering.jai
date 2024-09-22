@@ -266,31 +266,43 @@ measure_text :: ($$text: string, $scale: f32) -> Vec2 {
 	else                  { return      _internal(text, scale); }
 }
 
-draw_step_hslider :: (pos: Vec2, size: Vec2, layer: f32, amt: s32, value: *int) {
+draw_step_hslider :: (pos: Vec2, size: Vec2, layer: f32, amt: s32, value: *int, disabled: bool = false) {
 	widget_uuid += 1;
-	draw_rect(.{pos.x, pos.y + size.y / 2 - 1}, .{size.x, 2}, layer, COLOR_LINE);
+	draw_rect(.{pos.x, pos.y + size.y / 2 - 1}, .{size.x, 2}, layer, ifx disabled then GRAY else COLOR_LINE);
 	
-	col := COLOR_WIDGET_BG;
+	col_main: Col = ---;
+	col_step: Col = ---;
 	
-	if is_mouse_inside_rect(.{pos.x - 4, pos.y}, .{size.x + 8, size.y}) {
-		col = COLOR_WIDGET_BG_HOVERED;
-		if is_mouse_pressed(0) then widget_selected = widget_uuid;
+	if !disabled {
+		col_main = COLOR_WIDGET_BG;
+		col_step = COLOR_WIDGET_BORDER;
+		
+		if is_mouse_inside_rect(.{pos.x - 4, pos.y}, .{size.x + 8, size.y}) {
+			col_main = COLOR_WIDGET_BG_HOVERED;
+			if is_mouse_pressed(0) then widget_selected = widget_uuid;
+		}
+		
+		if is_mouse_released(0) then widget_selected = 0;
+		
+		if widget_selected == widget_uuid {
+			value.* = xx clamp((cast(f32)mouse_x - pos.x) / (size.x) * amt, 0, xx (amt - 1));
+			col_main = COLOR_WIDGET_BG_PRESSED;
+		}
+	} else {
+		col_main = GRAY;
+		col_step = GRAY;
 	}
 	
-	if is_mouse_released(0) then widget_selected = 0;
-	
-	if widget_selected == widget_uuid {
-		value.* = xx clamp((cast(f32)mouse_x - pos.x) / (size.x) * amt, 0, xx (amt - 1));
-		col = COLOR_WIDGET_BG_PRESSED;
-	}
-	
-	for 0..(amt) / 3 {
+	for 0..amt / 3 {
 		x := cast(f32)(it * 3) / (amt - 1) * size.x;
-		draw_rect(.{pos.x + x - 1, pos.y + size.y / 2 - size.y / 4}, .{2, size.y / 2}, layer + 1, COLOR_WIDGET_BORDER);
+		s := size.y / 2;
+		if it % 3 == 0 then s = size.y / 3 * 2;
+		
+		draw_rect(.{pos.x + x - 1, pos.y + size.y / 2 - s / 2}, .{2, s}, layer + 1, col_step);
 	}
 	
 	pos_x := pos.x + cast(f32)value.* / (amt - 1) * size.x;
-	draw_rect(.{pos_x - 4, pos.y}, .{8, size.y}, layer + 2, col);
+	draw_rect(.{pos_x - 4, pos.y}, .{8, size.y}, layer + 2, col_main);
 }
 
 Icon :: enum {
@@ -320,6 +332,7 @@ COLOR_BACKGROUND      :: #run Col.{  32,  30,  28, 255 } / 255;
 COLOR_DEEP_BACKGROUND :: #run Col.{  10,  10,   5, 255 } / 255;
 
 COLOR_LINE            :: #run Col.{ 254, 170,  55, 255 } / 255;
+COLOR_DISABLED        :: #run Col.{ 110, 110, 110, 255 } / 255;  // Todo - change this
 
 WHITE  :: #run Col.{240, 240, 220, 255} / 255;
 GREEN  :: #run Col.{ 59, 187,  20, 255} / 255;

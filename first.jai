@@ -38,8 +38,10 @@ handle_viewport_movement :: () {
 }
 
 handle_viewport_resize :: () {
+	s :: 15;
+	
 	if is_mouse_pressed(0) {
-		if is_mouse_inside_rect(.{xx (vp.width - 20), xx (vp.height - 20)}, .{20, 20}) {
+		if is_mouse_inside_rect(.{xx (vp.width - s), xx (vp.height - s)}, .{s, s}) {
 			r: RECT;
 			GetWindowRect(vp.window, *r);
 			pressed_pos.x = xx mouse_x;
@@ -74,8 +76,8 @@ handle_viewport_resize :: () {
 	if is_mouse_released(0) then enable_resizing = false;
 
 	p1 := Vec2.{xx vp.width, xx vp.height};
-	p2 := Vec2.{xx (vp.width - 20), xx vp.height};
-	p3 := Vec2.{xx vp.width, xx (vp.height - 20)};
+	p2 := Vec2.{xx (vp.width - s), xx vp.height};
+	p3 := Vec2.{xx vp.width, xx (vp.height - s)};
 	draw_triangle(p1, p2, p3, 10, COLOR_LINE);
 }
 
@@ -98,7 +100,7 @@ draw_one_frame :: () {
 		clear_background(COLOR_DEEP_BACKGROUND);
 
 		update_6502();
-		
+
 		finalize_drawing();
 	}
 	reset_temporary_storage();
