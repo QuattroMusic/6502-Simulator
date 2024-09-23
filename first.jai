@@ -1,86 +1,3 @@
-pressed_pos: Vec2;
-pressed_size: Vec2;
-enable_movement := false;
-enable_resizing := false;
-
-_user32 :: #system_library "User32";
-MoveWindow :: (hWnd: *void, x: s32, y: s32, nWidth: s32, nHeight: s32, bRepaint: s32) #foreign _user32;
-
-handle_viewport_movement :: () {
-	if is_mouse_pressed(0) {
-		// minus 3 * HEIGHT because a button has the size of that, so, 3 buttons
-		if is_mouse_inside_rect(.{0, 0}, .{vp.width - HEADER_HEIGHT * 3.0, HEADER_HEIGHT}) {
-			pressed_pos.x = xx mouse_x;
-			if vp.maximized {
-				w := vp.width;
-				ShowWindow(vp.window, SW_RESTORE);
-				vp.maximized = false;
-				pressed_pos.x = cast(f32)mouse_x / (w + 3 * HEADER_HEIGHT) * vp.width;
-			}
-			pressed_pos.y = xx mouse_y;
-			enable_movement = true;
-		}
-	}
-	if enable_movement {
-		r: RECT = ---;
-		pos: POINT = ---;
-		GetWindowRect(vp.window, *r);
-		GetCursorPos(*pos);
-
-		delta := Vec2.{xx (pos.x - r.left), xx (pos.y - r.top)} - pressed_pos;
-		w := r.right - r.left;
-		h := r.bottom - r.top;
-		MoveWindow(vp.window, xx (r.left + delta.x), xx (r.top + delta.y), w, h, xx true);
-	}
-	if is_mouse_released(0) {
-		enable_movement = false;
-	}
-}
-
-handle_viewport_resize :: () {
-	s :: 15;
-	
-	if is_mouse_pressed(0) {
-		if is_mouse_inside_rect(.{xx (vp.width - s), xx (vp.height - s)}, .{s, s}) {
-			r: RECT;
-			GetWindowRect(vp.window, *r);
-			pressed_pos.x = xx mouse_x;
-			pressed_pos.y = xx mouse_y;
-			pressed_size.x = xx (r.right - r.left);
-			pressed_size.y = xx (r.bottom - r.top);
-			enable_resizing = true;
-		}
-	}
-	if enable_resizing {
-		if vp.maximized {
-			ShowWindow(vp.window, SW_RESTORE);
-			vp.maximized = false;
-		}
-
-		r: RECT = ---;
-		pos: POINT = ---;
-		GetWindowRect(vp.window, *r);
-		GetCursorPos(*pos);
-
-		dx := pos.x - pressed_pos.x - r.left;
-		dy := pos.y - pressed_pos.y - r.top;
-
-		vx := dx + pressed_size.x;
-		vy := dy + pressed_size.y;
-
-		vx = max(vx, MIN_SCREEN_WIDTH);
-		vy = max(vy, MIN_SCREEN_HEIGHT);
-
-		MoveWindow(vp.window, r.left, r.top, xx vx, xx vy, xx true);
-	}
-	if is_mouse_released(0) then enable_resizing = false;
-
-	p1 := Vec2.{xx vp.width, xx vp.height};
-	p2 := Vec2.{xx (vp.width - s), xx vp.height};
-	p3 := Vec2.{xx vp.width, xx (vp.height - s)};
-	draw_triangle(p1, p2, p3, 10, COLOR_LINE);
-}
-
 update_6502 :: () {
 	handle_viewport_movement();
 	handle_viewport_resize();
@@ -109,12 +26,12 @@ draw_one_frame :: () {
 main :: () {
 	init_window(MIN_SCREEN_WIDTH, MIN_SCREEN_HEIGHT);
 
-	init_code_viewer("Random number.s");
+	init_code_viewer("font_test.s");
 
 	while vp.running {
 		fetch_window_inputs();
 		lock_frame_rate();
-
+		
 		draw_one_frame();
 	}
 	deinit_window();
@@ -175,6 +92,7 @@ f64  :: float64;
 
 #if OS == {
 	// Todo - still not platform dependent
+	//        even if the rendering is DX11, so we just support Windows, lol
 	case .WINDOWS; #import "Windows";
 	case; #assert(false);
 }

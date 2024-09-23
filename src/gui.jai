@@ -13,7 +13,9 @@ draw_header :: () {
 		}
 		vp.reduced = !vp.reduced;
 	}
-	if button(.MAXIMIZE, .{cast(f32)vp.width - h * 2, 0}, .{h, h}, 1, 2) {
+	
+	icon: Icon = ifx vp.maximized then .MINIMIZE else .MAXIMIZE;
+	if button(icon, .{cast(f32)vp.width - h * 2, 0}, .{h, h}, 1, 2) {
 		if !vp.maximized {
 			ShowWindow(vp.window, SW_MAXIMIZE);
 		} else {

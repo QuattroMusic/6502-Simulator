@@ -211,12 +211,10 @@ draw_icon :: (icon: Icon, pos: Vec2, layer: f32, $scale: f32, color: Col) {
 
 get_icon_mapping :: (icon: Icon) -> (uv: Vec2) {
 	if #complete icon == {
-		case .LEFT_ARROW;  return .{208.0 / texture_width, 0.0 / texture_height};
-		case .RIGHT_ARROW; return .{216.0 / texture_width, 0.0 / texture_height};
-		case .REDUCE;      return .{224.0 / texture_width, 0.0 / texture_height};
-		case .MINIMIZE;    return .{232.0 / texture_width, 0.0 / texture_height};
-		case .MAXIMIZE;    return .{240.0 / texture_width, 0.0 / texture_height};
-		case .CLOSE;       return .{248.0 / texture_width, 0.0 / texture_height};
+		case .REDUCE;      return .{64.0 / texture_width, 16.0 / texture_height};
+		case .MINIMIZE;    return .{72.0 / texture_width, 16.0 / texture_height};
+		case .MAXIMIZE;    return .{80.0 / texture_width, 16.0 / texture_height};
+		case .CLOSE;       return .{88.0 / texture_width, 16.0 / texture_height};
 	}
 }
 
@@ -231,16 +229,23 @@ get_char_mapping :: (c: u8) -> (uv: Vec2) {
 		x: f32 = ((c - #char "A") * 8.0) / texture_width;
 		y: f32 = 0;
 		return .{x, y};
-	} else if c >= #char "!" && c <= #char "?" {
+	} else if c >= #char "!" && c <= #char "@" {
 		x: f32 = ((c - #char "!") * 8.0) / texture_width;
 		y: f32 = 8.0 / texture_height;
 		return .{x, y};
-	} else if c == #char "_" {
-		x: f32 = 248.0 / texture_width;
-		y: f32 = 8.0 / texture_height;
+	} else if c >= #char "[" && c <= #char "`" {
+		x: f32 = (208.0 + ((c - #char "[") * 8.0)) / texture_width;
+		y: f32 = 0.0 / texture_height;
+		return .{x, y};
+	} else if c >= #char "{" && c <= #char "~" {
+		x: f32 = ((c - #char "{") * 8.0) / texture_width;
+		y: f32 = 16.0 / texture_height;
 		return .{x, y};
 	} else {
-		assert(false, "unable to get mapping of character (% - %)", string.{1, *c}, c);
+		x: f32 = 32.0 / texture_width;
+		y: f32 = 16.0 / texture_height;
+		return .{x, y};
+		// assert(false, "unable to get mapping of character (% - %)", string.{1, *c}, c);
 	}
 	return .{0, 0};
 }
@@ -306,8 +311,6 @@ draw_step_hslider :: (pos: Vec2, size: Vec2, layer: f32, amt: s32, value: *int, 
 }
 
 Icon :: enum {
-	LEFT_ARROW;
-	RIGHT_ARROW;
 	REDUCE;
 	MINIMIZE;
 	MAXIMIZE;
@@ -317,7 +320,7 @@ Icon :: enum {
 widget_uuid: u32;
 widget_selected: u32;
 
-COLOR_WIDGET_BG             :: #run Col.{  54,  50,  46, 255 } / 255;
+COLOR_WIDGET_BG             :: #run Col.{73, 62, 51, 255} / 255;
 COLOR_WIDGET_BG_HOVERED     :: #run Col.{ 188, 126,  59, 255 } / 255;
 COLOR_WIDGET_BG_PRESSED     :: #run Col.{ 246, 164,  76, 255 } / 255;
 COLOR_WIDGET_BORDER         :: #run Col.{ 196, 126,  43, 255 } / 255;
@@ -332,7 +335,7 @@ COLOR_BACKGROUND      :: #run Col.{  32,  30,  28, 255 } / 255;
 COLOR_DEEP_BACKGROUND :: #run Col.{  10,  10,   5, 255 } / 255;
 
 COLOR_LINE            :: #run Col.{ 254, 170,  55, 255 } / 255;
-COLOR_DISABLED        :: #run Col.{ 110, 110, 110, 255 } / 255;  // Todo - change this
+COLOR_DISABLED        :: #run Col.{  73,  85,  97, 255 } / 255;  // Todo - change this
 
 WHITE  :: #run Col.{240, 240, 220, 255} / 255;
 GREEN  :: #run Col.{ 59, 187,  20, 255} / 255;

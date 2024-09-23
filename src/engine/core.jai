@@ -1,5 +1,5 @@
 init_window :: (width: s32, height: s32) {
-	sleep_is_granular = (timeBeginPeriod(1) == TIMERR_NOERROR);
+	vp.sleep_is_granular = (timeBeginPeriod(1) == TIMERR_NOERROR);
 	SetProcessDPIAware();
 
 	vp.window = create_window(width, height);
@@ -8,8 +8,8 @@ init_window :: (width: s32, height: s32) {
 
 	init_rendering();
 
-	QueryPerformanceFrequency(*perf_count_frequency);
-	QueryPerformanceCounter(*last_counter);
+	QueryPerformanceFrequency(*vp.perf_count_frequency);
+	QueryPerformanceCounter(*vp.last_counter);
 	vp.running = true;
 }
 
@@ -26,13 +26,7 @@ resize_window :: (w: s32, h: s32) {
 }
 
 set_window_pos :: (x: s32, y: s32) {
-	r: RECT;
-	GetWindowRect(vp.window, *r);
-
-	w := r.right - r.left;
-	h := r.bottom - r.top;
-
-	MoveWindow(vp.window, x, y, w, h, xx true);
+	MoveWindow(vp.window, x, y, vp.width, vp.height, xx true);
 }
 
 get_monitor_size :: () -> (w: s32, h: s32) {
@@ -42,22 +36,21 @@ get_monitor_size :: () -> (w: s32, h: s32) {
 }
 
 lock_frame_rate :: () {
-    target_s: f32 = 1.0 / target_frame_rate;
-    seconds_elapsed_for_frame: f32 = (cast(f32)(read_os_timer() - last_counter)) / perf_count_frequency;
+    target_s: f32 = 1.0 / vp.target_frame_rate;
+    seconds_elapsed_for_frame: f32 = (cast(f32)(read_os_timer() - vp.last_counter)) / vp.perf_count_frequency;
     if seconds_elapsed_for_frame < target_s {
-        if sleep_is_granular {
-            sleep_ms := 1000.0 * target_s - seconds_elapsed_for_frame - 1;
-            if sleep_ms > 0 then Sleep(xx sleep_ms);
+        if vp.sleep_is_granular {
+            sleep_ms := cast(s32)(1000.0 * (target_s - seconds_elapsed_for_frame));
+            if sleep_ms > 0 then Sleep(sleep_ms);
         }
         while seconds_elapsed_for_frame < target_s {
-            seconds_elapsed_for_frame = (cast(f32)(read_os_timer() - last_counter)) / perf_count_frequency;
+            seconds_elapsed_for_frame = (cast(f32)(read_os_timer() - vp.last_counter)) / vp.perf_count_frequency;
         }
     }
     end_counter: s64;
     QueryPerformanceCounter(*end_counter);
-    dt = (cast(f32)(end_counter - last_counter)) / perf_count_frequency;
-    last_counter = end_counter;
-	// Todo - maybe clamp delta_time if it's too high?
+    vp.dt = (cast(f32)(end_counter - vp.last_counter)) / vp.perf_count_frequency;
+    vp.last_counter = end_counter;
 }
 
 read_os_timer :: () -> s64 {
@@ -112,10 +105,10 @@ create_window :: (width: s32, height: s32) -> *void {
 	y := (monitor_height - height) / 2;
 
 	r := RECT.{x, y, x + width, y + height};
-	AdjustWindowRect(*r, window_style, xx false);
+	AdjustWindowRect(*r, vp.window_style, xx false);
 
 	t := to_c_string("",, temp);
-	win := CreateWindowExA(0, class_name, t, window_style, r.left, r.top, r.right - r.left, r.bottom - r.top, null, null, null, null);
+	win := CreateWindowExA(0, class_name, t, vp.window_style, r.left, r.top, r.right - r.left, r.bottom - r.top, null, null, null, null);
 
 	DragAcceptFiles(win, xx true);  // enable drop file on window
 
@@ -171,21 +164,105 @@ EventsManager :: (hwnd: *void, msg: u32, wparam: u64, lparam: s64) -> s64 #c_cal
 	return DefWindowProcA(hwnd, msg, wparam, lparam);
 }
 
+handle_viewport_movement :: () {
+	if is_mouse_pressed(0) {
+		// minus 3 * HEIGHT because a button has the size of that, so, 3 buttons
+		if is_mouse_inside_rect(.{0, 0}, .{vp.width - HEADER_HEIGHT * 3.0, HEADER_HEIGHT}) {
+			vp.pressed_pos.x = xx mouse_x;
+			if vp.maximized {
+				w := vp.width;
+				ShowWindow(vp.window, SW_RESTORE);
+				vp.maximized = false;
+				vp.pressed_pos.x = cast(f32)mouse_x / (w + 3 * HEADER_HEIGHT) * vp.width;
+			}
+			vp.pressed_pos.y = xx mouse_y;
+			vp.enable_movement = true;
+		}
+	}
+	if vp.enable_movement {
+		r: RECT = ---;
+		pos: POINT = ---;
+		GetWindowRect(vp.window, *r);
+		GetCursorPos(*pos);
+
+		delta := Vec2.{xx (pos.x - r.left), xx (pos.y - r.top)} - vp.pressed_pos;
+		
+		set_window_pos(xx (r.left + delta.x), xx (r.top + delta.y));
+	}
+	if is_mouse_released(0) {
+		vp.enable_movement = false;
+	}
+}
+
+handle_viewport_resize :: () {
+	s :: 15;
+	
+	if is_mouse_pressed(0) {
+		if is_mouse_inside_rect(.{xx (vp.width - s), xx (vp.height - s)}, .{s, s}) {
+			r: RECT;
+			GetWindowRect(vp.window, *r);
+			vp.pressed_pos.x = xx mouse_x;
+			vp.pressed_pos.y = xx mouse_y;
+			vp.pressed_size.x = xx (r.right - r.left);
+			vp.pressed_size.y = xx (r.bottom - r.top);
+			vp.enable_resizing = true;
+		}
+	}
+	if vp.enable_resizing {
+		if vp.maximized {
+			ShowWindow(vp.window, SW_RESTORE);
+			vp.maximized = false;
+		}
+
+		r: RECT = ---;
+		pos: POINT = ---;
+		GetWindowRect(vp.window, *r);
+		GetCursorPos(*pos);
+
+		dx := pos.x - vp.pressed_pos.x - r.left;
+		dy := pos.y - vp.pressed_pos.y - r.top;
+
+		vx := dx + vp.pressed_size.x;
+		vy := dy + vp.pressed_size.y;
+
+		vx = max(vx, MIN_SCREEN_WIDTH);
+		vy = max(vy, MIN_SCREEN_HEIGHT);
+
+		MoveWindow(vp.window, r.left, r.top, xx vx, xx vy, xx true);
+	}
+	if is_mouse_released(0) then vp.enable_resizing = false;
+
+	p1 := Vec2.{xx vp.width, xx vp.height};
+	p2 := Vec2.{xx (vp.width - s), xx vp.height};
+	p3 := Vec2.{xx vp.width, xx (vp.height - s)};
+	draw_triangle(p1, p2, p3, 10, COLOR_LINE);
+}
+
 Viewport :: struct {
 	window: *void;
 	width, height: s32;
 	running: bool;
 	reduced: bool;
 	maximized: bool;
+	
+	sleep_is_granular: bool;
+	dt: f32;
+	
+	perf_count_frequency: s64;
+	last_counter: s64;
+	target_frame_rate: int = 120;
+	
+	window_style :: WS_POPUP;
+	
+	// used when moving / resizing the window
+	pressed_pos: Vec2;
+	pressed_size: Vec2;
+	enable_movement := false;
+	enable_resizing := false;
 }
 
-window_style :: WS_POPUP;
+_user32 :: #system_library "User32";
+MoveWindow :: (hWnd: *void, x: s32, y: s32, nWidth: s32, nHeight: s32, bRepaint: s32) #foreign _user32;
 
 vp: Viewport;
 engine: Emulator;
-
-sleep_is_granular: bool;
-perf_count_frequency: s64;
-last_counter: s64;
-target_frame_rate := 120;
-dt: f32;

@@ -81,7 +81,7 @@ create_depth_stencil :: () {
 
 	if depth_stencil_state then IUnknown_Release(depth_stencil_state);
 	ID3D11Device_CreateDepthStencilState(dev, *depth_stencil_desc, *depth_stencil_state);
-	
+
 	dsvDesc: D3D11_DEPTH_STENCIL_VIEW_DESC;
 	dsvDesc.Format = .DXGI_FORMAT_D32_FLOAT_S8X24_UINT;
 	dsvDesc.ViewDimension = .D3D11_DSV_DIMENSION_TEXTURE2DMS;
@@ -89,7 +89,7 @@ create_depth_stencil :: () {
 	if depth_stencil_view then IUnknown_Release(depth_stencil_view);
 	ID3D11Device_CreateDepthStencilView(dev, depth_stencil_buffer, *dsvDesc, *depth_stencil_view);
 	if depth_stencil_buffer then IUnknown_Release(depth_stencil_buffer);
-	
+
 	ID3D11DeviceContext_OMSetRenderTargets(devcon, 1, *back_buffer, depth_stencil_view);
 }
 
@@ -133,7 +133,7 @@ init_font :: () {
 		v := it;
 		for 0..63 {
 			x := ifx (v >> (63 - it)) & 1 then 255 else 0;
-			
+
 			mem[it * 4     + off] = xx x;
 			mem[it * 4 + 1 + off] = xx x;
 			mem[it * 4 + 2 + off] = xx x;
@@ -373,7 +373,7 @@ set_drawing_area :: (pos: Vec2, size: Vec2) {
 
 reset_drawing_area :: () {
 	flush_buffers();
-	
+
 	r: RECT;
 	r.left = 0;
 	r.right = 0;
@@ -387,7 +387,7 @@ resize_viewport :: () {
 	ID3D11DeviceContext_OMSetRenderTargets(devcon, 0, null, null);
 	IUnknown_Release(back_buffer);
 	IDXGISwapChain_ResizeBuffers(swapchain, 0, 0, 0, .DXGI_FORMAT_UNKNOWN, 0);
-	
+
 	set_render_target();
 	set_viewport();
 	update_camera();
@@ -448,49 +448,38 @@ depth_stencil_buffer: *ID3D11Texture2D;
 depth_stencil_state: *ID3D11DepthStencilState;
 
 texture_data :: u64.[
-	0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 
-	0x38fc3cf8fefe3ec6, 0x7e06c6c0c6c67cfc, 0x7cfc787ec6c6c6c6, 0x66fe0c60003e7e42, 
-	0x6cc666ccc0c060c6, 0x1806ccc0eee6c6c6, 0xc6c6cc18c6c6c6ee, 0x660e1c70007e4224, 
-	0xc6c6c0c6c0c0c0c6, 0x1806d8c0fef6c6c6, 0xc6c6c018c6c6d67c, 0x661c34587e464218, 
-	0xc6fcc0c6fcfccefe, 0x1806f0c0fefec6c6, 0xc6ce7c18c6eefe38, 0x3c38644c7e464218, 
-	0xfec6c0c6c0c0c6c6, 0x1806f8c0d6dec6fc, 0xdef80618c67cfe7c, 0x1870345800464224, 
-	0xc6c666ccc0c066c6, 0x18c6dcc0c6cec6c0, 0xccdcc618c638eeee, 0x18e01c70007c7e42, 
-	0xc6fc3cf8fec03ec6, 0x7e7ccefec6c67cc0, 0x7ace7c187c10c6c6, 0x18fe0c6000000000, 
-	0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 
-	0x1c6c001000203030, 0x6000000000000238, 0x187c7e1cfc3cfe78, 0x7c00600c00603800, 
-	0x1c6c283cc4503060, 0x302810000000044c, 0x38c60c3cc060c6c4, 0xc660601800304c00, 
-	0x38247c60c8501060, 0x30101000000008c6, 0x180e186cfcc00ce4, 0xc66000307e180c00, 
-	0x3048283810202060, 0x307c7c607c0010c6, 0x183c3ccc06fc1878, 0x7e006060000c1800, 
-	0x20007c0c20540060, 0x30101060000020c6, 0x187806fe06c6309e, 0x066060307e181000, 
-	0x000028784cc80060, 0x3028102000604064, 0x18e0c60cc6c63086, 0x0c60201800300000, 
-	0x800000108c740030, 0x6000004000608038, 0x7efe7c0c7c7c307c, 0x7800400c0060107e
+	0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000,
+	0x38fc3cf8fefe3ec6, 0x7e06c6c0c6c67cfc, 0x7cfc787ec6c6c6c6, 0x66fe_788078100060,
+	0x6cc666ccc0c060c6, 0x1806ccc0eee6c6c6, 0xc6c6cc18c6c6c6ee, 0x660e_604018280020,
+	0xc6c6c0c6c0c0c0c6, 0x1806d8c0fef6c6c6, 0xc6c6c018c6c6d67c, 0x661c_602018440030,
+	0xc6fcc0c6fcfccefe, 0x1806f0c0fefec6c6, 0xc6ce7c18c6eefe38, 0x3c38_601018000000,
+	0xfec6c0c6c0c0c6c6, 0x1806f8c0d6dec6fc, 0xdef80618c67cfe7c, 0x1870_600818000000,
+	0xc6c666ccc0c066c6, 0x18c6dcc0c6cec6c0, 0xccdcc618c638eeee, 0x18e0_600418000000,
+	0xc6fc3cf8fec03ec6, 0x7e7ccefec6c67cc0, 0x7ace7c187c10c6c6, 0x18fe_780278007e00,
+
+	0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000,
+	0x1c6c001000203030, 0x60000000000002_38, 0x187c7e1cfc3cfe78, 0x7c_00600c00603838,
+	0x1c6c283cc4503060, 0x30281000000004_4c, 0x38c60c3cc060c6c4, 0xc6_60601800304c44,
+	0x38247c60c8501060, 0x30101000000008_c6, 0x180e186cfcc00ce4, 0xc6_6000307e180c4c,
+	0x3048283810202060, 0x307c7c607c0010_c6, 0x183c3ccc06fc1878, 0x7e_006060000c1854,
+	0x20007c0c20540060, 0x30101060000020_c6, 0x187806fe06c6309e, 0x06_6060307e18105c,
+	0x000028784cc80060, 0x30281020006040_64, 0x18e0c60cc6c63086, 0x0c_60201800300042,
+	0x800000108c740030, 0x60000040006080_38, 0x7efe7c0c7c7c307c, 0x78_00400c0060103c,
+	
+	0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000,
+	0x387010003c000000, 0x003e7e4200000000, 0x0000000000000000, 0x0000000000000000,
+	0x6018100024000000, 0x007e422400000000, 0x0000000000000000, 0x0000000000000000,
+	0x6018103224000000, 0x7e46421800000000, 0x0000000000000000, 0x0000000000000000,
+	0xe01c104c24000000, 0x7e46421800000000, 0x0000000000000000, 0x0000000000000000,
+	0x6018100024000000, 0x0046422400000000, 0x0000000000000000, 0x0000000000000000,
+	0x6018100024000000, 0x007c7e4200000000, 0x0000000000000000, 0x0000000000000000,
+	0x387010003e000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000
 ];
-texture_width    :: 256;
-texture_height   :: 16;
+
+texture_height   :: #run texture_data.count / 4;
+texture_width    :: #run texture_data.count / texture_height * 64;
 texture_channels :: 4;  // Todo - is there a way to only have one channel? afterall it's just 0 or 255
-/*  // used to compress from the image to data
-temp: []u64;
-temp.data = xx texture_data;
-temp.count = texture_width * texture_height / 64;
 
-print(temp.count);
-print(texture_height);
-print(texture_width);
-temp: [..]u8;
-for 0..texture_width * texture_height * 4 - 1 if it % 4 == 0 then array_add(*temp, texture_data[it]);
-
-temp2: [..]u64;
-out: s64;
-while out < temp.count {
-	v: u64;
-	for 0..63 {
-		v |= (cast(u64)temp[out] & 1) << (63 - it);
-		out += 1;
-	}
-	print("%, ", formatInt(v, base = 16));
-}
-print(temp.count);
-*/
 #scope_file
 quad_shader :: #string DONE
 cbuffer cp_per_object {

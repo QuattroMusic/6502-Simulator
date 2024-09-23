@@ -12,8 +12,8 @@ fetch_window_inputs :: () {
 }
 
 reset_input :: () {
-	enable_movement = false;
-	enable_resizing = false;
+	vp.enable_movement = false;
+	vp.enable_resizing = false;
 	
 	mouse_dz = 0;
 	

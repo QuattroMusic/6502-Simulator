@@ -162,14 +162,14 @@ cpu_start :: () {
 
 lock_frame_rate_6502 :: () {
     target_s: f32 = 1.0 / engine.metrics.update_rate;
-    seconds_elapsed_for_frame: f32 = (cast(f32)(read_os_timer() - engine.metrics.last_counter)) / perf_count_frequency;
+    seconds_elapsed_for_frame: f32 = (cast(f32)(read_os_timer() - engine.metrics.last_counter)) / vp.perf_count_frequency;
     if seconds_elapsed_for_frame < target_s {
-        if sleep_is_granular {
+        if vp.sleep_is_granular {
             sleep_ms := 1000.0 * target_s - seconds_elapsed_for_frame - 1;
             if sleep_ms > 0 then Sleep(xx sleep_ms);
         }
         while seconds_elapsed_for_frame < target_s {
-            seconds_elapsed_for_frame = (cast(f32)(read_os_timer() - engine.metrics.last_counter)) / perf_count_frequency;
+            seconds_elapsed_for_frame = (cast(f32)(read_os_timer() - engine.metrics.last_counter)) / vp.perf_count_frequency;
         }
     }
     end_counter: s64;
