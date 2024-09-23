@@ -1,27 +1,27 @@
 #scope_file
 ADC :: (data: u8) {
 	temp: u16 = cast(u16)engine.A + cast(u16)data + cast(u16)engine.flags.C;
-	
+
 	set_overflow(engine.A, data, temp);
-	
+
 	engine.A = cast,trunc(u8)temp;
-	
+
 	engine.flags.C = cast(bool)bit(temp, 8);
 	update_N_and_Z(engine.A);
 }
 
 AND :: (data: u8) {
 	engine.A &= data;
-	
+
 	update_N_and_Z(engine.A);
 }
 
 ASL :: (addr: u16) {
 	temp: u16 = (cast(u16)read_data(addr)) << 1;
 	data: u8 = cast,trunc(u8)temp;
-	
+
 	write_data(addr, data);
-	
+
 	engine.flags.C = cast(bool)bit(temp, 8);
 	update_N_and_Z(data);
 }
@@ -29,63 +29,63 @@ ASL :: (addr: u16) {
 ASLA :: () {
 	temp: u16 = (cast(u16)engine.A) << 1;
 	engine.A = cast,trunc(u8)temp;
-	
+
 	engine.flags.C = cast(bool)bit(temp, 8);
 	update_N_and_Z(engine.A);
 }
 
 BIT :: (data: u8) {
 	temp: u8 = engine.A & data;
-	
+
 	engine.flags.V = cast(bool)bit(temp, 6);
-	
+
 	update_N_and_Z(temp);
 }
 
 CMP :: (data: u8) {
 	temp: u16 = cast(u16)engine.A - cast(u16)data;
-	
+
 	engine.flags.C = (engine.A >= data);
 	update_N_and_Z(cast,trunc(u8)temp);
 }
 
 CPX :: (data: u8) {
 	temp: u16 = cast(u16)engine.X - cast(u16)data;
-	
+
 	engine.flags.C = (engine.A >= data);
 	update_N_and_Z(cast,trunc(u8)temp);
 }
 
 CPY :: (data: u8) {
 	temp: u16 = cast(u16)engine.Y - cast(u16)data;
-	
+
 	engine.flags.C = (engine.A >= data);
 	update_N_and_Z(cast,trunc(u8)temp);
 }
 
 DEC :: (addr: u16) {
 	data: u8 = read_data(addr);
-	
+
 	data -= 1;
-	
+
 	update_N_and_Z(data);
-	
+
 	write_data(addr, data);
 }
 
 EOR :: (data: u8) {
 	engine.A ^= data;
-	
+
 	update_N_and_Z(engine.A);
 }
 
 INC :: (addr: u16) {
 	data := read_data(addr);
-	
+
 	data += 1;
-	
+
 	update_N_and_Z(data);
-	
+
 	write_data(addr, data);
 }
 
@@ -95,11 +95,11 @@ JMP :: (addr: u16) {
 
 JSR :: (addr: u16) {
 	update_PC(2);
-	
+
 	write_data(0x0100 + cast(u16)engine.S, cast,trunc(u8)(addr >> 8));
 	write_data(0x00FF + cast(u16)engine.S, cast,trunc(u8)(addr & 0xFF));
 	engine.S -= 2;
-	
+
 	update_PC(0, addr);
 }
 
@@ -120,13 +120,13 @@ LDY :: (data: u8) {
 
 LSR :: (addr: u16) {
 	data := read_data(addr);
-	
+
 	engine.flags.C = cast(bool)(data & 1);
-	
+
 	data >>= 1;
-	
+
 	write_data(addr, data);
-	
+
 	engine.flags.N = false;
 	engine.flags.Z = (data == 0);
 }
@@ -135,39 +135,39 @@ LSRA :: () {
 	engine.flags.C = cast(bool)(engine.A & 1);
 
 	engine.A >>= 1;
-	
+
 	engine.flags.N = false;
 	engine.flags.Z = (engine.A == 0);
 }
 
 ORA :: (data: u8) {
 	engine.A |= data;
-	
+
 	update_N_and_Z(engine.A);
 }
 
 ROL :: (addr: u16) {
 	data := read_data(addr);
-	
+
 	temp: u16 = (cast(u16)data) << 1;
-	
+
 	temp |= cast(u8)engine.flags.C;
-	
+
 	data = cast,trunc(u8)temp;
-	
+
 	write_data(addr, data);
-	
+
 	engine.flags.C = cast(bool)bit(temp, 8);
 	update_N_and_Z(data);
 }
 
 ROLA :: () {
 	temp: u16 = (cast(u16)engine.A) << 1;
-	
+
 	temp |= cast(u8)engine.flags.C;
-	
+
 	engine.A = cast,trunc(u8)temp;
-	
+
 	engine.flags.C = cast(bool)bit(temp, 8);
 	update_N_and_Z(engine.A);
 }
@@ -176,31 +176,31 @@ ROR :: (addr: u16) {
 	data := read_data(addr);
 	temp: u8 = cast(u8)engine.flags.C;
 	engine.flags.C = cast(bool)bit(data, 0);
-	
+
 	data >>= 1;
 	data |= (temp << 7);
-	
+
 	update_N_and_Z(data);
 }
 
 RORA :: () {
 	temp: u8 = cast(u8)engine.flags.C;
 	engine.flags.C = cast(bool)bit(engine.A, 0);
-	
+
 	engine.A >>= 1;
 	engine.A |= temp << 7;
-	
+
 	update_N_and_Z(engine.A);
 }
 
 SBC :: (data: u8) {
 	temp: u8 = engine.A - data - cast(u8)(!engine.flags.C);
-	
+
 	set_overflow(engine.A, ~data, temp);
 	engine.flags.C = (cast(u16)engine.A - data + cast(u8)engine.flags.C) >= 1;
-	
+
 	engine.A = temp;
-	
+
 	update_N_and_Z(engine.A);
 }
 
@@ -218,7 +218,7 @@ STY :: (addr: u16) {
 
 #scope_export
 exec_operation :: (opcode: Opcode) {
-	if opcode == {
+	if #complete opcode == {
 		case .BRK;  log_intrinsic("BRK"); engine.flags.B = true;  cpu_stop();
 		case .NOP;  log_intrinsic("NOP"); update_PC(1);
 		case .CLC;  log_intrinsic("CLC"); engine.flags.C = false;
@@ -249,14 +249,14 @@ exec_operation :: (opcode: Opcode) {
 		case .JMP_ABS;  log_intrinsic("JMP nn");     JMP(read_address(engine.PC));
 		case .JMP_IND;  log_intrinsic("JMP (nn)");   JMP(read_address(read_address(engine.PC)));
 		case .JSR_ABS;  log_intrinsic("JSR nn");     JSR(read_address(engine.PC));
-		case .BCS_REL;  log_intrinsic("BCS n");      branch_if(cast,no_check(s8)read_data(engine.PC), engine.flags.C == true);
-		case .BCC_REL;  log_intrinsic("BCC n");      branch_if(cast,no_check(s8)read_data(engine.PC), engine.flags.C == false);
-		case .BEQ_REL;  log_intrinsic("BEQ n");      branch_if(cast,no_check(s8)read_data(engine.PC), engine.flags.Z == true);
-		case .BNE_REL;  log_intrinsic("BNE n");      branch_if(cast,no_check(s8)read_data(engine.PC), engine.flags.Z == false);
-		case .BMI_REL;  log_intrinsic("BMI n");      branch_if(cast,no_check(s8)read_data(engine.PC), engine.flags.N == true);
-		case .BPL_REL;  log_intrinsic("BPL n");      branch_if(cast,no_check(s8)read_data(engine.PC), engine.flags.N == false);
-		case .BVS_REL;  log_intrinsic("BVS n");      branch_if(cast,no_check(s8)read_data(engine.PC), engine.flags.V == true);
-		case .BVC_REL;  log_intrinsic("BVC n");      branch_if(cast,no_check(s8)read_data(engine.PC), engine.flags.V == false);
+		case .BCS_REL;  log_intrinsic("BCS n");      branch_if(cast,no_check(s8)read_data(engine.PC),  engine.flags.C);
+		case .BCC_REL;  log_intrinsic("BCC n");      branch_if(cast,no_check(s8)read_data(engine.PC), !engine.flags.C);
+		case .BEQ_REL;  log_intrinsic("BEQ n");      branch_if(cast,no_check(s8)read_data(engine.PC),  engine.flags.Z);
+		case .BNE_REL;  log_intrinsic("BNE n");      branch_if(cast,no_check(s8)read_data(engine.PC), !engine.flags.Z);
+		case .BMI_REL;  log_intrinsic("BMI n");      branch_if(cast,no_check(s8)read_data(engine.PC),  engine.flags.N);
+		case .BPL_REL;  log_intrinsic("BPL n");      branch_if(cast,no_check(s8)read_data(engine.PC), !engine.flags.N);
+		case .BVS_REL;  log_intrinsic("BVS n");      branch_if(cast,no_check(s8)read_data(engine.PC),  engine.flags.V);
+		case .BVC_REL;  log_intrinsic("BVC n");      branch_if(cast,no_check(s8)read_data(engine.PC), !engine.flags.V);
 		case .INC_ABS;  log_intrinsic("INC nn");     compact_absolute_address(INC);
 		case .INC_ZPG;  log_intrinsic("INC n");      compact_zero_page_address(INC);
 		case .INC_ZPX;  log_intrinsic("INC n, X");   compact_zero_page_X_address(INC);
@@ -369,5 +369,160 @@ exec_operation :: (opcode: Opcode) {
 		case .ASL_ACC;  log_intrinsic("ASL A");      ASLA();
 		case .ASL_ZPX;  log_intrinsic("ASL n, X");   compact_zero_page_X_address(ASL);
 		case .ASL_ABX;  log_intrinsic("ASL nn, X");  compact_absolute_X_address(ASL);
+	}
+}
+
+virtual_exec_operation :: (opcode: Opcode, data: u16) {
+	if opcode == {
+		// case .BRK;     engine.flags.B = true; cpu_stop();
+		// case .NOP;
+		// case .CLC;     engine.flags.C = false;
+		// case .CLD;     engine.flags.D = false;
+		// case .CLI;     engine.flags.I = false;
+		// case .CLV;     engine.flags.V = false;
+		// case .SEC;     engine.flags.C = true;
+		// case .SED;     engine.flags.D = true;
+		// case .SEI;     engine.flags.I = true;
+		// case .DEX;     engine.X -= 1;  update_N_and_Z(engine.X);
+		// case .DEY;     engine.Y -= 1;  update_N_and_Z(engine.Y);
+		// case .INX;     engine.X += 1;  update_N_and_Z(engine.X);
+		// case .INY;     engine.Y += 1;  update_N_and_Z(engine.X);
+		// case .PHA;     stack_push(engine.A);
+		// case .PHP;     stack_push(pack_P());
+		// case .PLA;     engine.A = stack_pop();  update_N_and_Z(engine.A);
+		// case .PLP;     unpack_P(stack_pop());
+		// case .RTI;     log_warn("RTI not supported at the moment"); cpu_stop();
+		// case .RTS;     engine.PC = stack_pop();
+		// case .TAX;     engine.X = engine.A;  update_N_and_Z(engine.X);
+		// case .TAY;     engine.Y = engine.A;  update_N_and_Z(engine.Y);
+		// case .TSX;     engine.X = engine.S;  update_N_and_Z(engine.X);
+		// case .TXA;     engine.A = engine.X;  update_N_and_Z(engine.A);
+		// case .TXS;     engine.S = engine.X;  update_N_and_Z(engine.S);
+		// case .TYA;     engine.A = engine.Y;  update_N_and_Z(engine.A);
+		// case .BIT_ABS; BIT(read_data(data));
+		// case .BIT_ZPG; BIT(read_data(data));
+		// case .JMP_ABS; JMP(data);
+		// case .JMP_IND; JMP(read_address(data));
+		// case .JSR_ABS; JSR(data);
+		// case .BCS_REL; branch_if(cast,no_check(s8)data,  engine.flags.C);
+		// case .BCC_REL; branch_if(cast,no_check(s8)data, !engine.flags.C);
+		// case .BEQ_REL; branch_if(cast,no_check(s8)data,  engine.flags.Z);
+		// case .BNE_REL; branch_if(cast,no_check(s8)data, !engine.flags.Z);
+		// case .BMI_REL; branch_if(cast,no_check(s8)data,  engine.flags.N);
+		// case .BPL_REL; branch_if(cast,no_check(s8)data, !engine.flags.N);
+		// case .BVS_REL; branch_if(cast,no_check(s8)data,  engine.flags.V);
+		// case .BVC_REL; branch_if(cast,no_check(s8)data, !engine.flags.V);
+		// case .INC_ABS; INC(data);
+		// case .INC_ZPG; INC(data);
+		// case .INC_ZPX; INC(data + cast(u16)engine.X);
+		// case .INC_ABX; INC(data + cast(u16)engine.X);
+		// case .DEC_ABS; DEC(data);
+		// case .DEC_ZPG; DEC(data);
+		// case .DEC_ZPX; DEC(data + cast(u16)engine.X);
+		// case .DEC_ABX; DEC(data + cast(u16)engine.X);
+		// case .STA_ABS; STA(data);
+		// case .STA_ZPG; STA(data);
+		// case .STA_INX; STA(read_address(data + cast(u16)engine.X));
+		// case .STA_INY; STA(read_address(data) + cast(u16)engine.Y);
+		// case .STA_ZPX; STA(data + cast(u16)engine.X);
+		// case .STA_ABX; STA(data + cast(u16)engine.X);
+		// case .STA_ABY; STA(data + cast(u16)engine.Y);
+		// case .STX_ABS; STX(data);
+		// case .STX_ZPG; STX(data);
+		// case .STX_ZPY; STX(data + cast(u16)engine.Y);
+		// case .STY_ABS; STY(data);
+		// case .STY_ZPG; STY(data);
+		// case .STY_ZPX; STY(data + cast(u16)engine.X);
+		case .ADC_IMM; ADC(cast,trunc(u8)data);
+		// case .ADC_ABS; ADC(read_data(data));
+		// case .ADC_ZPG; ADC(read_data(data));
+		// case .ADC_INX; ADC(read_data(read_address(data + cast(u16)engine.X)));
+		// case .ADC_INY; ADC(read_data(read_address(data) + cast(u16)engine.Y));
+		// case .ADC_ZPX; ADC(read_data(data + cast(u16)engine.X));
+		// case .ADC_ABX; ADC(read_data(data + cast(u16)engine.X));
+		// case .ADC_ABY; ADC(read_data(data + cast(u16)engine.Y));
+		// case .AND_IMM; AND(cast,trunc(u8)data);
+		// case .AND_ABS; AND(read_data(data));
+		// case .AND_ZPG; AND(read_data(data));
+		// case .AND_INX; AND(read_data(read_address(data + cast(u16)engine.X)));
+		// case .AND_INY; AND(read_data(read_address(data) + cast(u16)engine.Y));
+		// case .AND_ZPX; AND(read_data(data + cast(u16)engine.X));
+		// case .AND_ABX; AND(read_data(data + cast(u16)engine.X));
+		// case .AND_ABY; AND(read_data(data + cast(u16)engine.Y));
+		// case .CMP_IMM; CMP(cast,trunc(u8)data);
+		// case .CMP_ABS; CMP(read_data(data));
+		// case .CMP_ZPG; CMP(read_data(data));
+		// case .CMP_INX; CMP(read_data(read_address(data + cast(u16)engine.X)));
+		// case .CMP_INY; CMP(read_data(read_address(data) + cast(u16)engine.Y));
+		// case .CMP_ABX; CMP(read_data(data + cast(u16)engine.X));
+		// case .CMP_ABY; CMP(read_data(data + cast(u16)engine.Y));
+		// case .CPX_IMM; CPX(cast,trunc(u8)data);
+		// case .CPX_ABS; CPX(read_data(data));
+		// case .CPX_ZPG; CPX(read_data(data));
+		// case .CPY_IMM; CPY(data);
+		// case .CPY_ABS; CPY(read_data(data));
+		// case .CPY_ZPG; CPY(read_data(data));
+		// case .EOR_IMM; EOR(cast,trunc(u8)data);
+		// case .EOR_ABS; EOR(read_data(data));
+		// case .EOR_ZPG; EOR(read_data(data));
+		// case .EOR_INX; EOR(read_data(read_address(data + cast(u16)engine.X)));
+		// case .EOR_INY; EOR(read_data(read_address(data) + cast(u16)engine.Y));
+		// case .EOR_ZPX; EOR(read_data(data + cast(u16)engine.X));
+		// case .EOR_ABX; EOR(read_data(data + cast(u16)engine.X));
+		// case .EOR_ABY; EOR(read_data(data + cast(u16)engine.Y));
+		case .LDA_IMM; LDA(cast,trunc(u8)data);
+		// case .LDA_ABS; LDA(read_data(data));
+		// case .LDA_ZPG; LDA(read_data(data));
+		// case .LDA_INX; LDA(read_data(read_address(data + cast(u16)engine.X)));
+		// case .LDA_INY; LDA(read_data(read_address(data) + cast(u16)engine.Y));
+		// case .LDA_ZPX; LDA(read_data(data + cast(u16)engine.X));
+		// case .LDA_ABX; LDA(read_data(data + cast(u16)engine.X));
+		// case .LDA_ABY; LDA(read_data(data + cast(u16)engine.Y));
+		// case .ORA_IMM; ORA(cast,trunc(u8)data);
+		// case .ORA_ABS; ORA(read_data(data));
+		// case .ORA_ZPG; ORA(read_data(data));
+		// case .ORA_INX; ORA(read_data(read_address(data + cast(u16)engine.X)));
+		// case .ORA_INY; ORA(read_data(read_address(data) + cast(u16)engine.Y));
+		// case .ORA_ZPX; ORA(read_data(data + cast(u16)engine.X));
+		// case .ORA_ABX; ORA(read_data(data + cast(u16)engine.X));
+		// case .ORA_ABY; ORA(read_data(data + cast(u16)engine.Y));
+		// case .SBC_IMM; SBC(cast,trunc(u8)data);
+		// case .SBC_ABS; SBC(read_data(data));
+		// case .SBC_ZPG; SBC(read_data(data));
+		// case .SBC_INX; SBC(read_data(read_address(data + cast(u16)engine.X)));
+		// case .SBC_INY; SBC(read_data(read_address(data) + cast(u16)engine.Y));
+		// case .SBC_ZPX; SBC(read_data(data + cast(u16)engine.X));
+		// case .SBC_ABX; SBC(read_data(data + cast(u16)engine.X));
+		// case .SBC_ABY; SBC(read_data(data + cast(u16)engine.Y));
+		// case .LDX_IMM; LDX(cast,trunc(u8)data);
+		// case .LDX_ABS; LDX(read_data(data));
+		// case .LDX_ZPG; LDX(read_data(data));
+		// case .LDX_ABY; LDX(read_data(data + cast(u16)engine.Y));
+		// case .LDX_ZPY; LDX(read_data(data + cast(u16)engine.Y));
+		// case .LDY_IMM; LDY(cast,trunc(u8)data);
+		// case .LDY_ABS; LDY(read_data(data));
+		// case .LDY_ZPG; LDY(read_data(data));
+		// case .LDY_ZPX; LDY(read_data(data + cast(u16)engine.X));
+		// case .LDY_ABX; LDY(read_data(data + cast(u16)engine.X));
+		// case .ROR_ABS; ROR(data);
+		// case .ROR_ZPG; ROR(data);
+		// case .ROR_ACC; RORA();
+		// case .ROR_ZPX; ROR(data + cast(u16)engine.X);
+		// case .ROR_ABX; ROR(data + cast(u16)engine.X);
+		// case .ROL_ABS; ROL(data);
+		// case .ROL_ZPG; ROL(data);
+		// case .ROL_ACC; ROLA();
+		// case .ROL_ZPX; ROL(data + cast(u16)engine.X);
+		// case .ROL_ABX; ROL(data + cast(u16)engine.X);
+		// case .LSR_ABS; LSR(data);
+		// case .LSR_ZPG; LSR(data);
+		// case .LSR_ACC; LSRA();
+		// case .LSR_ZPX; LSR(data + cast(u16)engine.X);
+		// case .LSR_ABX; LSR(data + cast(u16)engine.X);
+		// case .ASL_ABS; ASL(data);
+		// case .ASL_ZPG; ASL(data);
+		// case .ASL_ACC; ASLA();
+		// case .ASL_ZPX; ASL(data + cast(u16)engine.X);
+		// case .ASL_ABX; ASL(data + cast(u16)engine.X);
 	}
 }

@@ -46,13 +46,14 @@ Metrics :: struct {
 }
 
 Emulator :: struct {
-	ROM: [ROM_SIZE] u8;
-	RAM: [RAM_SIZE] u8;
-	A: u8;
-	X: u8;
-	Y: u8;
-	S: u8 = 0xFF;
+	ROM: [ROM_SIZE] u8 = ---;
+	RAM: [RAM_SIZE] u8 = ---;
+	A:  u8;
+	X:  u8;
+	Y:  u8;
+	S:  u8;
 	PC: u16;
+	
 	compilation_successful: bool;
 	
 	flags: Status_Flags;
@@ -129,7 +130,7 @@ cpu_stop :: () {
 }
 
 cpu_reset :: () {
-	update_PC(0, read_address(0xFFFC));
+	update_PC(0, read_address(0xFFFC));  // Todo - this shouldn't be here
 	Initialize(*engine.flags);
 	engine.A = 0;
 	engine.X = 0;
@@ -141,6 +142,8 @@ cpu_reset :: () {
 
 cpu_init :: () {
 	memset(engine.ROM.data, 0, ROM_SIZE);
+	memset(engine.RAM.data, 0, RAM_SIZE);
+	engine.S = 0xFF;
 }
 
 cpu_start :: () {
@@ -203,13 +206,13 @@ indirect_Y :: (addr: u16) -> u16 {
 	return read_address(read_data(addr)) + cast(u16)engine.Y;
 }
 
-absolute_X :: (addr: u16) -> u16 {
-	return read_data(addr) + engine.X;
-}
+// absolute_X :: (addr: u16) -> u16 {
+	// return read_data(addr) + engine.X;
+// }
 
-absolute_Y :: (addr: u16) -> u16 {
-	return read_data(addr) + engine.Y;
-}
+// absolute_Y :: (addr: u16) -> u16 {
+	// return read_data(addr) + engine.Y;
+// }
 
 compact_immediate :: (func: (u8)) {
 	func(read_data(engine.PC));

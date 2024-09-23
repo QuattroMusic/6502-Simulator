@@ -12,7 +12,7 @@ update_6502 :: () {
 }
 
 draw_one_frame :: () {
-	if !vp.reduced {
+	if !vp.reduced {  // I should find a way to entirely disable this until it's not reduced anymore
 		begin_drawing();
 		clear_background(COLOR_DEEP_BACKGROUND);
 
@@ -24,6 +24,7 @@ draw_one_frame :: () {
 }
 
 main :: () {
+	cpu_init();
 	init_window(MIN_SCREEN_WIDTH, MIN_SCREEN_HEIGHT);
 
 	init_code_viewer("Random number.s");
@@ -35,19 +36,14 @@ main :: () {
 		draw_one_frame();
 	}
 	deinit_window();
-
-	// read_ROM("Random number.bin");
-
+	
+	// virtual_exec_operation(.LDA_IMM, 4);
 	// cpu_reset();
-	// cpu_start();
+	// virtual_exec_operation(.LDA_IMM, 6);
+	
+	// print_data();
 
-	// while engine.running {}
-	// for 0..255 {
-		// print("% ", engine.RAM[it]);
-	// }
 	// while true {}
-
-	// run_all_tests();
 }
 
 LOG_INFO       :: true;
@@ -55,8 +51,8 @@ LOG_EDITOR     :: true;
 LOG_VERBOSE    :: true;
 LOG_INTRINSICS :: false;
 
-ROM_SIZE      :: 32 * 1024;
-RAM_SIZE      :: 32 * 1024;
+ROM_SIZE      :: 0x8000;
+RAM_SIZE      :: 0x8000;
 HEADER_HEIGHT :: 35;
 
 MEMORY_INPUT_ADDRESS  :: 0x2780;

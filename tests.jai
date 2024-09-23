@@ -1,8 +1,8 @@
 print_data :: () {
 	using engine;
 	using engine.flags;
-	print("A: % - X: % - Y: % - PC: % - S: %\n", A, X, Y, PC, S);
-	print("Flags [NV-BDIZC]: [%1%2-%3%4%5%6%7]\n\n", cast(u8)N, cast(u8)V, cast(u8)B, cast(u8)D, cast(u8)I, cast(u8)Z, cast(u8)C);
+	print("A: % - X: % - Y: % - PC: % - S: % - ", A, X, Y, PC, S);
+	print("[NV-BDIZC]: [%1%2-%3%4%5%6%7]\n\n", cast(u8)N, cast(u8)V, cast(u8)B, cast(u8)D, cast(u8)I, cast(u8)Z, cast(u8)C);
 }
 
 test1 :: () {
