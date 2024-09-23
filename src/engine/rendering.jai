@@ -1,18 +1,36 @@
-#scope_file
-Button_State :: enum {
+Interaction_State :: enum {
 	NORMAL;
 	HOVER;
 	PRESSED;
 }
 
-button_press :: (pos: Vec2, size: Vec2, id: u32) -> (bool, Button_State) {
-	state := Button_State.NORMAL;
+scrollbar_interaction :: (pos: Vec2, size: Vec2) -> Interaction_State {
+	state := Interaction_State.NORMAL;
+	widget_uuid += 1;
+	
+	if is_mouse_inside_rect(pos, size) {
+		if is_mouse_pressed(0) then widget_selected = widget_uuid;
+		
+		state = .HOVER;
+		if widget_selected == 0 then return state;
+		if widget_selected != widget_uuid then return .NORMAL;
+	}
+	
+	if widget_selected == widget_uuid {
+		return .PRESSED;
+	}
+	return state;
+}
+
+button_interaction :: (pos: Vec2, size: Vec2, id: u32) -> (bool, Interaction_State) {
+	state := Interaction_State.NORMAL;
 	
 	if is_mouse_inside_rect(pos, size) {
 		if is_mouse_pressed(0) then widget_selected = id;
 		
 		state = .HOVER;
-		if widget_selected != id then return false, state;
+		if widget_selected == 0  then return false, state;
+		if widget_selected != id then return false, .NORMAL;
 	}
 
 	released := is_mouse_released(0);
@@ -29,7 +47,7 @@ button_press :: (pos: Vec2, size: Vec2, id: u32) -> (bool, Button_State) {
 }
 
 button_internal :: (pos: Vec2, size: Vec2, layer: f32, $t: f32, id: u32) -> (bool, Col) {
-	fire, state := button_press(pos, size, id);
+	fire, state := button_interaction(pos, size, id);
 
 	bg_col: Col;
 	border_col: Col;
@@ -47,7 +65,6 @@ button_internal :: (pos: Vec2, size: Vec2, layer: f32, $t: f32, id: u32) -> (boo
 			bg_col = COLOR_WIDGET_BG_PRESSED;
 			border_col = COLOR_WIDGET_BORDER_PRESSED;
 			text_col = COLOR_TEXT_PRESSED;
-			// widget_selected = widget_uuid
 	}
 
 	draw_rect(pos, size, layer, bg_col);
@@ -56,7 +73,6 @@ button_internal :: (pos: Vec2, size: Vec2, layer: f32, $t: f32, id: u32) -> (boo
 	return fire, text_col;
 }
 
-#scope_export
 draw_rect :: (pos: Vec2, size: Vec2, layer: f32, col: Col) {
 	vert_count := quad_buffer.vertices_count;
 
@@ -131,7 +147,7 @@ checkbox :: (value: *bool, $$text: string, pos: Vec2, size: Vec2, layer: f32) {
 	widget_uuid += 1;
 	s := measure_text(text, 1);
 	
-	fire, state := button_press(pos, size + .{s.x + 12, 0}, widget_uuid);
+	fire, state := button_interaction(pos, size + .{s.x + 12, 0}, widget_uuid);
 
 	bg_col: Col;
 	text_col: Col;
@@ -283,11 +299,9 @@ draw_step_hslider :: (pos: Vec2, size: Vec2, layer: f32, amt: s32, value: *int, 
 		col_step = COLOR_WIDGET_BORDER;
 		
 		if is_mouse_inside_rect(.{pos.x - 4, pos.y}, .{size.x + 8, size.y}) {
-			col_main = COLOR_WIDGET_BG_HOVERED;
+			if widget_selected == 0 then col_main = COLOR_WIDGET_BG_HOVERED;
 			if is_mouse_pressed(0) then widget_selected = widget_uuid;
 		}
-		
-		if is_mouse_released(0) then widget_selected = 0;
 		
 		if widget_selected == widget_uuid {
 			value.* = xx clamp((cast(f32)mouse_x - pos.x) / (size.x) * amt, 0, xx (amt - 1));
@@ -335,7 +349,7 @@ COLOR_BACKGROUND      :: #run Col.{  32,  30,  28, 255 } / 255;
 COLOR_DEEP_BACKGROUND :: #run Col.{  10,  10,   5, 255 } / 255;
 
 COLOR_LINE            :: #run Col.{ 254, 170,  55, 255 } / 255;
-COLOR_DISABLED        :: #run Col.{  73,  85,  97, 255 } / 255;  // Todo - change this
+COLOR_DISABLED        :: #run Col.{  73,  85,  97, 255 } / 255;
 
 WHITE  :: #run Col.{240, 240, 220, 255} / 255;
 GREEN  :: #run Col.{ 59, 187,  20, 255} / 255;

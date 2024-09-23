@@ -27,7 +27,16 @@ draw_scrollbars :: () {
 	aspect_ratio := size.y / (size.y + (amt - 1) * 16);
 	bar_height := aspect_ratio * size.y;
 	
-	draw_rect(.{pos.x + size.x - 12, pos.y + scr_pos * aspect_ratio}, .{12, bar_height}, 2, COLOR_WIDGET_BORDER);
+	scroll_pos := pos + .{size.x - 12, scr_pos * aspect_ratio};
+	state := scrollbar_interaction(scroll_pos, .{12, size.y});
+	col: Col = ---;
+	if state == {
+		case .NORMAL;  col = COLOR_WIDGET_BORDER;
+		case .HOVER;   col = COLOR_WIDGET_BG_HOVERED;
+		case .PRESSED; col = COLOR_WIDGET_BG_PRESSED;
+	}
+	
+	draw_rect(scroll_pos, .{12, bar_height}, 2, col);
 }
 
 draw_colored_text :: () {

@@ -26,11 +26,11 @@ draw_one_frame :: () {
 main :: () {
 	init_window(MIN_SCREEN_WIDTH, MIN_SCREEN_HEIGHT);
 
-	init_code_viewer("font_test.s");
+	init_code_viewer("Random number.s");
 
 	while vp.running {
-		fetch_window_inputs();
 		lock_frame_rate();
+		fetch_window_inputs();
 		
 		draw_one_frame();
 	}

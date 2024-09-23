@@ -250,7 +250,7 @@ Viewport :: struct {
 	
 	perf_count_frequency: s64;
 	last_counter: s64;
-	target_frame_rate: int = 120;
+	target_frame_rate: int = 60;
 	
 	window_style :: WS_POPUP;
 	

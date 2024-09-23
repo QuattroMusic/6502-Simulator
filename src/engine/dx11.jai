@@ -296,6 +296,7 @@ finalize_drawing :: () {
 	flush_buffers();
 	IDXGISwapChain_Present(swapchain, 0, 0);
 	widget_uuid = 0;
+	if is_mouse_released(0) then widget_selected = 0;
 }
 
 vertices_add :: (using buff: *Buffer_Data, val: buff.vertex_type) {

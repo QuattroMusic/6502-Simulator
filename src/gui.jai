@@ -96,7 +96,6 @@ draw_code_viewer :: () {
 }
 
 handle_memory_scrollbar :: (pos: Vec2, size: Vec2) {
-	// Todo - check if app is also focused
 	if is_mouse_inside_rect(pos, size) {
 		if mouse_dz {
 			amt := mouse_dz * 16;
@@ -167,7 +166,18 @@ draw_program_memory :: () {
 		bar_height := aspect_ratio * size.y;
 
 		draw_rect(pos + .{size.x - 12, 0}, .{12, size.y}, 1, COLOR_WIDGET_BG);
-		draw_rect(pos + .{size.x - 12, ui.memory_scrollbar_pos * aspect_ratio}, .{12, bar_height}, 2, COLOR_WIDGET_BORDER);
+		
+		scroll_pos := pos + .{size.x - 12, ui.memory_scrollbar_pos * aspect_ratio};
+		
+		state := scrollbar_interaction(scroll_pos, .{12, size.y});
+		col: Col = ---;
+		if state == {
+			case .NORMAL;  col = COLOR_WIDGET_BORDER;
+			case .HOVER;   col = COLOR_WIDGET_BG_HOVERED;
+			case .PRESSED; col = COLOR_WIDGET_BG_PRESSED;
+		}
+		
+		draw_rect(scroll_pos, .{12, bar_height}, 2, col);
 
 		offset := pos + .{2, -ui.memory_scrollbar_pos};
 		start: int = xx ((ui.memory_scrollbar_pos) / 16);
@@ -186,7 +196,7 @@ draw_program_registers :: () {
 		hex := formatInt(val, base = 16, minimum_digits = (#ifx s == 1 then 2 else 4));
 		bin := formatInt(val, base =  2, minimum_digits = (#ifx s == 1 then 8 else 16));
 
-		draw_text(tprint("0x%", hex), offset + pos + .{9, 8}, layer, 2, WHITE);
+		draw_text(tprint("0x%", hex), offset + pos + .{9,  8}, layer, 2, WHITE);
 		draw_text(tprint("0b%", bin), offset + pos + .{9, 30}, layer, 2, WHITE);
 		draw_text(tprint("%",   val), offset + pos + .{9, 52}, layer, 2, WHITE);
 	}
