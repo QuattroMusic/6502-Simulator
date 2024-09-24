@@ -1,4 +1,5 @@
 update_6502 :: () {
+	// those two should be put before the drawing, see `EventsManager` - `WM_SIZE`
 	handle_viewport_movement();
 	handle_viewport_resize();
 
@@ -9,6 +10,8 @@ update_6502 :: () {
 	draw_program_registers();
 	draw_program_debug();
 	draw_program_frequency();
+	
+	draw_display();
 }
 
 draw_one_frame :: () {
@@ -18,6 +21,7 @@ draw_one_frame :: () {
 
 		update_6502();
 
+		finalize_widgets();
 		finalize_drawing();
 	}
 	reset_temporary_storage();
@@ -60,6 +64,9 @@ MEMORY_SECOND_ADDRESS :: 0x2787;
 MIN_SCREEN_WIDTH  :: 1400;
 MIN_SCREEN_HEIGHT :: 800;
 
+DISPLAY_WIDTH :: 120;
+DISPLAY_HEIGHT :: 80;
+
 APP_MAJOR_VERSION :: 0;
 APP_MINOR_VERSION :: 1;
 
@@ -91,6 +98,7 @@ f64  :: float64;
 #load "src/engine/dx11.jai";
 #load "src/engine/input.jai";
 #load "src/engine/rendering.jai";
+#load "src/engine/widgets.jai";
 #load "src/engine/logging.jai";
 
 #load "src/code_viewer/drawing.jai";

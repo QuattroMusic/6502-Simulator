@@ -133,8 +133,12 @@ EventsManager :: (hwnd: *void, msg: u32, wparam: u64, lparam: s64) -> s64 #c_cal
 			vp.height = h;
 			if vp.running {
 				resize_viewport();
-				// draw_one_frame();
+				// Todo - uses this when i decide to remove the depth stencil
+				// ID3D11DeviceContext_OMSetRenderTargets(devcon, 1, *back_buffer, null);
 			}
+		case WM_KEYFIRST;
+			// Todo - handle this better
+			if wparam == 112 then ui.display_visible = !ui.display_visible;
 		case WM_MOUSEMOVE;
 			mouse_x =  lparam        & 0xFFFF;
 			mouse_y = (lparam >> 16) & 0xFFFF;
@@ -235,7 +239,7 @@ handle_viewport_resize :: () {
 	p1 := Vec2.{xx vp.width, xx vp.height};
 	p2 := Vec2.{xx (vp.width - s), xx vp.height};
 	p3 := Vec2.{xx vp.width, xx (vp.height - s)};
-	draw_triangle(p1, p2, p3, 10, COLOR_LINE);
+	draw_triangle(p1, p2, p3, 1, COLOR_LINE);
 }
 
 Viewport :: struct {

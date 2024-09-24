@@ -1,15 +1,15 @@
 ; simple program that generates
-; a random 8bit number
+; random 8bit numbers
 
 max = $ff
 
     .org $8000
 setup:
-    lda #100 ; set initial state
+    lda #100 ; set seed
     ldx #0
 
-generate_rnd: ; giving 'a' as the seed
-    ; and 'x' reg as pointer in RAM
+generate_rnd: ; given A as the seed
+    ; and X as a pointer in RAM
     beq do_xor
     asl
     bcc no_xor
@@ -20,7 +20,7 @@ generate_rnd: ; giving 'a' as the seed
 
 loop:
     lda $0, x
-    cpx #max ; if(x != max) goto loop
+    cpx #max ; if(x != max) generate_rnd
     inx
     bne generate_rnd
 

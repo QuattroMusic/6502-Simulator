@@ -1,6 +1,11 @@
 General_UI :: struct {
 	memory_scrollbar_selected: bool;
 	memory_scrollbar_pos: f32;
+	
+	display_pressed_pos: Vec2;
+	display_pos: Vec2;
+	display_selected: bool;
+	display_visible: bool = true;
 }
 
 Color_Tokens :: enum u8 {

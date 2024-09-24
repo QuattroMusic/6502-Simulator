@@ -3,6 +3,7 @@ init_rendering :: () {
 	init_shaders();
 	init_font();
 	init_graphics();
+	reset_drawing_area();
 }
 
 deinit_rendering :: () {
@@ -295,8 +296,6 @@ flush_buffers :: () {
 finalize_drawing :: () {
 	flush_buffers();
 	IDXGISwapChain_Present(swapchain, 0, 0);
-	widget_uuid = 0;
-	if is_mouse_released(0) then widget_selected = 0;
 }
 
 vertices_add :: (using buff: *Buffer_Data, val: buff.vertex_type) {
@@ -466,7 +465,7 @@ texture_data :: u64.[
 	0x20007c0c20540060, 0x30101060000020_c6, 0x187806fe06c6309e, 0x06_6060307e18105c,
 	0x000028784cc80060, 0x30281020006040_64, 0x18e0c60cc6c63086, 0x0c_60201800300042,
 	0x800000108c740030, 0x60000040006080_38, 0x7efe7c0c7c7c307c, 0x78_00400c0060103c,
-	
+
 	0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000,
 	0x387010003c000000, 0x003e7e4200000000, 0x0000000000000000, 0x0000000000000000,
 	0x6018100024000000, 0x007e422400000000, 0x0000000000000000, 0x0000000000000000,

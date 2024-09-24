@@ -20,33 +20,19 @@ update_PC :: ($steps: u8, addr: u16 = 0) {
 }
 
 read_data :: (addr: u16) -> u8 {
-	if addr < 0x6000 {
+	if addr < 0x8000 {
 		return engine.RAM[addr];
-	} else if (addr <= 0x6000 && addr < 0x7FFF) {
-		log_warn("Trying to access I/O memory");
-		return 0;
-	} else if (addr >= 0x8000 && addr <= 0xFFFF) {
-		return engine.ROM[addr & 0x7FFF];
-	} else {
-		log_error("Address % out of memory", addr);
-		return 0;
 	}
+	return engine.ROM[addr & 0x7FFF];
 }
 
 write_data :: (addr: u16, data: u8) {
-	if addr < 0x6000 {
+	if addr < 0x8000 {
 		engine.RAM[addr] = data;
-		
-		// if addr >= 0x0200 && addr <= 0x277F {
-			// engine.windows.update_display = true;
-		// }
-	} else if addr >= 0x6000 && addr <= 0x7FFF {
-		log_warn("Trying to access I/O memory");
-	} else if addr >= 0x8000 && addr <= 0xFFFF {
-		log_error("Cannot write in ROM space");
-	} else {
-		log_error("Address % out of memory", addr);
+		return;
 	}
+	
+	log_error("Cannot write in ROM space");
 }
 
 read_address :: (addr: u16) -> u16 {

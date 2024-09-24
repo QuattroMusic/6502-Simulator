@@ -96,14 +96,16 @@ draw_code_viewer :: () {
 }
 
 handle_memory_scrollbar :: (pos: Vec2, size: Vec2) {
-	if is_mouse_inside_rect(pos, size) {
-		if mouse_dz {
-			amt := mouse_dz * 16;
-			ui.memory_scrollbar_pos -= amt;
+	if can_interact_with_widget() {
+		if is_mouse_inside_rect(pos, size) {
+			if mouse_dz {
+				amt := mouse_dz * 16;
+				ui.memory_scrollbar_pos -= amt;
+			}
 		}
-	}
-	if is_mouse_pressed(0) && is_mouse_inside_rect(.{pos.x + size.x - 12, pos.y}, .{12, size.y}) {
-		ui.memory_scrollbar_selected = true;
+		if is_mouse_pressed(0) && is_mouse_inside_rect(.{pos.x + size.x - 12, pos.y}, .{12, size.y}) {
+			ui.memory_scrollbar_selected = true;
+		}
 	}
 	if ui.memory_scrollbar_selected {
 		aspect_ratio := size.y / (2048 * 16);
@@ -288,8 +290,56 @@ draw_program_frequency :: () {
 	];
 
 	found, idx := array_find(freqs, freq);
-	draw_step_hslider(offset + .{20, 55}, .{160, 20}, 2, freqs.count, *idx, disabled = engine.metrics.unlock);
+	draw_step_hslider(offset + .{20, 55}, .{160, 20}, 1, freqs.count, *idx, disabled = engine.metrics.unlock);
 	engine.metrics.update_rate = freqs[idx];
 
 	draw_text(str, offset + .{90, 16}, 1, 2, ifx engine.metrics.unlock then GRAY else COLOR_TEXT_NORMAL);
+}
+
+draw_display :: () {
+	mouse_over_panel = false;
+	if !ui.display_visible then return;
+	
+	padding :: 4;
+	
+	w :: DISPLAY_WIDTH  * 8 + padding * 2;
+	h :: DISPLAY_HEIGHT * 8 + padding * 2 + 24;
+	
+	if is_mouse_inside_rect(.{ui.display_pos.x, ui.display_pos.y}, .{w - 24, 24}) {
+		mouse_over_panel = true;
+		if is_mouse_pressed(0) {
+			ui.display_pressed_pos.x = mouse_x - ui.display_pos.x;
+			ui.display_pressed_pos.y = mouse_y - ui.display_pos.y;
+			ui.display_selected = true;
+		}
+	}
+	if ui.display_selected {
+		delta := Vec2.{xx mouse_x, xx mouse_y} - ui.display_pressed_pos;
+		ui.display_pos = delta;
+	}
+	if is_mouse_released(0) then ui.display_selected = false;
+	
+	ui.display_pos.y = clamp(ui.display_pos.y, HEADER_HEIGHT, cast(f32)vp.height - 24);
+	
+	if is_mouse_inside_rect(.{ui.display_pos.x, ui.display_pos.y + 24}, .{w, h - 24}) {
+		mouse_over_panel = true;
+	}
+	
+	if button(.CLOSE, .{ui.display_pos.x + w - 24, ui.display_pos.y}, .{24, 24}, 5, 2) {
+		ui.display_visible = false;
+		return;
+	}
+	
+	draw_window(ui.display_pos, .{w, h}, 4, "Display");
+	
+	for 0x0200..(0x0200 + DISPLAY_WIDTH * DISPLAY_HEIGHT - 1) {
+		data := engine.RAM[it];
+		x := (((it - 0x0200) % DISPLAY_WIDTH) * 8) + ui.display_pos.x + padding;
+		y := (((it - 0x0200) / DISPLAY_WIDTH) * 8) + ui.display_pos.y + padding + 24;
+		
+		if data >= 0 && data < 32 {
+			col := DISPLAY_COLOR[data];
+			draw_rect(.{x, y}, .{8, 8}, 5, col);
+		}
+	}
 }
