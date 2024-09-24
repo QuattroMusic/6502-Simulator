@@ -197,7 +197,7 @@ SBC :: (data: u8) {
 	temp: u8 = engine.A - data - cast(u8)(!engine.flags.C);
 
 	set_overflow(engine.A, ~data, temp);
-	engine.flags.C = (cast(u16)engine.A - data + cast(u8)engine.flags.C) >= 1;
+	engine.flags.C = (0xFF + cast(u16)engine.A - data + cast(u8)engine.flags.C) >= 0x100;
 
 	engine.A = temp;
 
@@ -242,7 +242,7 @@ exec_operation :: (opcode: Opcode) {
 		case .TAY;  log_intrinsic("TAY");            engine.Y = engine.A;  update_N_and_Z(engine.Y);
 		case .TSX;  log_intrinsic("TSX");            engine.X = engine.S;  update_N_and_Z(engine.X);
 		case .TXA;  log_intrinsic("TXA");            engine.A = engine.X;  update_N_and_Z(engine.A);
-		case .TXS;  log_intrinsic("TXS");            engine.S = engine.X;  update_N_and_Z(engine.S);
+		case .TXS;  log_intrinsic("TXS");            engine.S = engine.X;
 		case .TYA;  log_intrinsic("TYA");            engine.A = engine.Y;  update_N_and_Z(engine.A);
 		case .BIT_ABS;  log_intrinsic("BIT nn");     BIT(read_data(read_address(engine.PC)));  update_PC(2);
 		case .BIT_ZPG;  log_intrinsic("BIT n, X");   BIT(read_data(cast(u16)read_data(engine.PC)));  update_PC(1);
@@ -372,15 +372,15 @@ exec_operation :: (opcode: Opcode) {
 	}
 }
 
-virtual_exec_operation :: (opcode: Opcode, data: u16) {
+virtual_exec_operation :: (opcode: Opcode, data: u16 = 0) {
 	if opcode == {
 		// case .BRK;     engine.flags.B = true; cpu_stop();
 		// case .NOP;
-		// case .CLC;     engine.flags.C = false;
+		case .CLC;     engine.flags.C = false;
 		// case .CLD;     engine.flags.D = false;
 		// case .CLI;     engine.flags.I = false;
 		// case .CLV;     engine.flags.V = false;
-		// case .SEC;     engine.flags.C = true;
+		case .SEC;     engine.flags.C = true;
 		// case .SED;     engine.flags.D = true;
 		// case .SEI;     engine.flags.I = true;
 		// case .DEX;     engine.X -= 1;  update_N_and_Z(engine.X);
@@ -393,11 +393,11 @@ virtual_exec_operation :: (opcode: Opcode, data: u16) {
 		// case .PLP;     unpack_P(stack_pop());
 		// case .RTI;     log_warn("RTI not supported at the moment"); cpu_stop();
 		// case .RTS;     engine.PC = stack_pop();
-		// case .TAX;     engine.X = engine.A;  update_N_and_Z(engine.X);
+		case .TAX;     engine.X = engine.A;  update_N_and_Z(engine.X);
 		// case .TAY;     engine.Y = engine.A;  update_N_and_Z(engine.Y);
 		// case .TSX;     engine.X = engine.S;  update_N_and_Z(engine.X);
 		// case .TXA;     engine.A = engine.X;  update_N_and_Z(engine.A);
-		// case .TXS;     engine.S = engine.X;  update_N_and_Z(engine.S);
+		case .TXS;     engine.S = engine.X;
 		// case .TYA;     engine.A = engine.Y;  update_N_and_Z(engine.A);
 		// case .BIT_ABS; BIT(read_data(data));
 		// case .BIT_ZPG; BIT(read_data(data));
@@ -421,7 +421,7 @@ virtual_exec_operation :: (opcode: Opcode, data: u16) {
 		// case .DEC_ZPX; DEC(data + cast(u16)engine.X);
 		// case .DEC_ABX; DEC(data + cast(u16)engine.X);
 		// case .STA_ABS; STA(data);
-		// case .STA_ZPG; STA(data);
+		case .STA_ZPG; STA(data);
 		// case .STA_INX; STA(read_address(data + cast(u16)engine.X));
 		// case .STA_INY; STA(read_address(data) + cast(u16)engine.Y);
 		// case .STA_ZPX; STA(data + cast(u16)engine.X);
@@ -486,7 +486,7 @@ virtual_exec_operation :: (opcode: Opcode, data: u16) {
 		// case .ORA_ZPX; ORA(read_data(data + cast(u16)engine.X));
 		// case .ORA_ABX; ORA(read_data(data + cast(u16)engine.X));
 		// case .ORA_ABY; ORA(read_data(data + cast(u16)engine.Y));
-		// case .SBC_IMM; SBC(cast,trunc(u8)data);
+		case .SBC_IMM; SBC(cast,trunc(u8)data);
 		// case .SBC_ABS; SBC(read_data(data));
 		// case .SBC_ZPG; SBC(read_data(data));
 		// case .SBC_INX; SBC(read_data(read_address(data + cast(u16)engine.X)));
@@ -494,12 +494,12 @@ virtual_exec_operation :: (opcode: Opcode, data: u16) {
 		// case .SBC_ZPX; SBC(read_data(data + cast(u16)engine.X));
 		// case .SBC_ABX; SBC(read_data(data + cast(u16)engine.X));
 		// case .SBC_ABY; SBC(read_data(data + cast(u16)engine.Y));
-		// case .LDX_IMM; LDX(cast,trunc(u8)data);
+		case .LDX_IMM; LDX(cast,trunc(u8)data);
 		// case .LDX_ABS; LDX(read_data(data));
 		// case .LDX_ZPG; LDX(read_data(data));
 		// case .LDX_ABY; LDX(read_data(data + cast(u16)engine.Y));
 		// case .LDX_ZPY; LDX(read_data(data + cast(u16)engine.Y));
-		// case .LDY_IMM; LDY(cast,trunc(u8)data);
+		case .LDY_IMM; LDY(cast,trunc(u8)data);
 		// case .LDY_ABS; LDY(read_data(data));
 		// case .LDY_ZPG; LDY(read_data(data));
 		// case .LDY_ZPX; LDY(read_data(data + cast(u16)engine.X));

@@ -36,14 +36,8 @@ main :: () {
 		draw_one_frame();
 	}
 	deinit_window();
-	
-	// virtual_exec_operation(.LDA_IMM, 4);
-	// cpu_reset();
-	// virtual_exec_operation(.LDA_IMM, 6);
-	
-	// print_data();
 
-	// while true {}
+	// run_all_tests();
 }
 
 LOG_INFO       :: true;
