@@ -96,17 +96,16 @@ draw_code_viewer :: () {
 }
 
 handle_memory_scrollbar :: (pos: Vec2, size: Vec2) {
-	if can_interact_with_widget() {
-		if is_mouse_inside_rect(pos, size) {
-			if mouse_dz {
-				amt := mouse_dz * 16;
-				ui.memory_scrollbar_pos -= amt;
-			}
-		}
-		if is_mouse_pressed(0) && is_mouse_inside_rect(.{pos.x + size.x - 12, pos.y}, .{12, size.y}) {
-			ui.memory_scrollbar_selected = true;
+	if is_mouse_inside_rect(pos, size) {
+		if mouse_dz {
+			amt := mouse_dz * 16;
+			ui.memory_scrollbar_pos -= amt;
 		}
 	}
+	if is_mouse_pressed(0) && can_interact_with_widget() && is_mouse_inside_rect(.{pos.x + size.x - 12, pos.y}, .{12, size.y}) {
+		ui.memory_scrollbar_selected = true;
+	}
+	
 	if ui.memory_scrollbar_selected {
 		aspect_ratio := size.y / (2048 * 16);
 		bar_height := aspect_ratio * size.y;
@@ -297,13 +296,21 @@ draw_program_frequency :: () {
 }
 
 draw_display :: () {
-	mouse_over_panel = false;
-	if !ui.display_visible then return;
-	
 	padding :: 4;
 	
 	w :: DISPLAY_WIDTH  * 8 + padding * 2;
 	h :: DISPLAY_HEIGHT * 8 + padding * 2 + 24;
+	
+	mouse_over_panel = false;
+	
+	if is_key_pressed(KEY_F1) {
+		ui.display_visible = !ui.display_visible;
+		x := (vp.width - w) / 2;
+		y := (vp.height - h) / 2;
+		ui.display_pos = .{xx x, xx y};
+	}
+	
+	if !ui.display_visible then return;
 	
 	if is_mouse_inside_rect(.{ui.display_pos.x, ui.display_pos.y}, .{w - 24, 24}) {
 		mouse_over_panel = true;

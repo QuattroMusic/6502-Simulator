@@ -13,7 +13,7 @@ and an input display!
 
 #### Version 1.0
 - [x] display
-- [ ] keyboard input
+- [x] keyboard input
 - [x] date in memory
 - [ ] fix / improve 6502 engine
 

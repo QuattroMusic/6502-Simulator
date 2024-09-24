@@ -136,9 +136,15 @@ EventsManager :: (hwnd: *void, msg: u32, wparam: u64, lparam: s64) -> s64 #c_cal
 				// Todo - uses this when i decide to remove the depth stencil
 				// ID3D11DeviceContext_OMSetRenderTargets(devcon, 1, *back_buffer, null);
 			}
+		case WM_SYSKEYDOWN; #through;
 		case WM_KEYFIRST;
-			// Todo - handle this better
-			if wparam == 112 then ui.display_visible = !ui.display_visible;
+			if wparam <= 0xFF {
+				input_keyboard_states[cast,no_check(u8)wparam] = true;
+				last_pressed_char = cast,no_check(u8)wparam;
+			}
+		case WM_SYSKEYUP; #through;
+		case WM_KEYUP;
+			if wparam <= 0xFF then input_keyboard_states[wparam] = false;
 		case WM_MOUSEMOVE;
 			mouse_x =  lparam        & 0xFFFF;
 			mouse_y = (lparam >> 16) & 0xFFFF;

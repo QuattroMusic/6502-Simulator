@@ -7,17 +7,16 @@ handle_scrollbar :: () {
 	size := viewer.size;
 	amt := viewer.rows_length.count;
 	
-	if can_interact_with_widget() {
-		if is_mouse_inside_rect(pos, size) {
-			if mouse_dz {
-				amt := mouse_dz * 16 * 3;
-				viewer.scrollbar_pos -= amt;
-			}
-		}
-		if is_mouse_pressed(0) && is_mouse_inside_rect(.{pos.x + size.x - 12, pos.y}, .{12, size.y}) {
-			viewer.scrollbar_selected = true;
+	if is_mouse_inside_rect(pos, size) {
+		if mouse_dz {
+			amt := mouse_dz * 16 * 3;
+			viewer.scrollbar_pos -= amt;
 		}
 	}
+	if is_mouse_pressed(0) && can_interact_with_widget() && is_mouse_inside_rect(.{pos.x + size.x - 12, pos.y}, .{12, size.y}) {
+		viewer.scrollbar_selected = true;
+	}
+	
 	if viewer.scrollbar_selected {
 		aspect_ratio := size.y / (size.y + 16 * amt);
 		bar_height := aspect_ratio * size.y;

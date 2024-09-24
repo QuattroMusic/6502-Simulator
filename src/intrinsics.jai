@@ -95,10 +95,8 @@ JMP :: (addr: u16) {
 
 JSR :: (addr: u16) {
 	update_PC(2);
-
-	write_data(0x0100 + cast(u16)engine.S, cast,trunc(u8)(addr >> 8));
-	write_data(0x00FF + cast(u16)engine.S, cast,trunc(u8)(addr & 0xFF));
-	engine.S -= 2;
+	stack_push(cast,trunc(u8)(engine.PC >> 8));
+	stack_push(cast,trunc(u8)engine.PC);
 
 	update_PC(0, addr);
 }
@@ -193,6 +191,15 @@ RORA :: () {
 	update_N_and_Z(engine.A);
 }
 
+RTS :: () {
+	d1 := cast(u16)stack_pop();
+	d2 := cast(u16)stack_pop();
+	
+	addr: u16 = (d2 << 8) | d1;
+	
+	update_PC(0, addr);
+}
+
 SBC :: (data: u8) {
 	temp: u8 = engine.A - data - cast(u8)(!engine.flags.C);
 
@@ -237,7 +244,7 @@ exec_operation :: (opcode: Opcode) {
 		case .PLA;  log_intrinsic("PLA"); engine.A = stack_pop();  update_N_and_Z(engine.A);
 		case .PLP;  log_intrinsic("PLP"); unpack_P(stack_pop());
 		case .RTI;  log_warn("RTI not supported at the moment");  cpu_stop();
-		case .RTS;  log_intrinsic("RTS");            engine.PC = stack_pop();
+		case .RTS;  log_intrinsic("RTS");            RTS();
 		case .TAX;  log_intrinsic("TAX");            engine.X = engine.A;  update_N_and_Z(engine.X);
 		case .TAY;  log_intrinsic("TAY");            engine.Y = engine.A;  update_N_and_Z(engine.Y);
 		case .TSX;  log_intrinsic("TSX");            engine.X = engine.S;  update_N_and_Z(engine.X);
@@ -392,7 +399,7 @@ virtual_exec_operation :: (opcode: Opcode, data: u16 = 0) {
 		// case .PLA;     engine.A = stack_pop();  update_N_and_Z(engine.A);
 		// case .PLP;     unpack_P(stack_pop());
 		// case .RTI;     log_warn("RTI not supported at the moment"); cpu_stop();
-		// case .RTS;     engine.PC = stack_pop();
+		// case .RTS;     
 		case .TAX;     engine.X = engine.A;  update_N_and_Z(engine.X);
 		// case .TAY;     engine.Y = engine.A;  update_N_and_Z(engine.Y);
 		// case .TSX;     engine.X = engine.S;  update_N_and_Z(engine.X);
