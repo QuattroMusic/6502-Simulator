@@ -131,7 +131,7 @@ draw_RAM_content :: (offset: Vec2, start: int, end: int, pos_y: f32, height: f32
 				col = ifx data then BLUE else PURPLE;
 			} else if 32 <= y && y < 632 {
 				col = ifx data then ORANGE else YELLOW;
-			} else if y == 632 && x <= 7 {
+			} else if y == 632 && x <= 9 {
 				col = PINK;
 			} else if data {
 				col = GREEN;

@@ -12,9 +12,9 @@ and an input display!
 ### Long term features
 
 #### Version 1.0
-- [ ] display
+- [x] display
 - [ ] keyboard input
-- [ ] date in memory
+- [x] date in memory
 - [ ] fix / improve 6502 engine
 
 #### Version 2.0

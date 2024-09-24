@@ -5,7 +5,7 @@ General_UI :: struct {
 	display_pressed_pos: Vec2;
 	display_pos: Vec2;
 	display_selected: bool;
-	display_visible: bool = true;
+	display_visible: bool;
 }
 
 Color_Tokens :: enum u8 {

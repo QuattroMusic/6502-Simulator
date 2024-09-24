@@ -40,3 +40,18 @@ read_address :: (addr: u16) -> u16 {
 	d2 := read_data(addr + 1);
 	return ((cast(u16)d2) << 8) | cast(u16)d1;
 }
+
+handle_input_and_time :: () {
+	time := current_time_consensus();
+	calendar := to_calendar(time, .LOCAL);
+	
+	engine.RAM[MEMORY_YEAR_ADDRESS]            = cast,trunc(u8)(calendar.year & 0xFF);
+	engine.RAM[MEMORY_YEAR_ADDRESS + 1]        = cast,trunc(u8)((calendar.year >> 8) & 0xFF);
+	engine.RAM[MEMORY_MONTH_ADDRESS]           = cast,no_check(u8)calendar.month_starting_at_0;
+	engine.RAM[MEMORY_DAY_ADDRESS]             = cast,no_check(u8)calendar.day_of_month_starting_at_0;
+	engine.RAM[MEMORY_HOUR_ADDRESS]            = cast,no_check(u8)calendar.hour;
+	engine.RAM[MEMORY_MINUTE_ADDRESS]          = cast,no_check(u8)calendar.minute;
+	engine.RAM[MEMORY_SECOND_ADDRESS]          = cast,no_check(u8)calendar.second;
+	engine.RAM[MEMORY_MILLISECOND_ADDRESS]     = cast,trunc(u8)(calendar.millisecond & 0xFF);
+	engine.RAM[MEMORY_MILLISECOND_ADDRESS + 1] = cast,trunc(u8)((calendar.millisecond >> 8) & 0xFF);
+}

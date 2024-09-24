@@ -2,6 +2,8 @@ update_6502 :: () {
 	// those two should be put before the drawing, see `EventsManager` - `WM_SIZE`
 	handle_viewport_movement();
 	handle_viewport_resize();
+	
+	handle_input_and_time();
 
 	draw_header();
 	draw_buttons_controls();
@@ -53,13 +55,14 @@ ROM_SIZE      :: 0x8000;
 RAM_SIZE      :: 0x8000;
 HEADER_HEIGHT :: 35;
 
-MEMORY_INPUT_ADDRESS  :: 0x2780;
-MEMORY_YEAR_ADDRESS   :: 0x2781;
-MEMORY_MONTH_ADDRESS  :: 0x2783;
-MEMORY_DAY_ADDRESS    :: 0x2784;
-MEMORY_HOUR_ADDRESS   :: 0x2785;
-MEMORY_MINUTE_ADDRESS :: 0x2786;
-MEMORY_SECOND_ADDRESS :: 0x2787;
+MEMORY_INPUT_ADDRESS       :: 0x2780;
+MEMORY_YEAR_ADDRESS        :: 0x2781;
+MEMORY_MONTH_ADDRESS       :: 0x2783;
+MEMORY_DAY_ADDRESS         :: 0x2784;
+MEMORY_HOUR_ADDRESS        :: 0x2785;
+MEMORY_MINUTE_ADDRESS      :: 0x2786;
+MEMORY_SECOND_ADDRESS      :: 0x2787;
+MEMORY_MILLISECOND_ADDRESS :: 0x2788;
 
 MIN_SCREEN_WIDTH  :: 1400;
 MIN_SCREEN_HEIGHT :: 800;
