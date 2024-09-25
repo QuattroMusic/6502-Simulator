@@ -21,11 +21,11 @@ and an input display!
 - [ ] render revamp
 - [ ] simply a calculator / conversion panel
 - [ ] options panel
+- [ ] use an internal 6502 compiler
 
 #### Version 3.0
-- [ ] code editor instead of code viewer
-
-#### Version 4.0
-- [ ] use an internal 6502 compiler
 - [ ] error handling
 - [ ] browser panel
+
+#### Version 4.0
+- [ ] code editor instead of code viewer

@@ -225,6 +225,8 @@ STY :: (addr: u16) {
 
 #scope_export
 exec_operation :: (opcode: Opcode) {
+	engine.current_instruction = opcode;
+	
 	if #complete opcode == {
 		case .BRK;  log_intrinsic("BRK"); engine.flags.B = true;  cpu_stop();
 		case .NOP;  log_intrinsic("NOP"); update_PC(1);
@@ -256,14 +258,14 @@ exec_operation :: (opcode: Opcode) {
 		case .JMP_ABS;  log_intrinsic("JMP nn");     JMP(read_address(engine.PC));
 		case .JMP_IND;  log_intrinsic("JMP (nn)");   JMP(read_address(read_address(engine.PC)));
 		case .JSR_ABS;  log_intrinsic("JSR nn");     JSR(read_address(engine.PC));
-		case .BCS_REL;  log_intrinsic("BCS n");      branch_if(cast,no_check(s8)read_data(engine.PC),  engine.flags.C);
-		case .BCC_REL;  log_intrinsic("BCC n");      branch_if(cast,no_check(s8)read_data(engine.PC), !engine.flags.C);
-		case .BEQ_REL;  log_intrinsic("BEQ n");      branch_if(cast,no_check(s8)read_data(engine.PC),  engine.flags.Z);
-		case .BNE_REL;  log_intrinsic("BNE n");      branch_if(cast,no_check(s8)read_data(engine.PC), !engine.flags.Z);
-		case .BMI_REL;  log_intrinsic("BMI n");      branch_if(cast,no_check(s8)read_data(engine.PC),  engine.flags.N);
-		case .BPL_REL;  log_intrinsic("BPL n");      branch_if(cast,no_check(s8)read_data(engine.PC), !engine.flags.N);
-		case .BVS_REL;  log_intrinsic("BVS n");      branch_if(cast,no_check(s8)read_data(engine.PC),  engine.flags.V);
-		case .BVC_REL;  log_intrinsic("BVC n");      branch_if(cast,no_check(s8)read_data(engine.PC), !engine.flags.V);
+		case .BCS;  log_intrinsic("BCS n");      branch_if(cast,no_check(s8)read_data(engine.PC),  engine.flags.C);
+		case .BCC;  log_intrinsic("BCC n");      branch_if(cast,no_check(s8)read_data(engine.PC), !engine.flags.C);
+		case .BEQ;  log_intrinsic("BEQ n");      branch_if(cast,no_check(s8)read_data(engine.PC),  engine.flags.Z);
+		case .BNE;  log_intrinsic("BNE n");      branch_if(cast,no_check(s8)read_data(engine.PC), !engine.flags.Z);
+		case .BMI;  log_intrinsic("BMI n");      branch_if(cast,no_check(s8)read_data(engine.PC),  engine.flags.N);
+		case .BPL;  log_intrinsic("BPL n");      branch_if(cast,no_check(s8)read_data(engine.PC), !engine.flags.N);
+		case .BVS;  log_intrinsic("BVS n");      branch_if(cast,no_check(s8)read_data(engine.PC),  engine.flags.V);
+		case .BVC;  log_intrinsic("BVC n");      branch_if(cast,no_check(s8)read_data(engine.PC), !engine.flags.V);
 		case .INC_ABS;  log_intrinsic("INC nn");     compact_absolute_address(INC);
 		case .INC_ZPG;  log_intrinsic("INC n");      compact_zero_page_address(INC);
 		case .INC_ZPX;  log_intrinsic("INC n, X");   compact_zero_page_X_address(INC);
@@ -411,14 +413,14 @@ virtual_exec_operation :: (opcode: Opcode, data: u16 = 0) {
 		// case .JMP_ABS; JMP(data);
 		// case .JMP_IND; JMP(read_address(data));
 		// case .JSR_ABS; JSR(data);
-		// case .BCS_REL; branch_if(cast,no_check(s8)data,  engine.flags.C);
-		// case .BCC_REL; branch_if(cast,no_check(s8)data, !engine.flags.C);
-		// case .BEQ_REL; branch_if(cast,no_check(s8)data,  engine.flags.Z);
-		// case .BNE_REL; branch_if(cast,no_check(s8)data, !engine.flags.Z);
-		// case .BMI_REL; branch_if(cast,no_check(s8)data,  engine.flags.N);
-		// case .BPL_REL; branch_if(cast,no_check(s8)data, !engine.flags.N);
-		// case .BVS_REL; branch_if(cast,no_check(s8)data,  engine.flags.V);
-		// case .BVC_REL; branch_if(cast,no_check(s8)data, !engine.flags.V);
+		// case .BCS; branch_if(cast,no_check(s8)data,  engine.flags.C);
+		// case .BCC; branch_if(cast,no_check(s8)data, !engine.flags.C);
+		// case .BEQ; branch_if(cast,no_check(s8)data,  engine.flags.Z);
+		// case .BNE; branch_if(cast,no_check(s8)data, !engine.flags.Z);
+		// case .BMI; branch_if(cast,no_check(s8)data,  engine.flags.N);
+		// case .BPL; branch_if(cast,no_check(s8)data, !engine.flags.N);
+		// case .BVS; branch_if(cast,no_check(s8)data,  engine.flags.V);
+		// case .BVC; branch_if(cast,no_check(s8)data, !engine.flags.V);
 		// case .INC_ABS; INC(data);
 		// case .INC_ZPG; INC(data);
 		// case .INC_ZPX; INC(data + cast(u16)engine.X);

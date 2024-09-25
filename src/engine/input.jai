@@ -25,11 +25,11 @@ reset_input :: () {
 }
 
 is_mouse_pressed  :: (key: int) -> bool { return  input_button_states[key] && !input_button_states_old[key]; }
-is_mouse_down     :: (key: int) -> bool { return  input_button_states[key] &&  input_button_states_old[key]; }
+is_mouse_down     :: (key: int) -> bool { return  input_button_states[key]; }
 is_mouse_released :: (key: int) -> bool { return !input_button_states[key] &&  input_button_states_old[key]; }
 
 is_key_pressed  :: (key: int) -> bool { return  input_keyboard_states[key] && !input_keyboard_states_old[key]; }
-is_key_down     :: (key: int) -> bool { return  input_keyboard_states[key] &&  input_keyboard_states_old[key]; }
+is_key_down     :: (key: int) -> bool { return  input_keyboard_states[key]; }
 is_key_released :: (key: int) -> bool { return !input_keyboard_states[key] &&  input_keyboard_states_old[key]; }
 
 mouse_x: int;

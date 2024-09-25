@@ -250,7 +250,7 @@ draw_program_debug :: () {
 	offset := Vec2.{vp.width + 40.0 - MIN_SCREEN_WIDTH / 2, vp.height - MIN_SCREEN_HEIGHT / 4 + 95.0};
 
 	// draw_panel("Debug", offset, .{MIN_SCREEN_WIDTH / 2 - 450.0, MIN_SCREEN_HEIGHT / 4 - 65.0}, 1);
-	draw_panel("Debug", offset, .{MIN_SCREEN_WIDTH / 2 - 260.0, MIN_SCREEN_HEIGHT / 4 - 105.0}, 1);
+	draw_panel("Debug", offset, .{240, MIN_SCREEN_HEIGHT / 4 - 105.0}, 1);
 
 	checkbox(*engine.debug, "Enable debug", offset + .{15, 15}, .{20, 20}, 1);
 	if engine.debug && engine.thread_running {
@@ -266,6 +266,36 @@ draw_program_debug :: () {
 	ff := formatFloat(stack_used * 100, trailing_width = 1, zero_removal = .NO);
 
 	draw_text(tprint("%\% - % / 255B", ff, 255 - engine.S), offset + .{20, 63}, 1, 1, col);
+}
+
+draw_current_instruction :: () {
+	offset := Vec2.{vp.width - MIN_SCREEN_WIDTH / 2 + 290.0, vp.height - MIN_SCREEN_HEIGHT / 4 + 95.0};
+	draw_panel("Executing", offset, .{vp.width - 220.0 - offset.x, 40}, 1);
+	
+	intrins := intrinsic_to_string(engine.current_instruction);
+	
+	draw_text(intrins, offset + .{8, 11}, 1, 2, WHITE);
+}
+
+draw_input :: () {
+	offset := Vec2.{vp.width - MIN_SCREEN_WIDTH / 2 + 290.0, vp.height - MIN_SCREEN_HEIGHT / 4 + 150.0};
+	draw_panel("Input", offset, .{vp.width - 220.0 - offset.x, 40}, 1);
+	
+	data := engine.RAM[MEMORY_INPUT_ADDRESS];
+	
+	fmt: string;
+	if data == {
+		case 0;         fmt = "NONE";
+		case KEY_SPACE; fmt = "32 / SPACE";
+		case KEY_LEFT;  fmt = "37 / LEFT";
+		case KEY_UP;    fmt = "38 / UP";
+		case KEY_RIGHT; fmt = "39 / RIGHT";
+		case KEY_DOWN;  fmt = "40 / DOWN";
+		case;
+			fmt = tprint("% / KEY_%", data, string.{1, *data});
+	}
+	
+	draw_text(fmt, offset + .{12, 11}, 1, 2, WHITE);
 }
 
 draw_program_frequency :: () {

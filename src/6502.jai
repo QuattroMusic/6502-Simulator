@@ -1,7 +1,7 @@
 General_UI :: struct {
 	memory_scrollbar_selected: bool;
 	memory_scrollbar_pos: f32;
-	
+
 	display_pressed_pos: Vec2;
 	display_pos: Vec2;
 	display_selected: bool;
@@ -21,16 +21,16 @@ Color_Tokens :: enum u8 {
 Code_Viewer :: struct {
 	pos: Vec2;
 	size: Vec2;
-	
+
 	scrollbar_selected: bool;
 	scrollbar_pos: f32;
 	row_digits: u32;
-	
+
 	content:     [..] u8;
 	rows_length: [..] u32;
 	file_path:   string;
 	file_name:   string;  // this is a view
-	
+
 	// coloring, stored as SoA
 	text_index:  [..] u32;
 	text_length: [..] u32;
@@ -44,9 +44,9 @@ Status_Flags :: struct {
 }
 
 Metrics :: struct {
-	update_rate: int = 10_000;
+	update_rate: int = 1_000;
 	last_counter: s64;
-	
+
 	unlock: bool;
 }
 
@@ -58,14 +58,15 @@ Emulator :: struct {
 	Y:  u8;
 	S:  u8;
 	PC: u16;
-	
+
 	compilation_successful: bool;
-	
+	current_instruction: Opcode;
+
 	flags: Status_Flags;
-	
+
 	cpu_thread: Thread;
 	metrics: Metrics;
-	
+
 	running: bool;
 	debug: bool;
 	thread_running: bool;  // could be `true` when 6502 is paused
@@ -113,7 +114,7 @@ pack_P :: () -> u8 {
 	n5 := (cast(u8)engine.flags.B) << 4;
 	n6 := (cast(u8)engine.flags.V) << 6;
 	n7 := (cast(u8)engine.flags.N) << 7;
-	
+
 	return n1 | n2 | n3 | n4 | n5 | n6 | n7;
 }
 
@@ -130,7 +131,7 @@ unpack_P :: (data: u8) {
 cpu_stop :: () {
 	engine.running = false;
 	engine.thread_running = false;
-	
+
 	log_info("CPU Stop");
 }
 
@@ -159,7 +160,7 @@ cpu_start :: () {
 		}
 		return 0;
 	}
-	
+
 	if !engine.thread_running {
 		engine.thread_running = true;
 		engine.running = true;
@@ -199,7 +200,7 @@ compile_program :: () {
 	res := run_command(..break_command_into_strings(fmt));
 	engine.compilation_successful = false;
 	if res.exit_code != 0 then return;  // Todo - handle better this
-	
+
 	engine.compilation_successful = true;
 }
 
@@ -309,36 +310,67 @@ compact_absolute_Y_address :: (func: (u16)) {
 	update_PC(2);
 }
 
-Opcode :: enum {
+intrinsic_to_string :: (code: Opcode) -> string {
+	info :: type_info(Opcode);
+	c := cast(u8)code;
+	s: string;
+
+	for info.values if it == c then s = info.names[it_index];
+	
+	if s.count == 3 then return s;
+	else {
+		t := s;
+		t.data += 4;
+		t.count -= 4;
+		s.count = 3;
+		if t == {
+			case "IMM"; return tprint("% #n",    s);
+			case "ZPG"; return tprint("% n",     s);
+			case "ZPX"; return tprint("% n, X",  s);
+			case "ZPY"; return tprint("% n, Y",  s);
+			case "ABS"; return tprint("% nn",    s);
+			case "ABX"; return tprint("% nn, X", s);
+			case "ABY"; return tprint("% nn, Y", s);
+			case "INX"; return tprint("% (n, X)",  s);
+			case "INY"; return tprint("% (n), Y",  s);
+			case "ACC"; return tprint("% A",     s);
+			case; log_error("Unhandled condition");
+		}
+	}
+	assert(false);
+	return "";
+}
+
+Opcode :: enum u8 {
 	BRK :: 0X00;
 	NOP :: 0XEA;
-	
+
 	CLC :: 0X18; CLD :: 0XD8; CLI :: 0X58; CLV :: 0XB8;
 	SEC :: 0X38; SED :: 0XF8; SEI :: 0X78;
-	
+
 	DEX :: 0XCA; DEY :: 0X88;
 	INX :: 0XE8; INY :: 0XC8;
-	
+
 	PHA :: 0X48; PHP :: 0X08; PLA :: 0X68; PLP :: 0X28;
-	
+
 	RTI :: 0X40; RTS :: 0X60;
-	
+
 	TAX :: 0XAA; TAY :: 0XA8; TSX :: 0XBA; TXA :: 0X8A; TXS :: 0X9A; TYA :: 0X98;
-	
+
 	BIT_ABS :: 0X2C; BIT_ZPG :: 0X24;
-	
+
 	JMP_ABS :: 0X4C; JMP_IND :: 0X6C;
 	JSR_ABS :: 0X20;
-	
-	BCC_REL :: 0X90; BCS_REL :: 0XB0; BEQ_REL :: 0XF0; BNE_REL :: 0XD0; BMI_REL :: 0X30; BPL_REL :: 0X10; BVC_REL :: 0X50; BVS_REL :: 0X70;
-	
+
+	BCC :: 0X90; BCS :: 0XB0; BEQ :: 0XF0; BNE :: 0XD0; BMI :: 0X30; BPL :: 0X10; BVC :: 0X50; BVS :: 0X70;
+
 	INC_ABS :: 0XEE; INC_ZPG :: 0XE6; INC_ZPX :: 0XF6; INC_ABX :: 0XFE;
 	DEC_ABS :: 0XCE; DEC_ZPG :: 0XC6; DEC_ZPX :: 0XD6; DEC_ABX :: 0XDE;
-	
+
 	STA_ABS :: 0X8D; STA_ZPG :: 0X85; STA_INX :: 0X81; STA_INY :: 0X91; STA_ZPX :: 0x95; STA_ABX :: 0X9D; STA_ABY :: 0X99;
 	STX_ABS :: 0X8E; STX_ZPG :: 0X86; STX_ZPY :: 0X96;
 	STY_ABS :: 0X8C; STY_ZPG :: 0X84; STY_ZPX :: 0X94;
-	
+
 	ADC_IMM :: 0x69; ADC_ABS :: 0x6D; ADC_ZPG :: 0x65; ADC_INX :: 0x61; ADC_INY :: 0x71; ADC_ZPX :: 0x75; ADC_ABX :: 0x7D; ADC_ABY :: 0x79;
 	AND_IMM :: 0x29; AND_ABS :: 0x2D; AND_ZPG :: 0X25; AND_INX :: 0X21; AND_INY :: 0X31; AND_ZPX :: 0X35; AND_ABX :: 0X3D; AND_ABY :: 0X39;
 	CMP_IMM :: 0XC9; CMP_ABS :: 0XCD; CMP_ZPG :: 0XC5; CMP_INX :: 0XC1; CMP_INY :: 0XD1; CMP_ABX :: 0XDD; CMP_ABY :: 0XD9;
@@ -348,7 +380,7 @@ Opcode :: enum {
 	LDA_IMM :: 0XA9; LDA_ABS :: 0XAD; LDA_ZPG :: 0XA5; LDA_INX :: 0XA1; LDA_INY :: 0XB1; LDA_ZPX :: 0XB5; LDA_ABX :: 0XBD; LDA_ABY :: 0XB9;
 	ORA_IMM :: 0X09; ORA_ABS :: 0X0D; ORA_ZPG :: 0X05; ORA_INX :: 0X01; ORA_INY :: 0X11; ORA_ZPX :: 0X15; ORA_ABX :: 0X1D; ORA_ABY :: 0X19;
 	SBC_IMM :: 0XE9; SBC_ABS :: 0XED; SBC_ZPG :: 0XE5; SBC_INX :: 0XE1; SBC_INY :: 0XF1; SBC_ZPX :: 0XF5; SBC_ABX :: 0XFD; SBC_ABY :: 0XF9;
-	
+
 	LDX_IMM :: 0XA2; LDX_ABS :: 0XAE; LDX_ZPG :: 0XA6; LDX_ABY :: 0XBE; LDX_ZPY :: 0XB6;
 	LDY_IMM :: 0XA0; LDY_ABS :: 0XAC; LDY_ZPG :: 0XA4; LDY_ZPX :: 0XB4; LDY_ABX :: 0XBC;
 
