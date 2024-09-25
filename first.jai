@@ -12,6 +12,8 @@ update_6502 :: () {
 	draw_program_registers();
 	draw_program_debug();
 	draw_program_frequency();
+	draw_current_instruction();
+	draw_input();
 	
 	draw_display();
 }

@@ -62,6 +62,7 @@ handle_input_and_time :: () {
 		(KEY_LEFT <= c && c <= KEY_DOWN) ||
 		c == KEY_SPACE ||
 		#char "0" <= c && c <= #char "9";
+	
 	if allowed_chars && is_key_down(c) {
 		engine.RAM[MEMORY_INPUT_ADDRESS] = c;
 	} else {
