@@ -136,20 +136,49 @@ cpu_stop :: () {
 }
 
 cpu_reset :: () {
-	update_PC(0, read_address(0xFFFC));  // Todo - this shouldn't be here
-	Initialize(*engine.flags);
+	memset(engine.RAM.data, 0, RAM_SIZE);
+	memset(*engine.flags, 0, size_of(Status_Flags));
+	update_PC(0, read_address(0xFFFC));  // Todo - this shouldn't be here, we should read at the beginning of the execution
+	engine.S = 0xFF;
 	engine.A = 0;
 	engine.X = 0;
 	engine.Y = 0;
-	engine.S = 0xFF;
-	memset(engine.RAM.data, 0, RAM_SIZE);
 	log_info("CPU Reset");
 }
 
 cpu_init :: () {
 	memset(engine.ROM.data, 0, ROM_SIZE);
 	memset(engine.RAM.data, 0, RAM_SIZE);
+	memset(*engine.flags, 0, size_of(Status_Flags));
+	engine.PC = 0;
 	engine.S = 0xFF;
+	engine.A = 0;
+	engine.X = 0;
+	engine.Y = 0;
+	log_info("CPU Init");
+}
+
+virtual_cpu_init :: () {
+	memset(engine.ROM.data, 0, ROM_SIZE);
+	memset(engine.RAM.data, 0, RAM_SIZE);
+	memset(*engine.flags, 0, size_of(Status_Flags));
+	engine.PC = 0x8000;
+	engine.S = 0xFF;
+	engine.A = 0;
+	engine.X = 0;
+	engine.Y = 0;
+	log_info("Virtual CPU Init");
+}
+
+virtual_cpu_reset :: () {
+	memset(engine.RAM.data, 0, RAM_SIZE);
+	memset(*engine.flags, 0, size_of(Status_Flags));
+	engine.PC = 0x8000;
+	engine.S = 0xFF;
+	engine.A = 0;
+	engine.X = 0;
+	engine.Y = 0;
+	log_info("Virtual CPU Reset");
 }
 
 cpu_start :: () {

@@ -83,7 +83,7 @@ draw_code_viewer :: () {
 	viewer.pos = offset;
 	viewer.size = .{vp.width - MIN_SCREEN_WIDTH / 2.0 + 20, vp.height - 84.0};
 
-	draw_panel(viewer.file_name, viewer.pos, viewer.size, 1);
+	draw_panel(viewer.file_name, viewer.pos, viewer.size, 3);
 	draw_rect(viewer.pos, viewer.size, 0, COLOR_BACKGROUND);
 
 	handle_scrollbar();
@@ -157,7 +157,7 @@ draw_program_memory :: () {
 
 	handle_memory_scrollbar(pos, size);
 
-	draw_panel("Memory", pos, size, 2);
+	draw_panel("Memory", pos, size, 3);
 	draw_rect(pos, size, 0, COLOR_BACKGROUND);
 
 	draw_rect(pos, .{48, size.y}, 1, COLOR_WIDGET_BG);

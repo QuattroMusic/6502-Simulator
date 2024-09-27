@@ -48,10 +48,9 @@ main :: () {
 	// run_all_tests();
 }
 
-LOG_INFO       :: true;
-LOG_EDITOR     :: true;
-LOG_VERBOSE    :: true;
-LOG_INTRINSICS :: false;
+LOG_INFO       :: false;
+LOG_EDITOR     :: false;
+LOG_VERBOSE    :: false;
 
 ROM_SIZE      :: 0x8000;
 RAM_SIZE      :: 0x8000;
