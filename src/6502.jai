@@ -85,9 +85,9 @@ bit :: (n: int, i: int) -> u8 { return cast(u8)((n >> i) & 1); }
 set_overflow :: (n1: u8, n2: u8, res: u16) { engine.flags.V = (bit(n1, 7) == bit(n2, 7)) && (bit(n2, 7) != bit(res, 7)); }
 
 branch_if :: (relative: s8, cond: bool) {
-	update_PC(1);
+	PC_advance(1);
 	addr := cast,no_check(u16)(cast(s32)engine.PC + relative);
-	if cond then update_PC(0, addr);
+	if cond then PC_jump(addr);
 }
 
 stack_push :: (data: u8) {
@@ -138,7 +138,7 @@ cpu_stop :: () {
 cpu_reset :: () {
 	memset(engine.RAM.data, 0, RAM_SIZE);
 	memset(*engine.flags, 0, size_of(Status_Flags));
-	update_PC(0, read_address(0xFFFC));  // Todo - this shouldn't be here, we should read at the beginning of the execution
+	engine.PC = 0xFFFC;
 	engine.S = 0xFF;
 	engine.A = 0;
 	engine.X = 0;
@@ -150,7 +150,7 @@ cpu_init :: () {
 	memset(engine.ROM.data, 0, ROM_SIZE);
 	memset(engine.RAM.data, 0, RAM_SIZE);
 	memset(*engine.flags, 0, size_of(Status_Flags));
-	engine.PC = 0;
+	engine.PC = 0xFFFC;
 	engine.S = 0xFF;
 	engine.A = 0;
 	engine.X = 0;
@@ -158,31 +158,25 @@ cpu_init :: () {
 	log_info("CPU Init");
 }
 
-virtual_cpu_init :: () {
-	memset(engine.ROM.data, 0, ROM_SIZE);
-	memset(engine.RAM.data, 0, RAM_SIZE);
-	memset(*engine.flags, 0, size_of(Status_Flags));
+virtual_cpu_reset :: () {
+	cpu_reset();
 	engine.PC = 0x8000;
-	engine.S = 0xFF;
-	engine.A = 0;
-	engine.X = 0;
-	engine.Y = 0;
-	log_info("Virtual CPU Init");
 }
 
-virtual_cpu_reset :: () {
-	memset(engine.RAM.data, 0, RAM_SIZE);
-	memset(*engine.flags, 0, size_of(Status_Flags));
+virtual_cpu_init :: () {
+	cpu_init();
 	engine.PC = 0x8000;
-	engine.S = 0xFF;
-	engine.A = 0;
-	engine.X = 0;
-	engine.Y = 0;
-	log_info("Virtual CPU Reset");
+}
+
+next_instruction :: () {
+	intrinsic := read_data(engine.PC);
+	PC_advance(1);
+	exec_operation(xx intrinsic);
 }
 
 cpu_start :: () {
 	threaded_func :: (t: *Thread) -> s64 {
+		PC_jump(read_address(engine.PC));
 		while engine.thread_running {
 			if !engine.metrics.unlock then lock_frame_rate_6502();
 			if engine.running && !engine.debug then next_instruction();
@@ -215,12 +209,6 @@ lock_frame_rate_6502 :: () {
     engine.metrics.last_counter = end_counter;
 }
 
-next_instruction :: () {
-	intrinsic := read_data(engine.PC);
-	update_PC(1);
-	exec_operation(xx intrinsic);
-}
-
 compile_program :: () {
 	// Todo - format input and output
 	path := get_absolute_path(viewer.file_path,, temp);
@@ -241,102 +229,94 @@ indirect_Y :: (addr: u16) -> u16 {
 	return read_address(read_data(addr)) + cast(u16)engine.Y;
 }
 
-// absolute_X :: (addr: u16) -> u16 {
-	// return read_data(addr) + engine.X;
-// }
-
-// absolute_Y :: (addr: u16) -> u16 {
-	// return read_data(addr) + engine.Y;
-// }
-
 compact_immediate :: (func: (u8)) {
 	func(read_data(engine.PC));
-	update_PC(1);
+	PC_advance(1);
 }
 
 compact_absolute_data :: (func: (u8)) {
 	func(read_data(read_address(engine.PC)));
-	update_PC(2);
+	PC_advance(2);
 }
 
 compact_zero_page_data :: (func: (u8)) {
 	func(read_data(cast(u16)read_data(engine.PC)));
-	update_PC(1);
+	PC_advance(1);
 }
 
 compact_ind_X_data :: (func: (u8)) {
 	func(read_data(indirect_X(engine.PC)));
-	update_PC(1);
+	PC_advance(1);
 }
 
 compact_ind_Y_data :: (func: (u8)) {
 	func(read_data(indirect_Y(engine.PC)));
-	update_PC(1);
+	PC_advance(1);
 }
 
 compact_zero_page_X_data :: (func: (u8)) {
 	func(read_data(cast(u16)read_data(engine.PC) + cast(u16)engine.X));
-	update_PC(1);
+	PC_advance(1);
 }
 
 compact_zero_page_Y_data :: (func: (u8)) {
 	func(read_data(cast(u16)read_data(engine.PC) + cast(u16)engine.Y));
-	update_PC(1);
+	PC_advance(1);
 }
 
 compact_absolute_X_data :: (func: (u8)) {
 	func(read_data(read_address(engine.PC) + cast(u16)engine.X));
-	update_PC(2);
+	PC_advance(2);
 }
 
 compact_absolute_Y_data :: (func: (u8)) {
 	func(read_data(read_address(engine.PC) + cast(u16)engine.Y));
-	update_PC(2);
+	PC_advance(2);
 }
 
 compact_absolute_address :: (func: (u16)) {
 	func(read_address(engine.PC));
-	update_PC(2);
+	PC_advance(2);
 }
 
 compact_zero_page_address :: (func: (u16)) {
 	func(cast(u16)read_data(engine.PC));
-	update_PC(1);
+	PC_advance(1);
 }
 
 compact_indirect_address :: (func: (u16)) {
 	func(read_address(read_address(engine.PC)));
-	update_PC(2);
+	PC_advance(2);
 }
 
 compact_ind_X_address :: (func: (u16)) {
 	func(indirect_X(engine.PC));
-	update_PC(1);
+	PC_advance(1);
 }
 
 compact_ind_Y_address :: (func: (u16)) {
 	func(indirect_Y(engine.PC));
-	update_PC(1);
+	PC_advance(1);
 }
 
 compact_zero_page_X_address :: (func: (u16)) {
 	func(cast(u16)read_data(engine.PC) + cast(u16)engine.X);
-	update_PC(1);
+	PC_advance(1);
 }
 
 compact_zero_page_Y_address :: (func: (u16)) {
 	func(cast(u16)read_data(engine.PC) + cast(u16)engine.Y);
-	update_PC(1);
+	PC_advance(1);
 }
 
 compact_absolute_X_address :: (func: (u16)) {
 	func(read_address(engine.PC) + cast(u16)engine.X);
-	update_PC(2);
+	PC_advance(2);
 }
 
 compact_absolute_Y_address :: (func: (u16)) {
 	func(read_address(engine.PC) + cast(u16)engine.Y);
-	update_PC(2);
+	PC_advance(2);
 }
 
 intrinsic_to_string :: (code: Opcode) -> string {

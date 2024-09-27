@@ -89,16 +89,12 @@ INC :: (addr: u16) {
 	write_data(addr, data);
 }
 
-JMP :: (addr: u16) {
-	update_PC(0, addr);
-}
-
 JSR :: (addr: u16) {
-	update_PC(2);
+	PC_advance(2);
 	stack_push(cast,trunc(u8)(engine.PC >> 8));
 	stack_push(cast,trunc(u8)engine.PC);
 
-	update_PC(0, addr);
+	PC_jump(addr);
 }
 
 LDA :: (data: u8) {
@@ -197,7 +193,7 @@ RTS :: () {
 	
 	addr: u16 = (d2 << 8) | d1;
 	
-	update_PC(0, addr);
+	PC_jump(addr);
 }
 
 SBC :: (data: u8) {
@@ -229,7 +225,7 @@ exec_operation :: (opcode: Opcode) {
 	
 	if #complete opcode == {
 		case .BRK;     engine.flags.B = true;  cpu_stop();
-		case .NOP;     update_PC(1);
+		case .NOP;     PC_advance(1);
 		case .CLC;     engine.flags.C = false;
 		case .CLD;     engine.flags.D = false;
 		case .CLI;     engine.flags.I = false;
@@ -261,10 +257,10 @@ exec_operation :: (opcode: Opcode) {
 		case .BPL;     branch_if(cast,no_check(s8)read_data(engine.PC), !engine.flags.N);
 		case .BVS;     branch_if(cast,no_check(s8)read_data(engine.PC),  engine.flags.V);
 		case .BVC;     branch_if(cast,no_check(s8)read_data(engine.PC), !engine.flags.V);
-		case .BIT_ABS; BIT(read_data(read_address(engine.PC)));  update_PC(2);
-		case .BIT_ZPG; BIT(read_data(cast(u16)read_data(engine.PC)));  update_PC(1);
-		case .JMP_ABS; JMP(read_address(engine.PC));
-		case .JMP_IND; JMP(read_address(read_address(engine.PC)));
+		case .BIT_ABS; BIT(read_data(read_address(engine.PC)));       PC_advance(2);
+		case .BIT_ZPG; BIT(read_data(cast(u16)read_data(engine.PC))); PC_advance(1);
+		case .JMP_ABS; PC_jump(read_address(engine.PC));
+		case .JMP_IND; PC_jump(read_address(read_address(engine.PC)));
 		case .JSR_ABS; JSR(read_address(engine.PC));
 		case .INC_ABS; compact_absolute_address(INC);
 		case .INC_ZPG; compact_zero_page_address(INC);
@@ -382,8 +378,8 @@ exec_operation :: (opcode: Opcode) {
 }
 
 virtual_exec_operation :: (opcode: Opcode, data: u16 = 0) {
-	engine.ROM[engine.PC & 0x7FFF] = xx opcode;
-	update_PC(1);
+	virtual_write_ROM(engine.PC, xx opcode);
+	PC_advance(1);
 
 	defer exec_operation(opcode);
 	
@@ -406,7 +402,8 @@ virtual_exec_operation :: (opcode: Opcode, data: u16 = 0) {
 		case .ORA_ZPG; #through; case .ORA_IMM; #through; case .CPY_ZPG; #through; case .EOR_IMM; #through;
 		case .EOR_ZPG; #through; case .EOR_INX; #through; case .EOR_INY; #through; case .EOR_ZPX; #through;
 		case .LDA_IMM; #through; case .LDA_ZPG; #through; case .LDA_INX; #through; case .LDA_INY; #through;
-		case .LDA_ZPX; engine.ROM[engine.PC & 0x7FFF] = cast,trunc(u8)data;
+		case .LDA_ZPX; virtual_write_ROM(engine.PC, cast,trunc(u8)data);
+		
 		
 		case .BIT_ABS; #through;
 		case .JMP_ABS; #through; case .JMP_IND; #through; case .JSR_ABS; #through; case .INC_ABS; #through;
@@ -422,7 +419,7 @@ virtual_exec_operation :: (opcode: Opcode, data: u16 = 0) {
 		case .ROR_ABX; #through; case .ROL_ABS; #through; case .ROL_ABX; #through; case .LSR_ABS; #through;
 		case .LSR_ABX; #through; case .ASL_ABS; #through;
 		case .ASL_ABX;
-			engine.ROM[ engine.PC      & 0x7FFF] = cast,trunc(u8) data;
-			engine.ROM[(engine.PC + 1) & 0x7FFF] = cast,trunc(u8)(data >> 8);
+			virtual_write_ROM(engine.PC    , cast,trunc(u8)data);
+			virtual_write_ROM(engine.PC + 1, cast,trunc(u8)(data >> 8));
 	}
 }

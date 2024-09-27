@@ -14,25 +14,25 @@ read_ROM :: (name: string) {
 	file_close(*file);
 }
 
-update_PC :: ($steps: u8, addr: u16 = 0) {
-	#if !steps then engine.PC = addr;
-	else            engine.PC += steps;
-}
+PC_advance :: (steps: u8) { engine.PC += steps; }
+PC_jump    :: (addr: u16) { engine.PC  = addr;  }
 
 read_data :: (addr: u16) -> u8 {
-	if addr < 0x8000 {
-		return engine.RAM[addr];
-	}
-	return engine.ROM[addr & 0x7FFF];
+	if addr < RAM_SIZE then return engine.RAM[addr];
+	return engine.ROM[addr & (RAM_SIZE - 1)];
 }
 
 write_data :: (addr: u16, data: u8) {
-	if addr < 0x8000 {
-		engine.RAM[addr] = data;
+	if addr >= RAM_SIZE {
+		log_error("Cannot write in ROM space");
 		return;
 	}
-	
-	log_error("Cannot write in ROM space");
+	engine.RAM[addr] = data;
+}
+
+virtual_write_ROM :: (addr: u16, data: u8) {
+	assert(addr >= RAM_SIZE);
+	engine.ROM[addr & (RAM_SIZE - 1)] = data;
 }
 
 read_address :: (addr: u16) -> u16 {

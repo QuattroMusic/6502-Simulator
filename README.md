@@ -15,7 +15,7 @@ and an input display!
 - [x] display
 - [x] keyboard input
 - [x] date in memory
-- [ ] fix / improve 6502 engine
+- [x] fix / improve 6502 engine
 
 #### Version 2.0
 - [ ] render revamp
@@ -29,3 +29,8 @@ and an input display!
 
 #### Version 4.0
 - [ ] code editor instead of code viewer
+
+#### Thigs to do right now
+- [ ] use the render texture for the display
+- [ ] cleanup the horrifying code
+- [ ] read the TODOs in the code

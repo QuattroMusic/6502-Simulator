@@ -403,12 +403,12 @@ test_JMP :: () {
 	test_handler("JMP");
 	
 	virtual_cpu_reset();
-	
-	engine.ROM[ engine.PC      & 0x7FFF] = xx Opcode.JMP_ABS;
-	engine.ROM[(engine.PC + 1) & 0x7FFF] = xx ((engine.PC + 4) & 0xFF);
-	engine.ROM[(engine.PC + 2) & 0x7FFF] = xx (engine.PC >> 8);
-	engine.ROM[(engine.PC + 3) & 0x7FFF] = xx Opcode.CLD;
-	engine.ROM[(engine.PC + 4) & 0x7FFF] = xx Opcode.SED;
+
+	virtual_write_ROM(engine.PC    , xx Opcode.JMP_ABS);
+	virtual_write_ROM(engine.PC + 1, xx ((engine.PC + 4 ) & 0xFF));
+	virtual_write_ROM(engine.PC + 2, xx (engine.PC >> 8));
+	virtual_write_ROM(engine.PC + 3, xx Opcode.CLD);
+	virtual_write_ROM(engine.PC + 4, xx Opcode.SED);
 	
 	next_instruction();
 	next_instruction();
@@ -416,11 +416,11 @@ test_JMP :: () {
 	assert_flags(D = 1);
 	virtual_exec_operation(.CLD);
 	
-	engine.ROM[ engine.PC      & 0x7FFF] = xx Opcode.JMP_ABS;
-	engine.ROM[(engine.PC + 1) & 0x7FFF] = xx ((engine.PC + 4) & 0xFF);
-	engine.ROM[(engine.PC + 2) & 0x7FFF] = xx (engine.PC >> 8);
-	engine.ROM[(engine.PC + 3) & 0x7FFF] = xx Opcode.SED;
-	engine.ROM[(engine.PC + 4) & 0x7FFF] = xx Opcode.CLD;
+	virtual_write_ROM(engine.PC    , xx Opcode.JMP_ABS);
+	virtual_write_ROM(engine.PC + 1, xx ((engine.PC + 4 ) & 0xFF));
+	virtual_write_ROM(engine.PC + 2, xx (engine.PC >> 8));
+	virtual_write_ROM(engine.PC + 3, xx Opcode.SED);
+	virtual_write_ROM(engine.PC + 4, xx Opcode.CLD);
 	
 	next_instruction();
 	next_instruction();
@@ -896,10 +896,11 @@ test_branch :: () {
 	test_handler("branch");
 	
 	internal_branch :: (op: Opcode) {
-		engine.ROM[ engine.PC      & 0x7FFF] = xx op;
-		engine.ROM[(engine.PC + 1) & 0x7FFF] = 1;
-		engine.ROM[(engine.PC + 2) & 0x7FFF] = xx Opcode.SED;
-		engine.ROM[(engine.PC + 3) & 0x7FFF] = xx Opcode.CLD;
+		virtual_write_ROM(engine.PC    , xx op);
+		virtual_write_ROM(engine.PC + 1, 1);
+		virtual_write_ROM(engine.PC + 2, xx Opcode.SED);
+		virtual_write_ROM(engine.PC + 3, xx Opcode.CLD);
+		
 		next_instruction();
 		next_instruction();
 	}
