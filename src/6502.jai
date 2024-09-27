@@ -210,9 +210,8 @@ lock_frame_rate_6502 :: () {
 }
 
 compile_program :: () {
-	// Todo - format input and output
 	path := get_absolute_path(viewer.file_path,, temp);
-	fmt := tprint("data\\vasm6502_old.exe -Fbin -o \"out.bin\" -dotdir \"%\"", path);
+	fmt := tprint("vasm6502_oldstyle.exe -Fbin -o \"out.bin\" -dotdir \"%\"", path);
 
 	res := run_command(..break_command_into_strings(fmt));
 	engine.compilation_successful = false;

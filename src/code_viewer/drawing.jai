@@ -73,7 +73,7 @@ parse_token :: (t: Color_Tokens) -> Col {
 		case .STRING;      return GREEN;
 		case .TEXT;        return WHITE;
 	}
-	assert(false);  // Todo - better errors handling
+	assert(false);
 	return .{};
 }
 

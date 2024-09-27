@@ -92,8 +92,6 @@ f64  :: float64;
 #import "dxgi";
 
 #if OS == {
-	// Todo - still not platform dependent
-	//        even if the rendering is DX11, so we just support Windows, lol
 	case .WINDOWS; #import "Windows";
 	case; #assert(false);
 }

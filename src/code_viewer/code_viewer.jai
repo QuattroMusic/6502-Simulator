@@ -46,8 +46,8 @@ init_code_viewer :: (path: string) {
 	viewer.file_path = copy_string(path);
 	viewer.file_name = split_from_right(viewer.file_path, #char "\\");
 
-	// Todo - maybe check if file exists
-	file := file_open(path, for_writing = false);
+	file, success := file_open(path, for_writing = false);
+	if !success then log_error("Unable to open file %", path);
 	size := file_length(file);
 	
 	out := round_number_power_of_2(size);

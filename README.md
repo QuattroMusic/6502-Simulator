@@ -7,11 +7,11 @@ and an input display!
 ### Technical specifications
 - 32kB RAM and ROM
 - 120x80 display
-- date and time in RAM
-- keyboard input
-- frequency selector in the range of 1Hz to 1GHz
+- Date and time in RAM
+- Keyboard input
+- Frequency selector in the range of 1Hz to 1GHz
 
-##### Address Space
+#### Address Space
 ```
 ┌───────────────┐
 │               │ 0x0000
@@ -40,7 +40,7 @@ and an input display!
 └───────────────┘
 ```
 
-##### Programmers Model
+#### Programmers Model
 At the beginning of the exectution, the 6502 will read the data in the address `0xFFFC` and `0xFFFD`.
 This address will give the entry point of your program (see examples).
 
@@ -52,7 +52,7 @@ and the 8b `P` reg, which includes the flags for comparisons and branching.
 ```
    MSB                             LSB
     ┌───┬───┬───┬───┬───┬───┬───┬───┐
-P = │ N │ V │ - │ B │ D │ I │ Z │ C │
+P = │ N │ V │ - │ B │ D │ I │ Z │ C │
     └───┴───┴───┴───┴───┴───┴───┴───┘
 ```
 - `N`: Negative result
@@ -65,6 +65,23 @@ P = │ N │ V │ - │ B │ D │ I │ Z │ C │
 
 For a complete list of the implemented intrinsics, you may look at this [cheatsheet](https://www.atarimania.com/documents/6502%20(65xx)%20Microprocessor%20Instant%20Reference%20Card.pdf)
 
+### Installation
+
+1. Download the simulator from this repository
+2. Download the [Vasm compiler](http://www.compilers.de/vasm.html) and add it to the same folder of the executable
+3. Enjoy!
+
+### Minimal Example
+```
+    .org $8000
+init:
+    ; your code here!
+
+    .org $FFFC
+    .word init
+    .word $0000
+```
+
 ### Long term features
 
 #### Version 1.0
@@ -75,8 +92,8 @@ For a complete list of the implemented intrinsics, you may look at this [cheatsh
 
 #### Version 2.0
 - [ ] render revamp
-- [ ] simply a calculator / conversion panel
-- [ ] options panel
+- [ ] calculator / conversion panel
+- [ ] options panel + save configurations to file
 - [ ] use an internal 6502 compiler
 
 #### Version 3.0
@@ -86,7 +103,8 @@ For a complete list of the implemented intrinsics, you may look at this [cheatsh
 #### Version 4.0
 - [ ] code editor instead of code viewer
 
-#### Thigs to do right now
-- [ ] use the render texture for the display
-- [ ] cleanup the horrifying code
-- [ ] read the TODOs in the code
+---
+
+Do you have any questions or are you interested on my projects? Feel free to contact me on Discord `@quattromusic`!
+
+Join [my server](https://discord.gg/wXECkMJb6V) for the latest news.

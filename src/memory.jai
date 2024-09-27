@@ -4,7 +4,7 @@ read_ROM :: (name: string) {
 	
 	file_seek(file, 0, .END);
 	result, size := file_tell(file);
-	// Todo - at the moment we're handling only 32kB ROM files
+
 	if size != ROM_SIZE then log_error("Incompatible file, it must to be a 32kB ROM");
 	file_seek(file, 0, .START);
 	
