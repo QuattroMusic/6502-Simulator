@@ -1,17 +1,17 @@
 # 6502-Simulator
-A simple to use 6502 emulator / simulator, featuring a code viewer, registers viewers
+A simple to use 6502 simulator, featuring a code viewer, registers viewers
 and an input display!
 
 ![[image]](_data/6502.png)
 
-### Technical specifications
+## Technical specifications
 - 32kB RAM and ROM
 - 120x80 display
 - Date and time in RAM
 - Keyboard input
 - Frequency selector in the range of 1Hz to 1GHz
 
-#### Address Space
+### Address Space
 ```
 ┌───────────────┐
 │               │ 0x0000
@@ -40,7 +40,7 @@ and an input display!
 └───────────────┘
 ```
 
-#### Programmers Model
+### Programmers Model
 At the beginning of the exectution, the 6502 will read the data in the address `0xFFFC` and `0xFFFD`.
 This address will give the entry point of your program (see examples).
 
@@ -65,13 +65,13 @@ P = │ N │ V │ - │ B │ D │ I │ Z │ C │
 
 For a complete list of the implemented intrinsics, you may look at this [cheatsheet](https://www.atarimania.com/documents/6502%20(65xx)%20Microprocessor%20Instant%20Reference%20Card.pdf)
 
-### Installation
+## Installation
 
 1. Download the simulator from this repository
-2. Download the [Vasm compiler](http://www.compilers.de/vasm.html) and add it to the same folder of the executable
+2. Download the [Vasm compiler](http://www.compilers.de/vasm.html) and add it to the same folder of the executable, or setup environment variables
 3. Enjoy!
 
-### Minimal Example
+## Minimal Example
 ```
     .org $8000
 init:
@@ -82,29 +82,29 @@ init:
     .word $0000
 ```
 
-### Long term features
+## Long term features
 
-#### Version 1.0
+### Version 1.0
 - [x] display
 - [x] keyboard input
 - [x] date in memory
 - [x] fix / improve 6502 engine
 
-#### Version 2.0
+### Version 2.0
 - [ ] render revamp
 - [ ] calculator / conversion panel
 - [ ] options panel + save configurations to file
 - [ ] use an internal 6502 compiler
 
-#### Version 3.0
+### Version 3.0
 - [ ] error handling
 - [ ] browser panel
 
-#### Version 4.0
+### Version 4.0
 - [ ] code editor instead of code viewer
 
 ---
 
-Do you have any questions or are you interested on my projects? Feel free to contact me on Discord `@quattromusic`!
+Are you interested on my projects? Feel free to contact me on Discord `@quattromusic`!
 
 Join [my server](https://discord.gg/wXECkMJb6V) for the latest news.
