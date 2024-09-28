@@ -35,7 +35,7 @@ main :: () {
 	cpu_init();
 	init_window(MIN_SCREEN_WIDTH, MIN_SCREEN_HEIGHT);
 
-	init_code_viewer("Random number.s");
+	init_code_viewer("examples/Random number.s");
 
 	while vp.running {
 		lock_frame_rate();

@@ -41,13 +41,15 @@ and an input display!
 ```
 
 ### Programmers Model
-At the beginning of the exectution, the 6502 will read the data in the address `0xFFFC` and `0xFFFD`.
-This address will give the entry point of your program (see examples).
+At the beginning of the exectution, the 6502 will read the data at the address `0xFFFC` and `0xFFFD` (RES Vector).
+The resulted address will give the entry point of your program (see examples or the minimal code).
+
+Multiple byte data is stored in little-endian, so, the address `0x1234` will be stored the RAM as `0x34` and `0x12`
 
 The 6502 features 3 general purpose 8b registers, called `A` (accumulator), `X` and `Y`.
 Then there's the 16b `PC` (Program Counter) used to point at the instruction in the ROM,
 an 8b register `S`, which points to the next free slot in the stack (0xFF at startup, downwards)
-and the 8b `P` reg, which includes the flags for comparisons and branching.
+and the 8b `P` reg, which includes the flags used for comparisons and branching.
 
 ```
    MSB                             LSB
@@ -71,7 +73,7 @@ For a complete list of the implemented intrinsics, you may look at this [cheatsh
 2. Download the [Vasm compiler](http://www.compilers.de/vasm.html) and add it to the same folder of the executable, or setup environment variables
 3. Enjoy!
 
-## Minimal Example
+## Minimal Code
 ```
     .org $8000
 init:
@@ -105,6 +107,6 @@ init:
 
 ---
 
-Are you interested on my projects? Feel free to contact me on Discord `@quattromusic`!
+Questions? Bugs? Ideas? Feel free to contact me on Discord `@quattromusic`!
 
 Join [my server](https://discord.gg/wXECkMJb6V) for the latest news.

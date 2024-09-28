@@ -127,6 +127,8 @@ init_shaders :: () {
 }
 
 init_font :: () {
+	// The font is stored internally as lines of bits. If a bit is 1, there's the pixel, and if not, it's empty
+	// so, we should convert the packed data to the format for DX11
 	mem := cast(*u8)alloc(texture_width * texture_height * texture_channels,, temp);
 
 	off: int;

@@ -159,13 +159,26 @@ cpu_init :: () {
 }
 
 virtual_cpu_reset :: () {
-	cpu_reset();
+	memset(engine.RAM.data, 0, RAM_SIZE);
+	memset(*engine.flags, 0, size_of(Status_Flags));
 	engine.PC = 0x8000;
+	engine.S = 0xFF;
+	engine.A = 0;
+	engine.X = 0;
+	engine.Y = 0;
+	log_info("Virtual CPU Reset");
 }
 
 virtual_cpu_init :: () {
-	cpu_init();
+	memset(engine.ROM.data, 0, ROM_SIZE);
+	memset(engine.RAM.data, 0, RAM_SIZE);
+	memset(*engine.flags, 0, size_of(Status_Flags));
 	engine.PC = 0x8000;
+	engine.S = 0xFF;
+	engine.A = 0;
+	engine.X = 0;
+	engine.Y = 0;
+	log_info("Virtual CPU Init");
 }
 
 next_instruction :: () {
@@ -197,8 +210,8 @@ lock_frame_rate_6502 :: () {
     seconds_elapsed_for_frame: f32 = (cast(f32)(read_os_timer() - engine.metrics.last_counter)) / vp.perf_count_frequency;
     if seconds_elapsed_for_frame < target_s {
         if vp.sleep_is_granular {
-            sleep_ms := 1000.0 * target_s - seconds_elapsed_for_frame - 1;
-            if sleep_ms > 0 then Sleep(xx sleep_ms);
+			sleep_ms := cast(s32)(1000.0 * (target_s - seconds_elapsed_for_frame));
+            if sleep_ms > 0 then Sleep(sleep_ms);
         }
         while seconds_elapsed_for_frame < target_s {
             seconds_elapsed_for_frame = (cast(f32)(read_os_timer() - engine.metrics.last_counter)) / vp.perf_count_frequency;
@@ -319,6 +332,7 @@ compact_absolute_Y_address :: (func: (u16)) {
 }
 
 intrinsic_to_string :: (code: Opcode) -> string {
+	// This function is used to not increase the load size of the 6502 engine
 	info :: type_info(Opcode);
 	c := cast(u8)code;
 	s: string;
