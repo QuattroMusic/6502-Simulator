@@ -11,7 +11,6 @@ goto :end
 :start_tool
 	pushd out
 	
-	REM start RGUI.exe
 	FOR %%f IN (*.exe) DO (
 		  set executable=%%f
 		  GOTO :cont
