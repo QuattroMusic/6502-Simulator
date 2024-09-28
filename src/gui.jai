@@ -75,6 +75,13 @@ draw_buttons_controls :: () {
 	if button("Reset", .{370, 40}, .{80, 25}, 1, t) {
 		cpu_reset();
 	}
+	
+	if button("Reload", .{460, 40}, .{80, 25}, 1, t) {
+		// Todo - This button is temporary
+		temp := tprint(viewer.file_path);
+		deinit_code_viewer();
+		init_code_viewer(temp);
+	}
 }
 
 draw_code_viewer :: () {
@@ -102,7 +109,7 @@ handle_memory_scrollbar :: (pos: Vec2, size: Vec2) {
 			ui.memory_scrollbar_pos -= amt;
 		}
 	}
-	if is_mouse_pressed(0) && can_interact_with_widget() && is_mouse_inside_rect(.{pos.x + size.x - 12, pos.y}, .{12, size.y}) {
+	if is_mouse_pressed(0) && can_interact_with_widget(0) && is_mouse_inside_rect(.{pos.x + size.x - 12, pos.y}, .{12, size.y}) {
 		ui.memory_scrollbar_selected = true;
 	}
 	
@@ -170,7 +177,7 @@ draw_program_memory :: () {
 		
 		scroll_pos := pos + .{size.x - 12, ui.memory_scrollbar_pos * aspect_ratio};
 		
-		state := scrollbar_interaction(scroll_pos, .{12, size.y});
+		state := scrollbar_interaction(scroll_pos, .{12, size.y}, 2);
 		col: Col = ---;
 		if state == {
 			case .NORMAL;  col = COLOR_WIDGET_BORDER;
@@ -333,7 +340,7 @@ draw_display :: () {
 	
 	mouse_over_panel = false;
 	
-	if is_key_pressed(KEY_F1) {
+	if is_key_pressed(KEY_F1) && !ui.show_popup {
 		ui.display_visible = !ui.display_visible;
 		x := (vp.width - w) / 2;
 		y := (vp.height - h) / 2;

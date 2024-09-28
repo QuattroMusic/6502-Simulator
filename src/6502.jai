@@ -2,6 +2,10 @@ General_UI :: struct {
 	memory_scrollbar_selected: bool;
 	memory_scrollbar_pos: f32;
 
+	show_popup: bool;
+	popup_title: string;
+	error_message: string;
+
 	display_pressed_pos: Vec2;
 	display_pos: Vec2;
 	display_selected: bool;
@@ -226,9 +230,19 @@ compile_program :: () {
 	path := get_absolute_path(viewer.file_path,, temp);
 	fmt := tprint("vasm6502_oldstyle.exe -Fbin -o \"out.bin\" -dotdir \"%\"", path);
 
-	res := run_command(..break_command_into_strings(fmt));
+	res, output_string, error_string := run_command(..break_command_into_strings(fmt), capture_and_return_output = true);
 	engine.compilation_successful = false;
-	if res.exit_code != 0 then return;  // Todo - handle better this
+	
+	free(output_string);
+	
+	if res.exit_code != 0 {
+		ui.show_popup = true;
+		ui.popup_title = "Compilation failed";
+		ui.error_message = error_string;
+		return;
+	}
+	
+	free(error_string);
 
 	engine.compilation_successful = true;
 }
@@ -359,7 +373,6 @@ intrinsic_to_string :: (code: Opcode) -> string {
 			case; log_error("Unhandled condition");
 		}
 	}
-	assert(false);
 	return "";
 }
 

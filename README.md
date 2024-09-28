@@ -1,6 +1,5 @@
 # 6502-Simulator
-A simple to use 6502 simulator, featuring a code viewer, registers viewers
-and an input display!
+A simple to use 6502 simulator, featuring a code viewer, keyboard input and an input display!
 
 ![[image]](_data/6502.png)
 
@@ -96,13 +95,14 @@ init:
 - [ ] render revamp
 - [ ] calculator / conversion panel
 - [ ] options panel + save configurations to file
-- [ ] use an internal 6502 compiler
-
-### Version 3.0
-- [ ] error handling
 - [ ] browser panel
 
+### Version 3.0
+- [ ] implement the decimal mode
+- [ ] use an internal 6502 compiler
+
 ### Version 4.0
+- [ ] error handling
 - [ ] code editor instead of code viewer
 
 ---

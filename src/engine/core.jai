@@ -133,7 +133,7 @@ EventsManager :: (hwnd: *void, msg: u32, wparam: u64, lparam: s64) -> s64 #c_cal
 			vp.height = h;
 			if vp.running {
 				resize_viewport();
-				// Todo - uses this when i decide to remove the depth stencil
+				// Todo - use this when i decide to remove the depth stencil
 				// ID3D11DeviceContext_OMSetRenderTargets(devcon, 1, *back_buffer, null);
 			}
 		case WM_SYSKEYDOWN; #through;

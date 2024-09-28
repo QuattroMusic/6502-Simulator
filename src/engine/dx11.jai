@@ -221,11 +221,13 @@ init_graphics :: () {
 	rtbd.RenderTargetWriteMask  =  xx D3D11_COLOR_WRITE_ENABLE.ALL;
 
 	blend_desc: D3D11_BLEND_DESC;
-	blend_desc.AlphaToCoverageEnable = xx false;
+	blend_desc.AlphaToCoverageEnable = xx true;
 	blend_desc.RenderTarget[0] = rtbd;
 
 	ID3D11Device_CreateBlendState(dev, *blend_desc, *transparency);
 
+	ID3D11DeviceContext_OMSetBlendState(devcon, transparency, null, 0xFFFFFFFF);
+	
 	update_camera();
 }
 
@@ -271,7 +273,7 @@ draw_buffer :: (data: *Buffer_Data) {
 	ID3D11DeviceContext_IASetVertexBuffers(devcon, 0, 1, *data.VBuffer, *stride, *offset);
 	ID3D11DeviceContext_IASetIndexBuffer(devcon, data.IBuffer, .R32_UINT, 0);
 
-	// Todo - something more performant?
+	// Todo - something more performant? Or is this already performant?
 	ms: D3D11_MAPPED_SUBRESOURCE;
 	ID3D11DeviceContext_Map(devcon, data.VBuffer, 0, .WRITE_DISCARD, 0, *ms);
 	memcpy(ms.pData, data.vertices_data, size * data.vertices_count);
@@ -288,10 +290,7 @@ draw_buffer :: (data: *Buffer_Data) {
 }
 
 flush_buffers :: () {
-    ID3D11DeviceContext_OMSetBlendState(devcon, null, null, 0xFFFFFFFF);
 	draw_buffer(*quad_buffer);
-
-    ID3D11DeviceContext_OMSetBlendState(devcon, transparency, null, 0xFFFFFFFF);
 	draw_buffer(*font_buffer);
 }
 
@@ -450,7 +449,7 @@ depth_stencil_buffer: *ID3D11Texture2D;
 depth_stencil_state: *ID3D11DepthStencilState;
 
 texture_data :: u64.[
-	0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000,
+	0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000_000000000000,
 	0x38fc3cf8fefe3ec6, 0x7e06c6c0c6c67cfc, 0x7cfc787ec6c6c6c6, 0x66fe_788078100060,
 	0x6cc666ccc0c060c6, 0x1806ccc0eee6c6c6, 0xc6c6cc18c6c6c6ee, 0x660e_604018280020,
 	0xc6c6c0c6c0c0c0c6, 0x1806d8c0fef6c6c6, 0xc6c6c018c6c6d67c, 0x661c_602018440030,
@@ -459,7 +458,7 @@ texture_data :: u64.[
 	0xc6c666ccc0c066c6, 0x18c6dcc0c6cec6c0, 0xccdcc618c638eeee, 0x18e0_600418000000,
 	0xc6fc3cf8fec03ec6, 0x7e7ccefec6c67cc0, 0x7ace7c187c10c6c6, 0x18fe_780278007e00,
 
-	0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000,
+	0x0000000000000000, 0x00000000000000_00, 0x0000000000000000, 0x00_00000000000000,
 	0x1c6c001000203030, 0x60000000000002_38, 0x187c7e1cfc3cfe78, 0x7c_00600c00603838,
 	0x1c6c283cc4503060, 0x30281000000004_4c, 0x38c60c3cc060c6c4, 0xc6_60601800304c44,
 	0x38247c60c8501060, 0x30101000000008_c6, 0x180e186cfcc00ce4, 0xc6_6000307e180c4c,
@@ -475,7 +474,7 @@ texture_data :: u64.[
 	0xe01c104c24000000, 0x7e46421800000000, 0x0000000000000000, 0x0000000000000000,
 	0x6018100024000000, 0x0046422400000000, 0x0000000000000000, 0x0000000000000000,
 	0x6018100024000000, 0x007c7e4200000000, 0x0000000000000000, 0x0000000000000000,
-	0x387010003e000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000
+	0x387010003c000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000
 ];
 
 texture_height   :: #run texture_data.count / 4;

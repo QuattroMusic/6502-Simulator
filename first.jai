@@ -2,8 +2,12 @@ update_6502 :: () {
 	// those two should be put before the drawing, see `EventsManager` - `WM_SIZE`
 	handle_viewport_movement();
 	handle_viewport_resize();
-	
+
+	handle_widget_layering();
+
 	handle_input_and_time();
+
+	if ui.show_popup then draw_popup(800, 400);
 
 	draw_header();
 	draw_buttons_controls();
@@ -14,7 +18,7 @@ update_6502 :: () {
 	draw_program_frequency();
 	draw_current_instruction();
 	draw_input();
-	
+
 	draw_display();
 }
 
@@ -40,7 +44,7 @@ main :: () {
 	while vp.running {
 		lock_frame_rate();
 		fetch_window_inputs();
-		
+
 		draw_one_frame();
 	}
 	deinit_window();

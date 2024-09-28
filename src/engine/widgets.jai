@@ -4,11 +4,11 @@ Interaction_State :: enum {
 	PRESSED;
 }
 
-scrollbar_interaction :: (pos: Vec2, size: Vec2) -> Interaction_State {
+scrollbar_interaction :: (pos: Vec2, size: Vec2, layer: f32) -> Interaction_State {
 	state := Interaction_State.NORMAL;
 	widget_uuid += 1;
 	
-	if is_mouse_inside_rect(pos, size) && can_interact_with_widget() {
+	if is_mouse_inside_rect(pos, size) && can_interact_with_widget(layer) {
 		if is_mouse_pressed(0) then widget_selected = widget_uuid;
 		
 		state = .HOVER;
@@ -22,10 +22,10 @@ scrollbar_interaction :: (pos: Vec2, size: Vec2) -> Interaction_State {
 	return state;
 }
 
-button_interaction :: (pos: Vec2, size: Vec2, id: u32) -> (bool, Interaction_State) {
+button_interaction :: (pos: Vec2, size: Vec2, id: u32, layer: f32) -> (bool, Interaction_State) {
 	state := Interaction_State.NORMAL;
 	
-	if is_mouse_inside_rect(pos, size) && can_interact_with_widget() {
+	if is_mouse_inside_rect(pos, size) && can_interact_with_widget(layer) {
 		if is_mouse_pressed(0) then widget_selected = id;
 		
 		state = .HOVER;
@@ -47,7 +47,7 @@ button_interaction :: (pos: Vec2, size: Vec2, id: u32) -> (bool, Interaction_Sta
 }
 
 button_internal :: (pos: Vec2, size: Vec2, layer: f32, $t: f32, id: u32) -> (bool, Col) {
-	fire, state := button_interaction(pos, size, id);
+	fire, state := button_interaction(pos, size, id, layer);
 
 	bg_col: Col;
 	border_col: Col;
@@ -97,7 +97,7 @@ checkbox :: (value: *bool, $$text: string, pos: Vec2, size: Vec2, layer: f32) {
 	widget_uuid += 1;
 	s := measure_text(text, 1);
 	
-	fire, state := button_interaction(pos, size + .{s.x + 12, 0}, widget_uuid);
+	fire, state := button_interaction(pos, size + .{s.x + 12, 0}, widget_uuid, layer);
 
 	bg_col: Col;
 	text_col: Col;
@@ -131,7 +131,7 @@ draw_step_hslider :: (pos: Vec2, size: Vec2, layer: f32, amt: s32, value: *int, 
 		col_main = COLOR_WIDGET_BG;
 		col_step = COLOR_WIDGET_BORDER;
 		
-		if is_mouse_inside_rect(.{pos.x - 4, pos.y}, .{size.x + 8, size.y}) && can_interact_with_widget() {
+		if is_mouse_inside_rect(.{pos.x - 4, pos.y}, .{size.x + 8, size.y}) && can_interact_with_widget(layer) {
 			if widget_selected == 0 then col_main = COLOR_WIDGET_BG_HOVERED;
 			if is_mouse_pressed(0) then widget_selected = widget_uuid;
 		}
@@ -157,24 +157,58 @@ draw_step_hslider :: (pos: Vec2, size: Vec2, layer: f32, amt: s32, value: *int, 
 	draw_rect(.{pos_x - 4, pos.y}, .{8, size.y}, layer + 2, col_main);
 }
 
-draw_window :: (pos: Vec2, size: Vec2, layer: f32, $name: string) {
+draw_window :: (pos: Vec2, size: Vec2, layer: f32, $$name: string) {
 	draw_rect(pos, size, layer, COLOR_WIDGET_BG);
 	draw_rect_lines(pos, size, layer + 1, COLOR_WIDGET_BORDER);
 	
 	draw_rect_lines(pos, .{size.x, 24}, layer + 1, COLOR_WIDGET_BORDER);
 	
-	draw_text(name, pos + .{9, 3}, layer + 1, 2, COLOR_WIDGET_BORDER);
+	draw_text(name, pos + .{9, 8}, layer + 1, 1, COLOR_WIDGET_BORDER);
+}
+
+draw_popup :: (width: f32, height: f32) {
+	x := (vp.width - width) / 2;
+	y := (vp.height - height) / 2;
+
+	draw_window(.{x, y}, .{width, height}, 10, ui.popup_title);
+	
+	if ui.popup_title == "Compilation failed" {
+		// Todo - I could make an enum for the type of popup, but I'm lazy
+		// afterall this is temporary
+		draw_text(ui.error_message, .{x + 10, y + 40}, 11, 2, WHITE, wrap = width - 20);
+	}
+	
+	w :: 90;
+	h :: 24;
+	if button("Continue", .{x + width - w - 10, y + height - h - 10}, .{w, h}, 11, 1) || is_key_pressed(KEY_ESC) {
+		ui.show_popup = false;
+		free(ui.error_message);
+	}
 }
 
 finalize_widgets :: () {
 	widget_uuid = 0;
 	if is_mouse_released(0) then widget_selected = 0;
+	
+	target_fade := ifx ui.show_popup 0.75 else 0;
+	fade_value = lerp(fade_value, target_fade, vp.dt / 0.08);
+	
+	draw_rect(.{0, 0}, .{xx vp.width, xx vp.height}, 9, .{0, 0, 0, fade_value});
 }
 
-can_interact_with_widget :: () -> bool {
-	return !mouse_over_panel;
+handle_widget_layering :: () {
+	if ui.show_popup { focused_layer = 10; return; }
+	if ui.display_visible { focused_layer = 4; return; }
+	focused_layer = 0;
+}
+
+can_interact_with_widget :: (layer: f32) -> bool {
+	return (!mouse_over_panel) && (focused_layer <= layer);
 }
 
 widget_uuid: u32;
 widget_selected: u32;
 mouse_over_panel: bool;
+
+fade_value: f32;
+focused_layer: f32;

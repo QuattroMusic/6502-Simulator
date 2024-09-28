@@ -28,7 +28,7 @@ draw_scrollbars :: () {
 	bar_height := aspect_ratio * size.y;
 	
 	scroll_pos := pos + .{size.x - 12, scr_pos * aspect_ratio};
-	state := scrollbar_interaction(scroll_pos, .{12, size.y});
+	state := scrollbar_interaction(scroll_pos, .{12, size.y}, 2);
 	col: Col = ---;
 	if state == {
 		case .NORMAL;  col = COLOR_WIDGET_BORDER;
@@ -64,7 +64,7 @@ draw_colored_text :: () {
 }
 
 parse_token :: (t: Color_Tokens) -> Col {
-	if t == {
+	if #complete t == {
 		case .INSTRUCTION; return PURPLE2;
 		case .COMMENT;     return GRAY;
 		case .NUMBER;      return BLUE2;
@@ -73,8 +73,6 @@ parse_token :: (t: Color_Tokens) -> Col {
 		case .STRING;      return GREEN;
 		case .TEXT;        return WHITE;
 	}
-	assert(false);
-	return .{};
 }
 
 init_code_viewer_coloring :: () {
@@ -104,31 +102,37 @@ code_viewer_coloring_parse_line :: (line: s64, idx: u32, len: s64) {
 	
 	label_len: u32;
 	it := 0;
+	tab_size := 0;
+	
 	while it < len {
 		defer it += 1;
 		c := viewer.content[idx + it];
 		if c == #char " " then continue;
+		if c == #char "\t" {
+			tab_size += 3;
+			continue;
+		}
 		else if (it + 2) < len && is_an_instruction(viewer.content.data + idx + it) {
-			add_new_color_token(idx + it, 3, line, it, .INSTRUCTION);
+			add_new_color_token(idx + it, 3, line, it + tab_size, .INSTRUCTION);
 			it += 3;
 		} else if c == #char ";" {
-			add_new_color_token(idx + it, len - it, line, it, .COMMENT);
+			add_new_color_token(idx + it, len - it, line, it + tab_size, .COMMENT);
 			return;
 		} else if c == #char "." {
 			tok_length := eat_until_whitespace(idx, xx it, xx len);
-			add_new_color_token(idx + it, tok_length, line, it, .DOTDIR);
-			it += tok_length;
+			add_new_color_token(idx + it, tok_length, line, it + tab_size, .DOTDIR);
+			it += tok_length - 1;
 		} else if c == #char "$" || c == #char "#" || c == #char "%" || (#char "0" <= c && c <= #char "9") {
 			tok_length := eat_until_whitespace(idx, xx it, xx len);
-			add_new_color_token(idx + it, tok_length, line, it, .NUMBER);
+			add_new_color_token(idx + it, tok_length, line, it + tab_size, .NUMBER);
 			it += tok_length;
-		} else if is_word_a_label(xx (idx + it), *label_len) {
-			add_new_color_token(idx + it, label_len + 1, line, it, .LABEL);
+		} else if is_word_a_label(xx idx, xx it, xx len, *label_len) {
+			add_new_color_token(idx + it, label_len + 1, line, it + tab_size, .LABEL);
 			it += label_len;
 			label_len = 0;
 		} else {
 			tok_length := eat_until_whitespace(idx, xx it, xx len);
-			add_new_color_token(idx + it, tok_length, line, it, .TEXT);
+			add_new_color_token(idx + it, tok_length, line, it + tab_size, .TEXT);
 			it += tok_length;
 		}
 	}
@@ -137,19 +141,21 @@ code_viewer_coloring_parse_line :: (line: s64, idx: u32, len: s64) {
 eat_until_whitespace :: (idx: u32, i: u32, len: u32) -> u32 {
 	c: u8;
 	length: u32;
-	while i < len && c != #char " " {
-		i += 1;
+	while i < len {
 		c = viewer.content[idx + i];
+		if c == #char " " then break;
+		if c == #char ";" then break;
+		i += 1;
 		length += 1;
 	}
 	return length;
 }
 
-is_word_a_label :: (idx: u32, label_len: *u32) -> bool {
+is_word_a_label :: (idx: u32, it: u32, len: u32, label_len: *u32) -> bool {
 	c: u8;
 	off: u32;
-	while c != #char " " && c != #char "\n" {
-		c = viewer.content[idx + off];
+	while it + off < len && c != #char " " && c != #char "\n" && c != #char "\r" {
+		c = viewer.content[idx + it + off];
 		off += 1;
 		if c == #char ":" {
 			label_len.* = off - 1;
@@ -160,7 +166,7 @@ is_word_a_label :: (idx: u32, label_len: *u32) -> bool {
 }
 
 is_an_instruction :: (buff: *u8) -> bool {
-	if !(buff[3] == #char " " || buff[3] == #char "\n") {
+	if !(buff[3] == #char " " || buff[3] == #char "\n" || buff[3] == #char "\r") {
 		// check if instruction is 3 char long
 		return false;
 	}
@@ -170,64 +176,69 @@ is_an_instruction :: (buff: *u8) -> bool {
 	}
 	
 	// peak performance moment
-	val: u32 = buff[0] | ((cast(u32)buff[1]) << 8) | ((cast(u32)buff[2]) << 16);
-	if val == {
-		case #run make_u24(#char "a", #char "d", #char "c"); return true;
-		case #run make_u24(#char "a", #char "n", #char "d"); return true;
-		case #run make_u24(#char "a", #char "s", #char "l"); return true;
-		case #run make_u24(#char "b", #char "c", #char "c"); return true;
-		case #run make_u24(#char "b", #char "c", #char "s"); return true;
-		case #run make_u24(#char "b", #char "e", #char "q"); return true;
-		case #run make_u24(#char "b", #char "n", #char "e"); return true;
-		case #run make_u24(#char "b", #char "m", #char "i"); return true;
-		case #run make_u24(#char "b", #char "p", #char "l"); return true;
-		case #run make_u24(#char "b", #char "v", #char "c"); return true;
-		case #run make_u24(#char "b", #char "v", #char "s"); return true;
-		case #run make_u24(#char "b", #char "i", #char "t"); return true;
-		case #run make_u24(#char "b", #char "r", #char "k"); return true;
-		case #run make_u24(#char "c", #char "l", #char "c"); return true;
-		case #run make_u24(#char "c", #char "l", #char "d"); return true;
-		case #run make_u24(#char "c", #char "l", #char "i"); return true;
-		case #run make_u24(#char "c", #char "l", #char "v"); return true;
-		case #run make_u24(#char "c", #char "m", #char "p"); return true;
-		case #run make_u24(#char "c", #char "p", #char "x"); return true;
-		case #run make_u24(#char "c", #char "p", #char "y"); return true;
-		case #run make_u24(#char "d", #char "e", #char "c"); return true;
-		case #run make_u24(#char "d", #char "e", #char "x"); return true;
-		case #run make_u24(#char "d", #char "e", #char "y"); return true;
-		case #run make_u24(#char "e", #char "o", #char "r"); return true;
-		case #run make_u24(#char "i", #char "n", #char "c"); return true;
-		case #run make_u24(#char "i", #char "n", #char "x"); return true;
-		case #run make_u24(#char "i", #char "n", #char "y"); return true;
-		case #run make_u24(#char "j", #char "m", #char "p"); return true;
-		case #run make_u24(#char "j", #char "s", #char "r"); return true;
-		case #run make_u24(#char "l", #char "d", #char "a"); return true;
-		case #run make_u24(#char "l", #char "d", #char "x"); return true;
-		case #run make_u24(#char "l", #char "d", #char "y"); return true;
-		case #run make_u24(#char "l", #char "s", #char "r"); return true;
-		case #run make_u24(#char "n", #char "o", #char "p"); return true;
-		case #run make_u24(#char "o", #char "r", #char "a"); return true;
-		case #run make_u24(#char "p", #char "h", #char "a"); return true;
-		case #run make_u24(#char "p", #char "h", #char "p"); return true;
-		case #run make_u24(#char "p", #char "l", #char "a"); return true;
-		case #run make_u24(#char "p", #char "l", #char "p"); return true;
-		case #run make_u24(#char "r", #char "o", #char "l"); return true;
-		case #run make_u24(#char "r", #char "o", #char "r"); return true;
-		case #run make_u24(#char "r", #char "t", #char "i"); return true;
-		case #run make_u24(#char "r", #char "t", #char "s"); return true;
-		case #run make_u24(#char "s", #char "b", #char "c"); return true;
-		case #run make_u24(#char "s", #char "e", #char "c"); return true;
-		case #run make_u24(#char "s", #char "e", #char "d"); return true;
-		case #run make_u24(#char "s", #char "e", #char "i"); return true;
-		case #run make_u24(#char "s", #char "t", #char "a"); return true;
-		case #run make_u24(#char "s", #char "t", #char "x"); return true;
-		case #run make_u24(#char "s", #char "t", #char "y"); return true;
-		case #run make_u24(#char "t", #char "a", #char "x"); return true;
-		case #run make_u24(#char "t", #char "a", #char "y"); return true;
-		case #run make_u24(#char "t", #char "s", #char "x"); return true;
-		case #run make_u24(#char "t", #char "x", #char "a"); return true;
-		case #run make_u24(#char "t", #char "x", #char "s"); return true;
-		case #run make_u24(#char "t", #char "y", #char "a"); return true;
+	str := string.{3, buff};
+	
+	str[0] = to_lower(str[0]);
+	str[1] = to_lower(str[1]);
+	str[2] = to_lower(str[2]);
+	
+	if str == {
+		case "adc"; return true;
+		case "and"; return true;
+		case "asl"; return true;
+		case "bcc"; return true;
+		case "bcs"; return true;
+		case "beq"; return true;
+		case "bne"; return true;
+		case "bmi"; return true;
+		case "bpl"; return true;
+		case "bvc"; return true;
+		case "bvs"; return true;
+		case "bit"; return true;
+		case "brk"; return true;
+		case "clc"; return true;
+		case "cld"; return true;
+		case "cli"; return true;
+		case "clv"; return true;
+		case "cmp"; return true;
+		case "cpx"; return true;
+		case "cpy"; return true;
+		case "dec"; return true;
+		case "dex"; return true;
+		case "dey"; return true;
+		case "eor"; return true;
+		case "inc"; return true;
+		case "inx"; return true;
+		case "iny"; return true;
+		case "jmp"; return true;
+		case "jsr"; return true;
+		case "lda"; return true;
+		case "ldx"; return true;
+		case "ldy"; return true;
+		case "lsr"; return true;
+		case "nop"; return true;
+		case "ora"; return true;
+		case "pha"; return true;
+		case "php"; return true;
+		case "pla"; return true;
+		case "plp"; return true;
+		case "rol"; return true;
+		case "ror"; return true;
+		case "rti"; return true;
+		case "rts"; return true;
+		case "sbc"; return true;
+		case "sec"; return true;
+		case "sed"; return true;
+		case "sei"; return true;
+		case "sta"; return true;
+		case "stx"; return true;
+		case "sty"; return true;
+		case "tax"; return true;
+		case "tay"; return true;
+		case "tsx"; return true;
+		case "txa"; return true;
+		case "txs"; return true;
+		case "tya"; return true;
 	}
 	return false;
 }

@@ -50,7 +50,7 @@ draw_rect_lines :: (pos: Vec2, size: Vec2, layer: f32, col: Col, t: f32 = 1) {
 
 
 
-draw_text :: (text: string, pos: Vec2, layer: f32, scale: f32, color: Col) {
+draw_text :: (text: string, pos: Vec2, layer: f32, scale: f32, color: Col, wrap: f32 = 0) {
 	x_pos: f32;
 	y_pos: f32;
 
@@ -62,7 +62,8 @@ draw_text :: (text: string, pos: Vec2, layer: f32, scale: f32, color: Col) {
 	for cast([]u8) text {
 		if it == #char "\n" {
 			x_pos = 0;
-		} else if it != #char " " {
+			y_pos += s;
+		} else if it != #char " " && it != #char "\t" && it != #char "\r" {
 			uv := get_char_mapping(it);
 			vert_count := font_buffer.vertices_count;
 
@@ -79,6 +80,10 @@ draw_text :: (text: string, pos: Vec2, layer: f32, scale: f32, color: Col) {
 			indices_add(*font_buffer, vert_count + 3);
 		}
 		x_pos += s;
+		if wrap && x_pos + s > wrap {
+			x_pos = 0;
+			y_pos += s;
+		}
 	}
 }
 
@@ -141,9 +146,7 @@ get_char_mapping :: (c: u8) -> (uv: Vec2) {
 		x: f32 = 32.0 / texture_width;
 		y: f32 = 16.0 / texture_height;
 		return .{x, y};
-		// assert(false, "unable to get mapping of character (% - %)", string.{1, *c}, c);
 	}
-	return .{0, 0};
 }
 
 measure_text :: ($$text: string, $scale: f32) -> Vec2 {
@@ -174,7 +177,7 @@ Icon :: enum {
 	CLOSE;
 }
 
-COLOR_WIDGET_BG             :: #run Col.{73, 62, 51, 255} / 255;
+COLOR_WIDGET_BG             :: #run Col.{  73,  62,  51, 255} / 255;
 COLOR_WIDGET_BG_HOVERED     :: #run Col.{ 188, 126,  59, 255 } / 255;
 COLOR_WIDGET_BG_PRESSED     :: #run Col.{ 246, 164,  76, 255 } / 255;
 COLOR_WIDGET_BORDER         :: #run Col.{ 196, 126,  43, 255 } / 255;

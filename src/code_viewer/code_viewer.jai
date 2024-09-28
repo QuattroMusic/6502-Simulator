@@ -13,7 +13,7 @@ handle_scrollbar :: () {
 			viewer.scrollbar_pos -= amt;
 		}
 	}
-	if is_mouse_pressed(0) && can_interact_with_widget() && is_mouse_inside_rect(.{pos.x + size.x - 12, pos.y}, .{12, size.y}) {
+	if is_mouse_pressed(0) && can_interact_with_widget(0) && is_mouse_inside_rect(.{pos.x + size.x - 12, pos.y}, .{12, size.y}) {
 		viewer.scrollbar_selected = true;
 	}
 	
@@ -57,9 +57,7 @@ init_code_viewer :: (path: string) {
 	viewer.content.count = size;
 	
 	file_close(*file);
-	
-	// Todo - remove '\t', or find a way to implement them
-	
+
 	calculate_rows_length();
 	
 	viewer.row_digits = count_digits(xx viewer.rows_length.count);
