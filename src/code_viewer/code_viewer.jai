@@ -8,7 +8,7 @@ handle_scrollbar :: () {
 	amt := viewer.rows_length.count;
 	
 	if is_mouse_inside_rect(pos, size) {
-		if mouse_dz {
+		if mouse_dz && !ui.show_popup {
 			amt := mouse_dz * 16 * 3;
 			viewer.scrollbar_pos -= amt;
 		}
@@ -42,26 +42,56 @@ calculate_rows_length :: () {
 	array_add(*viewer.rows_length, len);
 }
 
+handle_displayed_file :: () {
+	if viewer.file_path {
+		modtime := file_modtime_and_size(viewer.file_path);
+		
+		if compare_apollo_times(modtime, viewer.file_modtime) {
+			viewer.file_modtime = modtime;
+			
+			init := seconds_since_init();
+			
+			while true {
+				file, success := file_open(viewer.file_path);
+				if success {
+					file_close(*file);
+					break;
+				}
+				if seconds_since_init() - init > 1 {
+					ui.show_popup = true;
+					ui.popup_title = "timed out";
+					ui.popup_error_type = .READING_FILE_TIMED_OUT;
+					deinit_code_viewer();
+					return;
+				}
+			}
+			
+			t := copy_string(viewer.file_path,, allocator = temp);
+			deinit_code_viewer();
+			init_code_viewer(t);
+		}
+	}
+}
+
 init_code_viewer :: (path: string) {
 	viewer.file_path = copy_string(path);
 	viewer.file_name = split_from_right(viewer.file_path, #char "\\");
 
-	file, success := file_open(path, for_writing = false);
-	// if !success then log_error("Unable to open file %", path);
+	data, success := read_entire_file(path);
+	
+	modtime := file_modtime_and_size(path);
+	viewer.file_modtime = modtime;
+	
 	if !success {
 		ui.show_popup = true;
-		// ui.popup_title = 
+		ui.popup_title = "error opening file";
+		ui.popup_error_type = .ERROR_OPENING_FILE;
+		viewer.content.count = 0;
+		viewer.file_name = "";
 		return;
 	}
-	size := file_length(file);
-	
-	out := round_number_power_of_2(size);
-	array_reserve(*viewer.content, size);
-	
-	file_read(file, viewer.content.data, size);
-	viewer.content.count = size;
-	
-	file_close(*file);
+	viewer.content.data = data.data;
+	viewer.content.count = data.count;
 
 	calculate_rows_length();
 	

@@ -107,7 +107,7 @@ create_window :: (width: s32, height: s32) -> *void {
 	r := RECT.{x, y, x + width, y + height};
 	AdjustWindowRect(*r, vp.window_style, xx false);
 
-	t := to_c_string("",, temp);
+	t := to_c_string("6502 Simulator",, temp);
 	win := CreateWindowExA(0, class_name, t, vp.window_style, r.left, r.top, r.right - r.left, r.bottom - r.top, null, null, null, null);
 
 	DragAcceptFiles(win, xx true);  // enable drop file on window

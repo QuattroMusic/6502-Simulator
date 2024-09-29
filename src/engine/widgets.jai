@@ -130,7 +130,6 @@ draw_step_hslider :: (pos: Vec2, size: Vec2, layer: f32, amt: s32, value: *int, 
 	if !disabled {
 		col_main = COLOR_WIDGET_BG;
 		col_step = COLOR_WIDGET_BORDER;
-		
 		if is_mouse_inside_rect(.{pos.x - 4, pos.y}, .{size.x + 8, size.y}) && can_interact_with_widget(layer) {
 			if widget_selected == 0 then col_main = COLOR_WIDGET_BG_HOVERED;
 			if is_mouse_pressed(0) then widget_selected = widget_uuid;
@@ -180,6 +179,12 @@ draw_popup :: (width: f32, height: f32) {
 		case .INCOMPATIBLE_ROM_SIZE;
 			draw_text("Incompatible ROM size", .{x + 10, y + 40}, 11, 2, WHITE);
 			draw_text("ROM size must to be 32kB", .{x + 10, y + 56}, 11, 2, WHITE);
+		case .ERROR_OPENING_FILE;
+			draw_text("An error has occured while opening the file", .{x + 10, y + 40}, 11, 2, WHITE);
+		case .READING_FILE_TIMED_OUT;
+			draw_text("Reading file timed out", .{x + 10, y + 40}, 11, 2, WHITE);
+		case .NO_INPUT_FILE_GIVEN;
+			draw_text("No input file given", .{x + 10, y + 40}, 11, 2, WHITE);
 	}
 	
 	w :: 90;
@@ -207,7 +212,10 @@ handle_widget_layering :: () {
 }
 
 can_interact_with_widget :: (layer: f32) -> bool {
-	return !mouse_over_panel && (!ui.show_popup || focused_layer <= layer);
+	if ui.show_popup {
+		return focused_layer <= layer;
+	}
+	return (!mouse_over_panel);
 }
 
 widget_uuid: u32;

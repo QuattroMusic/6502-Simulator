@@ -6,6 +6,8 @@ update_6502 :: () {
 	handle_widget_layering();
 
 	handle_input_and_time();
+	
+	handle_displayed_file();
 
 	if ui.show_popup then draw_popup(800, 400);
 
@@ -39,11 +41,13 @@ main :: () {
 	cpu_init();
 	init_window(MIN_SCREEN_WIDTH, MIN_SCREEN_HEIGHT);
 
-	init_code_viewer("examples/Random number.s");
+	// init_code_viewer("examples/Random number.s");
 
 	while vp.running {
 		lock_frame_rate();
 		fetch_window_inputs();
+
+		if is_mouse_pressed(2) then report_memory_leaks();
 
 		draw_one_frame();
 	}
@@ -61,13 +65,13 @@ RAM_SIZE      :: 0x8000;
 HEADER_HEIGHT :: 35;
 
 MEMORY_INPUT_ADDRESS       :: 0x2780;
-MEMORY_YEAR_ADDRESS        :: 0x2781;
+MEMORY_YEAR_ADDRESS        :: 0x2781;  // 2 bytes
 MEMORY_MONTH_ADDRESS       :: 0x2783;
 MEMORY_DAY_ADDRESS         :: 0x2784;
 MEMORY_HOUR_ADDRESS        :: 0x2785;
 MEMORY_MINUTE_ADDRESS      :: 0x2786;
 MEMORY_SECOND_ADDRESS      :: 0x2787;
-MEMORY_MILLISECOND_ADDRESS :: 0x2788;
+MEMORY_MILLISECOND_ADDRESS :: 0x2788;  // 2 bytes
 
 MIN_SCREEN_WIDTH  :: 1400;
 MIN_SCREEN_HEIGHT :: 800;
@@ -75,8 +79,8 @@ MIN_SCREEN_HEIGHT :: 800;
 DISPLAY_WIDTH :: 120;
 DISPLAY_HEIGHT :: 80;
 
-APP_MAJOR_VERSION :: 0;
-APP_MINOR_VERSION :: 1;
+APP_MAJOR_VERSION :: 1;
+APP_MINOR_VERSION :: 0;
 
 Vec2 :: Vector2;
 Vec3 :: Vector3;
@@ -85,11 +89,12 @@ Col  :: Vector4;
 f32  :: float32;
 f64  :: float64;
 
-#import "Basic";
+#import "Basic"()(MEMORY_DEBUGGER = true);
 #import "Math";
 #import "File";
 #import "Thread";
 #import "Process";
+#import "File_Utilities";
 
 #import "d3d11";
 #import "d3d_compiler";

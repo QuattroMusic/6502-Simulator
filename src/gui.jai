@@ -76,11 +76,8 @@ draw_buttons_controls :: () {
 		cpu_reset();
 	}
 	
-	if button("Reload", .{460, 40}, .{80, 25}, 1, t) {
-		// Todo - This button is temporary
-		temp := tprint(viewer.file_path);
-		deinit_code_viewer();
-		init_code_viewer(temp);
+	if button("Display", .{460, 40}, .{80, 25}, 1, t) {
+		toggle_display();
 	}
 }
 
@@ -104,7 +101,7 @@ draw_code_viewer :: () {
 
 handle_memory_scrollbar :: (pos: Vec2, size: Vec2) {
 	if is_mouse_inside_rect(pos, size) {
-		if mouse_dz {
+		if mouse_dz && !ui.show_popup {
 			amt := mouse_dz * 16;
 			ui.memory_scrollbar_pos -= amt;
 		}
@@ -314,7 +311,7 @@ draw_program_frequency :: () {
 	str: string;
 	freq := engine.metrics.update_rate;
 	
-	if freq < kHz(1)      str = tprint(" %Hz",  formatInt(freq / 1,            minimum_digits = 3, padding = #char " "));
+	     if freq < kHz(1) str = tprint(" %Hz", formatInt(freq,                 minimum_digits = 3, padding = #char " "));
 	else if freq < MHz(1) str = tprint("%kHz", formatInt(freq / 1_000,         minimum_digits = 3, padding = #char " "));
 	else if freq < GHz(1) str = tprint("%MHz", formatInt(freq / 1_000_000,     minimum_digits = 3, padding = #char " "));
 	else                  str = tprint("%GHz", formatInt(freq / 1_000_000_000, minimum_digits = 3, padding = #char " "));
@@ -332,6 +329,19 @@ draw_program_frequency :: () {
 	draw_text(str, offset + .{90, 16}, 1, 2, ifx engine.metrics.unlock then GRAY else COLOR_TEXT_NORMAL);
 }
 
+toggle_display :: () {
+	ui.display_visible = !ui.display_visible;
+
+	padding :: 4;
+
+	w :: DISPLAY_WIDTH  * 8 + padding * 2;
+	h :: DISPLAY_HEIGHT * 8 + padding * 2 + 24;
+
+	x := (vp.width - w) / 2;
+	y := (vp.height - h) / 2;
+	ui.display_pos = .{xx x, xx y};
+}
+
 draw_display :: () {
 	padding :: 4;
 	
@@ -339,14 +349,7 @@ draw_display :: () {
 	h :: DISPLAY_HEIGHT * 8 + padding * 2 + 24;
 	
 	mouse_over_panel = false;
-	
-	if is_key_pressed(KEY_F1) && !ui.show_popup {
-		ui.display_visible = !ui.display_visible;
-		x := (vp.width - w) / 2;
-		y := (vp.height - h) / 2;
-		ui.display_pos = .{xx x, xx y};
-	}
-	
+
 	if !ui.display_visible then return;
 	
 	if is_mouse_inside_rect(.{ui.display_pos.x, ui.display_pos.y}, .{w - 24, 24}) {
@@ -363,6 +366,7 @@ draw_display :: () {
 	}
 	if is_mouse_released(0) then ui.display_selected = false;
 	
+	ui.display_pos.x = clamp(ui.display_pos.x, -w + 24 * 2, vp.width - 24 * 2.0);
 	ui.display_pos.y = clamp(ui.display_pos.y, HEADER_HEIGHT, cast(f32)vp.height - 24);
 	
 	if is_mouse_inside_rect(.{ui.display_pos.x, ui.display_pos.y + 24}, .{w, h - 24}) {
@@ -375,6 +379,8 @@ draw_display :: () {
 	}
 	
 	draw_window(ui.display_pos, .{w, h}, 4, "Display");
+	
+	draw_rect_lines(ui.display_pos + .{padding, padding + 24}, .{DISPLAY_WIDTH * 8, DISPLAY_HEIGHT * 8}, 5, COLOR_WIDGET_BORDER, 1);
 	
 	for 0x0200..(0x0200 + DISPLAY_WIDTH * DISPLAY_HEIGHT - 1) {
 		data := engine.RAM[it];

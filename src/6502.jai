@@ -17,6 +17,9 @@ Error_Type :: enum {
 	FAILED_COMPILATION;
 	UNABLE_TO_OPEN_BINARY;
 	INCOMPATIBLE_ROM_SIZE;
+	ERROR_OPENING_FILE;
+	READING_FILE_TIMED_OUT;
+	NO_INPUT_FILE_GIVEN;
 }
 
 Color_Tokens :: enum u8 {
@@ -36,6 +39,8 @@ Code_Viewer :: struct {
 	scrollbar_selected: bool;
 	scrollbar_pos: f32;
 	row_digits: u32;
+	
+	file_modtime: Apollo_Time;
 
 	content:     [..] u8;
 	rows_length: [..] u32;
@@ -205,6 +210,7 @@ cpu_start :: () {
 			if !engine.metrics.unlock then lock_frame_rate_6502();
 			if engine.running && !engine.debug then next_instruction();
 		}
+		thread_deinit(*engine.cpu_thread);
 		return 0;
 	}
 
@@ -234,24 +240,28 @@ lock_frame_rate_6502 :: () {
 }
 
 compile_program :: () {
+	if !viewer.file_path {
+		ui.show_popup = true;
+		ui.popup_title = "No input file";
+		ui.popup_error_type = .NO_INPUT_FILE_GIVEN;
+		return;
+	}
+	
 	path := get_absolute_path(viewer.file_path,, temp);
 	fmt := tprint("vasm6502_oldstyle.exe -Fbin -o \"out.bin\" -dotdir \"%\"", path);
 
-	res, output_string, error_string := run_command(..break_command_into_strings(fmt), capture_and_return_output = true);
-	defer free(output_string);
+	res, output_string, error_string := run_command(..break_command_into_strings(fmt), capture_and_return_output = true,, allocator = temp);
 	
 	engine.compilation_successful = false;
 	
 	if res.exit_code != 0 {
 		ui.show_popup = true;
 		ui.popup_title = "Compilation failed";
-		ui.error_message = error_string;
+		ui.error_message = copy_string(error_string);
 		ui.popup_error_type = .FAILED_COMPILATION;
 		return;
 	}
 	
-	free(error_string);
-
 	engine.compilation_successful = true;
 }
 
