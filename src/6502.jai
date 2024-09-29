@@ -5,11 +5,18 @@ General_UI :: struct {
 	show_popup: bool;
 	popup_title: string;
 	error_message: string;
+	popup_error_type: Error_Type;
 
 	display_pressed_pos: Vec2;
 	display_pos: Vec2;
 	display_selected: bool;
 	display_visible: bool;
+}
+
+Error_Type :: enum {
+	FAILED_COMPILATION;
+	UNABLE_TO_OPEN_BINARY;
+	INCOMPATIBLE_ROM_SIZE;
 }
 
 Color_Tokens :: enum u8 {
@@ -231,14 +238,15 @@ compile_program :: () {
 	fmt := tprint("vasm6502_oldstyle.exe -Fbin -o \"out.bin\" -dotdir \"%\"", path);
 
 	res, output_string, error_string := run_command(..break_command_into_strings(fmt), capture_and_return_output = true);
-	engine.compilation_successful = false;
+	defer free(output_string);
 	
-	free(output_string);
+	engine.compilation_successful = false;
 	
 	if res.exit_code != 0 {
 		ui.show_popup = true;
 		ui.popup_title = "Compilation failed";
 		ui.error_message = error_string;
+		ui.popup_error_type = .FAILED_COMPILATION;
 		return;
 	}
 	
@@ -370,7 +378,6 @@ intrinsic_to_string :: (code: Opcode) -> string {
 			case "INX"; return tprint("% (n, X)",  s);
 			case "INY"; return tprint("% (n), Y",  s);
 			case "ACC"; return tprint("% A",     s);
-			case; log_error("Unhandled condition");
 		}
 	}
 	return "";

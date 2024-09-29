@@ -47,7 +47,12 @@ init_code_viewer :: (path: string) {
 	viewer.file_name = split_from_right(viewer.file_path, #char "\\");
 
 	file, success := file_open(path, for_writing = false);
-	if !success then log_error("Unable to open file %", path);
+	// if !success then log_error("Unable to open file %", path);
+	if !success {
+		ui.show_popup = true;
+		// ui.popup_title = 
+		return;
+	}
 	size := file_length(file);
 	
 	out := round_number_power_of_2(size);

@@ -172,17 +172,21 @@ draw_popup :: (width: f32, height: f32) {
 
 	draw_window(.{x, y}, .{width, height}, 10, ui.popup_title);
 	
-	if ui.popup_title == "Compilation failed" {
-		// Todo - I could make an enum for the type of popup, but I'm lazy
-		// afterall this is temporary
-		draw_text(ui.error_message, .{x + 10, y + 40}, 11, 2, WHITE, wrap = width - 20);
+	if ui.popup_error_type == {
+		case .FAILED_COMPILATION;
+			draw_text(ui.error_message, .{x + 10, y + 40}, 11, 2, WHITE, wrap = width - 20);
+		case .UNABLE_TO_OPEN_BINARY;
+			draw_text("Unable to open binary file <out.bin> for reading", .{x + 10, y + 40}, 11, 2, WHITE);
+		case .INCOMPATIBLE_ROM_SIZE;
+			draw_text("Incompatible ROM size", .{x + 10, y + 40}, 11, 2, WHITE);
+			draw_text("ROM size must to be 32kB", .{x + 10, y + 56}, 11, 2, WHITE);
 	}
 	
 	w :: 90;
 	h :: 24;
 	if button("Continue", .{x + width - w - 10, y + height - h - 10}, .{w, h}, 11, 1) || is_key_pressed(KEY_ESC) {
 		ui.show_popup = false;
-		free(ui.error_message);
+		if ui.popup_error_type == .FAILED_COMPILATION then free(ui.error_message);
 	}
 }
 
@@ -203,7 +207,7 @@ handle_widget_layering :: () {
 }
 
 can_interact_with_widget :: (layer: f32) -> bool {
-	return (!mouse_over_panel) && (focused_layer <= layer);
+	return !mouse_over_panel && (!ui.show_popup || focused_layer <= layer);
 }
 
 widget_uuid: u32;

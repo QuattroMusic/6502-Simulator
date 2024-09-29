@@ -1,17 +1,26 @@
 read_ROM :: (name: string) {
 	file, res := file_open(name);
-	if !res then log_error("Unable to open file \"%\"", name);
+	defer file_close(*file);
+	if !res {
+		ui.show_popup = true;
+		ui.popup_title = "BIN error";
+		ui.popup_error_type = .UNABLE_TO_OPEN_BINARY;
+		return;
+	}
 	
 	file_seek(file, 0, .END);
 	result, size := file_tell(file);
 
-	if size != ROM_SIZE then log_error("Incompatible file, it must to be a 32kB ROM");
+	if size != ROM_SIZE {
+		ui.show_popup = true;
+		ui.popup_title = "ROM error";
+		ui.popup_error_type = .INCOMPATIBLE_ROM_SIZE;
+		return;
+	}
 	file_seek(file, 0, .START);
 	
 	res = file_read(file, engine.ROM.data, ROM_SIZE);
 	if !res then log_error("huh?");
-	
-	file_close(*file);
 }
 
 PC_advance :: (steps: u8) { engine.PC += steps; }
