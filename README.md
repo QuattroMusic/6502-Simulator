@@ -39,6 +39,40 @@ A simple to use 6502 simulator, featuring a code viewer, keyboard input and an i
 └───────────────┘
 ```
 
+The Zero Page is considered as RAM, it's just an optimized way for the memory operations (less cycles).
+
+The RAM is then subdivided as below:
+```
+┌───────────────┐
+│               │ 0x0200
+│    Display    │
+│               │ 0x277F
+├───────────────┤
+│    Keyboard   │ 0x2780
+│     Input     │
+├───────────────┤
+│     Year      │ 0x2781 & 0x2782
+├───────────────┤
+│     Month     │ 0x2783
+├───────────────┤
+│      Day      │ 0x2784
+├───────────────┤
+│     Hours     │ 0x2785
+├───────────────┤
+│    Minutes    │ 0x2786
+├───────────────┤
+│    Seconds    │ 0x2787
+├───────────────┤
+│ Milliseconds  │ 0x2788 & 0x2789
+├───────────────┤
+│               │ 0x278A
+│      RAM      │
+│               │ 0x7FFF
+└───────────────┘
+```
+
+Note: you can use the display space as RAM storage without any problem, but not the input and date space
+
 ### Programmers Model
 At the beginning of the exectution, the 6502 will read the data at the address `0xFFFC` and `0xFFFD` (RES Vector).
 The resulted address will give the entry point of your program (see examples or the minimal code).

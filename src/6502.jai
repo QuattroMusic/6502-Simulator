@@ -260,8 +260,9 @@ compile_program :: () {
 	
 	path := get_absolute_path(viewer.file_path,, temp);
 	fmt := tprint("vasm6502_oldstyle.exe -Fbin -o \"out.bin\" -dotdir \"%\"", path);
-
-	res, output_string, error_string := run_command(..break_command_into_strings(fmt), capture_and_return_output = true,, allocator = temp);
+	
+	out := break_command_into_strings(fmt);
+	res, output_string, error_string := run_command(..out, capture_and_return_output = true,, allocator = temp);
 	
 	engine.compilation_successful = false;
 	
@@ -272,6 +273,7 @@ compile_program :: () {
 		ui.popup_error_type = .FAILED_COMPILATION;
 		return;
 	}
+	
 	
 	engine.compilation_successful = true;
 }

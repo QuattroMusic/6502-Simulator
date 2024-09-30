@@ -386,9 +386,10 @@ draw_display :: () {
 		x := (((it - 0x0200) % DISPLAY_WIDTH) * 8) + ui.display_pos.x + padding;
 		y := (((it - 0x0200) / DISPLAY_WIDTH) * 8) + ui.display_pos.y + padding + 24;
 		
-		if data >= 0 && data < 32 {
-			col := DISPLAY_COLOR[data];
-			draw_rect(.{x, y}, .{8, 8}, 5, col);
+		col: Col = BLACK;
+		if data >= 0 && data < DISPLAY_COLOR.count {
+			col = DISPLAY_COLOR[data];
 		}
+		draw_rect(.{x, y}, .{8, 8}, 5, col);
 	}
 }

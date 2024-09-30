@@ -47,8 +47,6 @@ main :: () {
 		lock_frame_rate();
 		fetch_window_inputs();
 
-		if is_mouse_pressed(2) then report_memory_leaks();
-
 		draw_one_frame();
 	}
 	deinit_window();
@@ -89,7 +87,7 @@ Col  :: Vector4;
 f32  :: float32;
 f64  :: float64;
 
-#import "Basic"()(MEMORY_DEBUGGER = true);
+#import "Basic";
 #import "Math";
 #import "File";
 #import "Thread";
