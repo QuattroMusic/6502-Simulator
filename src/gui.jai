@@ -65,11 +65,10 @@ draw_buttons_controls :: () {
 				}
 			}
 		}
+		engine.running = running;
 		if button("Stop", .{10, 40}, .{80, 25}, 1, t) {
 			cpu_stop();
-			cpu_reset();
 		}
-		engine.running = running;
 	}
 
 	if button("Reset", .{370, 40}, .{80, 25}, 1, t) {

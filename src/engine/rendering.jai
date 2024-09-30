@@ -198,16 +198,14 @@ WHITE  :: #run Col.{240, 240, 220, 255} / 255;
 GREEN  :: #run Col.{ 59, 187,  20, 255} / 255;
 RED    :: #run Col.{202,  45,  31, 255} / 255;
 PURPLE :: #run Col.{130, 102, 193, 255} / 255;
-BLUE   :: #run Col.{ 20,  90, 210, 255} / 255;
-// ORANGE :: #run Col.{255, 123,  10, 255} / 255;
-ORANGE :: #run Col.{221, 119, 17, 255} / 255;
+ORANGE :: #run Col.{221, 119,  17, 255} / 255;
 YELLOW :: #run Col.{238, 210,   5, 255} / 255;
 PINK   :: #run Col.{255, 110, 199, 255} / 255;
 GRAY   :: #run Col.{110, 110, 110, 255} / 255;
-BLUE2 :: #run Col.{64, 104, 200, 255} / 255;
-AMBER :: #run Col.{234, 191, 21, 255} / 255;
-PURPLE2 :: #run Col.{130, 102, 193, 255} / 255;
+BLUE   :: #run Col.{ 64, 104, 200, 255} / 255;
+AMBER  :: #run Col.{234, 191,  21, 255} / 255;
+BLACK  :: #run Col.{  0,   0,   0, 255} / 255;
 
 DISPLAY_COLOR :: Col.[
-	.{0, 0, 0, 1}, WHITE, GREEN, RED, PURPLE, BLUE, ORANGE, YELLOW, PINK, GRAY, BLUE2, AMBER, PURPLE2
+	BLACK, WHITE, GRAY, RED, ORANGE, AMBER, YELLOW, GREEN, BLUE, PURPLE, PINK
 ];

@@ -65,9 +65,9 @@ draw_colored_text :: () {
 
 parse_token :: (t: Color_Tokens) -> Col {
 	if #complete t == {
-		case .INSTRUCTION; return PURPLE2;
+		case .INSTRUCTION; return PURPLE;
 		case .COMMENT;     return GRAY;
-		case .NUMBER;      return BLUE2;
+		case .NUMBER;      return BLUE;
 		case .DOTDIR;      return ORANGE;
 		case .LABEL;       return AMBER;
 		case .STRING;      return GREEN;
