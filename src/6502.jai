@@ -21,6 +21,7 @@ Error_Type :: enum {
 	READING_FILE_TIMED_OUT;
 	NO_INPUT_FILE_GIVEN;
 	GIVEN_FILE_NOT_VALID;
+	UNABLE_TO_FIND_COMPILER;
 }
 
 Color_Tokens :: enum u8 {
@@ -241,6 +242,15 @@ lock_frame_rate_6502 :: () {
 }
 
 compile_program :: () {
+	file, success := file_open("vasm6502_oldstyle.exe");
+	defer file_close(*file);
+	if !success {
+		ui.show_popup = true;
+		ui.popup_title = "No compiler found";
+		ui.popup_error_type = .UNABLE_TO_FIND_COMPILER;
+		return;
+	}
+	
 	if !viewer.file_path {
 		ui.show_popup = true;
 		ui.popup_title = "No input file";

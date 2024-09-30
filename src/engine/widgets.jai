@@ -188,6 +188,8 @@ draw_popup :: (width: f32, height: f32) {
 		case .GIVEN_FILE_NOT_VALID;
 			draw_text("Unsupported given file", .{x + 10, y + 40}, 11, 2, WHITE);
 			draw_text("File must to have the '.s' extension", .{x + 10, y + 56}, 11, 2, WHITE);
+		case .UNABLE_TO_FIND_COMPILER;
+			draw_text("Unable to find 'vasm6502_oldstyle.exe', aborting", .{x + 10, y + 40}, 11, 2, WHITE);
 	}
 	
 	w :: 90;
