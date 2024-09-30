@@ -20,6 +20,7 @@ Error_Type :: enum {
 	ERROR_OPENING_FILE;
 	READING_FILE_TIMED_OUT;
 	NO_INPUT_FILE_GIVEN;
+	GIVEN_FILE_NOT_VALID;
 }
 
 Color_Tokens :: enum u8 {

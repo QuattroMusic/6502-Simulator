@@ -108,6 +108,14 @@ deinit_code_viewer :: () {
 }
 
 handle_dropped_file :: (file: string) {
+	ext := split_from_right(file, #char ".");
+	if ext != "s" {
+		ui.show_popup = true;
+		ui.popup_title = "unsupported file";
+		ui.popup_error_type = .GIVEN_FILE_NOT_VALID;
+		return;
+	}
+
 	deinit_code_viewer();
 	init_code_viewer(file);
 }

@@ -72,7 +72,15 @@ For a complete list of the implemented intrinsics, you may look at this [cheatsh
 2. Download the [Vasm compiler](http://www.compilers.de/vasm.html) and add it to the same folder of the executable, or setup environment variables
 3. Enjoy!
 
-## Minimal Code
+## How to use
+
+1. Open the simulator
+2. Create a file on your pc
+3. Drag and drop the file on the simulator
+4. Open your favourite IDE and edit the file (when saved, it's automatically reloaded inside)
+5. Enjoy!
+
+### Minimal Code
 ```
     .org $8000
 init:
@@ -83,7 +91,7 @@ init:
     .word $0000
 ```
 
-## Long term features
+## Roadmap
 
 ### Version 1.0
 - [x] display

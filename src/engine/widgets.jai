@@ -185,6 +185,9 @@ draw_popup :: (width: f32, height: f32) {
 			draw_text("Reading file timed out", .{x + 10, y + 40}, 11, 2, WHITE);
 		case .NO_INPUT_FILE_GIVEN;
 			draw_text("No input file given", .{x + 10, y + 40}, 11, 2, WHITE);
+		case .GIVEN_FILE_NOT_VALID;
+			draw_text("Unsupported given file", .{x + 10, y + 40}, 11, 2, WHITE);
+			draw_text("File must to have the '.s' extension", .{x + 10, y + 56}, 11, 2, WHITE);
 	}
 	
 	w :: 90;
