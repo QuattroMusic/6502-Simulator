@@ -1,5 +1,5 @@
 # 6502-Simulator
-A simple to use 6502 simulator, featuring a code viewer, keyboard input and an input display!
+A simple to use 6502 simulator, featuring a code viewer, keyboard input and a display!
 
 ![[image]](_data/6502.png)
 
