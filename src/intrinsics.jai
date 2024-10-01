@@ -190,9 +190,9 @@ RORA :: () {
 RTS :: () {
 	d1 := cast(u16)stack_pop();
 	d2 := cast(u16)stack_pop();
-	
+
 	addr: u16 = (d2 << 8) | d1;
-	
+
 	PC_jump(addr);
 }
 
@@ -222,10 +222,10 @@ STY :: (addr: u16) {
 #scope_export
 exec_operation :: (opcode: Opcode) {
 	engine.current_instruction = opcode;
-	
+
 	if #complete opcode == {
+		case .NOP;     // do nothing!
 		case .BRK;     engine.flags.B = true;  cpu_stop();
-		case .NOP;     PC_advance(1);
 		case .CLC;     engine.flags.C = false;
 		case .CLD;     engine.flags.D = false;
 		case .CLI;     engine.flags.I = false;
@@ -374,6 +374,7 @@ exec_operation :: (opcode: Opcode) {
 		case .ASL_ACC; ASLA();
 		case .ASL_ZPX; compact_zero_page_X_address(ASL);
 		case .ASL_ABX; compact_absolute_X_address(ASL);
+		case; log_warn("Found illegal opcode"); cpu_stop();
 	}
 }
 
@@ -382,7 +383,7 @@ virtual_exec_operation :: (opcode: Opcode, data: u16 = 0) {
 	PC_advance(1);
 
 	defer exec_operation(opcode);
-	
+
 	if opcode == {
 		case .BCS;     #through; case .BCC;     #through; case .BEQ;     #through; case .BNE;     #through;
 		case .BMI;     #through; case .BPL;     #through; case .BVS;     #through; case .BVC;     #through;
@@ -403,8 +404,8 @@ virtual_exec_operation :: (opcode: Opcode, data: u16 = 0) {
 		case .EOR_ZPG; #through; case .EOR_INX; #through; case .EOR_INY; #through; case .EOR_ZPX; #through;
 		case .LDA_IMM; #through; case .LDA_ZPG; #through; case .LDA_INX; #through; case .LDA_INY; #through;
 		case .LDA_ZPX; virtual_write_ROM(engine.PC, cast,trunc(u8)data);
-		
-		
+
+
 		case .BIT_ABS; #through;
 		case .JMP_ABS; #through; case .JMP_IND; #through; case .JSR_ABS; #through; case .INC_ABS; #through;
 		case .INC_ABX; #through; case .DEC_ABS; #through; case .DEC_ABX; #through; case .STA_ABX; #through;

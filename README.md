@@ -71,7 +71,10 @@ The RAM is then subdivided as below:
 └───────────────┘
 ```
 
-Note: you can use the display space as RAM storage without any problem, but not the input and date space
+The Year and the Milliseconds section is stored as little-endian (see programmers model)
+
+Note: you can use the display space as RAM storage without any problem, but not the input and date space.
+The keyboard input only works when the display is open
 
 ### Programmers Model
 At the beginning of the exectution, the 6502 will read the data at the address `0xFFFC` and `0xFFFD` (RES Vector).
@@ -103,7 +106,7 @@ For a complete list of the implemented intrinsics, you may look at this [cheatsh
 ## Installation
 
 1. Download the simulator from this repository
-2. Download the [Vasm compiler](http://www.compilers.de/vasm.html) and add it to the same folder of the executable, or setup environment variables
+2. Download the [Vasm compiler](http://www.compilers.de/vasm.html) (`vasm6502_oldstyle.exe`) and add it to the same folder of the executable, or setup environment variables
 3. Enjoy!
 
 ## How to use
@@ -111,8 +114,10 @@ For a complete list of the implemented intrinsics, you may look at this [cheatsh
 1. Open the simulator
 2. Create a file on your pc
 3. Drag and drop the file on the simulator
-4. Open your favourite IDE and edit the file (when saved, it's automatically reloaded inside)
+4. Open your favourite IDE and edit the file
 5. Enjoy!
+
+Note: every time you save the file, the program automatically reload it
 
 ### Minimal Code
 ```

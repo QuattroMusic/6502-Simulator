@@ -38,6 +38,11 @@ draw_one_frame :: () {
 }
 
 main :: () {
+	#if !DEBUG {
+		WR :: #import "Windows_Resources";
+		#run WR.disable_runtime_console();
+	}
+	
 	cpu_init();
 	init_window(MIN_SCREEN_WIDTH, MIN_SCREEN_HEIGHT);
 
@@ -50,7 +55,7 @@ main :: () {
 		draw_one_frame();
 	}
 	deinit_window();
-
+	
 	// run_all_tests();
 }
 

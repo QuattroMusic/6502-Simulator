@@ -5,7 +5,6 @@ CompileFlag :: enum_flags {
 
 // configs
 app_name :: "6502 Simulator";
-custom_import_paths :: string.[];
 
 compile_type := CompileFlag.DEBUG;
 
@@ -46,17 +45,10 @@ setup_game_workspace :: () -> Workspace {
     if       compile_type & .DEBUG    { options.backend = .X64;  set_optimization(*options, .DEBUG); }
     else if (compile_type & .RELEASE) { options.backend = .LLVM; set_optimization(*options, .OPTIMIZED); }
     else { assert(false); }
-    
-	#if custom_import_paths.count {
-		paths : [..] string;
-		array_add(*paths, ..options.import_path);
-		array_add(*paths, ..custom_import_paths);
-		options.import_path = paths;
-	}
-	
+
     set_build_options(options, w);
     add_build_file("first.jai", w);
-    // add_build_string(tprint("DEBUG :: %;", cast(bool)(compile_type & .DEBUG)), w);
+    add_build_string(tprint("DEBUG :: %;", cast(bool)(compile_type & .DEBUG)), w);
     return w;
 }
 

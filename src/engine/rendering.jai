@@ -204,7 +204,7 @@ PINK   :: #run Col.{255, 110, 199, 255} / 255;
 GRAY   :: #run Col.{110, 110, 110, 255} / 255;
 BLUE   :: #run Col.{ 64, 104, 200, 255} / 255;
 AMBER  :: #run Col.{234, 191,  21, 255} / 255;
-BLACK  :: #run Col.{  0,   0,   0, 255} / 255;
+BLACK  :: #run Col.{ 12,  12,  12, 255} / 255;
 
 DISPLAY_COLOR :: Col.[
 	BLACK, WHITE, GRAY, RED, ORANGE, AMBER, YELLOW, GREEN, BLUE, PURPLE, PINK
