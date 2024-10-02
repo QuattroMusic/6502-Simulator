@@ -3,7 +3,7 @@ A simple to use 6502 simulator, featuring a code viewer, keyboard input and a di
 
 ![[image]](_data/6502.png)
 
-![[video]](_data/hello_6502.mp4)
+![[video]](_data/hello_6502.gif)
 
 ## Technical specifications
 - 32kB RAM and ROM
