@@ -946,6 +946,58 @@ test_branch :: () {
 	assert_flags(D = 0, C = 0, N = 1);
 }
 
+test_ADD_decimal :: () {
+	test_handler("Decimal ADC");
+
+	virtual_exec_operation(.SED);
+	virtual_exec_operation(.SEC);
+	virtual_exec_operation(.LDA_IMM, 0x58);
+	virtual_exec_operation(.ADC_IMM, 0x46);
+	assert_reg(A = 0x05);
+	assert_flags(C = 1, D = 1);
+	
+	virtual_exec_operation(.CLC);
+	virtual_exec_operation(.LDA_IMM, 0x12);
+	virtual_exec_operation(.ADC_IMM, 0x34);
+	assert_reg(A = 0x46);
+	assert_flags(C = 0, D = 1);
+	
+	virtual_exec_operation(.CLC);
+	virtual_exec_operation(.LDA_IMM, 0x15);
+	virtual_exec_operation(.ADC_IMM, 0x26);
+	assert_reg(A = 0x41);
+	assert_flags(C = 0, D = 1);
+	
+	virtual_exec_operation(.CLC);
+	virtual_exec_operation(.LDA_IMM, 0x81);
+	virtual_exec_operation(.ADC_IMM, 0x92);
+	assert_reg(A = 0x73);
+	assert_flags(C = 1, D = 1);
+}
+
+test_SUB_decimal :: () {
+	test_handler("Decimal SBC");
+	
+	virtual_exec_operation(.SED);
+	virtual_exec_operation(.SEC);
+	virtual_exec_operation(.LDA_IMM, 0x46);
+	virtual_exec_operation(.SBC_IMM, 0x12);
+	assert_flags(C = 1, D = 1);
+	assert_reg(A = 0x34);
+	
+	virtual_exec_operation(.SEC);
+	virtual_exec_operation(.LDA_IMM, 0x40);
+	virtual_exec_operation(.SBC_IMM, 0x13);
+	assert_flags(C = 1, D = 1);
+	assert_reg(A = 0x27);
+	
+	virtual_exec_operation(.CLC);
+	virtual_exec_operation(.LDA_IMM, 0x32);
+	virtual_exec_operation(.SBC_IMM, 0x02);
+	assert_flags(C = 1, D = 1);
+	assert_reg(A = 0x29);
+}
+
 #scope_export
 run_all_tests :: () {
 	start := current_time_monotonic();
@@ -965,6 +1017,8 @@ run_all_tests :: () {
 	test_INC();
 	test_DEC();
 	test_SBC();
+	test_ADD_decimal();
+	test_SUB_decimal();
 	
 	write_string("\n---    SHIFT     ---\n");
 	test_ASL();

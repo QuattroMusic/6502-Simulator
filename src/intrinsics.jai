@@ -1,12 +1,26 @@
 #scope_file
 ADC :: (data: u8) {
-	temp: u16 = cast(u16)engine.A + cast(u16)data + cast(u16)engine.flags.C;
+	temp: u16;
+	if engine.flags.D {
+		temp = (engine.A & 0xF) + (data & 0xF) + cast(u8)engine.flags.C;
+		if temp >= 0x0A then temp = 0x10 | ((temp + 6) & 0xF);
+		
+		temp += cast(u16)(engine.A & 0xF0) + (data & 0xF0);
 
-	set_overflow(engine.A, data, temp);
+		if temp >= 0xA0 {
+			engine.flags.C = true;
+			temp += 0x60;
+		} else {
+			engine.flags.C = false;
+		}
+	} else {
+		temp = cast(u16)engine.A + cast(u16)data + cast(u16)engine.flags.C;
+		set_overflow(engine.A, data, temp);
+		engine.flags.C = cast(bool)bit(temp, 8);
+	}
 
 	engine.A = cast,trunc(u8)temp;
 
-	engine.flags.C = cast(bool)bit(temp, 8);
 	update_N_and_Z(engine.A);
 }
 
@@ -197,12 +211,27 @@ RTS :: () {
 }
 
 SBC :: (data: u8) {
-	temp: u8 = engine.A - data - cast(u8)(!engine.flags.C);
+	temp: u16;
 
-	set_overflow(engine.A, ~data, temp);
-	engine.flags.C = (0xFF + cast(u16)engine.A - data + cast(u8)engine.flags.C) >= 0x100;
+	if engine.flags.D {
+		temp = 0xF + (engine.A & 0xF) - (data & 0xF) + cast(u8)engine.flags.C;
 
-	engine.A = temp;
+		if temp < 0x10 then temp -= 0x6;
+		temp += 0xF0 + cast(u16)(engine.A & 0xF0) - (data  & 0xF0);
+
+		if temp < 0x100 {
+			engine.flags.C = false;
+			temp -= 0x60;
+		} else {
+			engine.flags.C = true;
+		}
+	} else {
+		temp = engine.A - data - cast(u8)(!engine.flags.C);
+		set_overflow(engine.A, ~data, temp);
+		engine.flags.C = (0xFF + cast(u16)engine.A - data + cast(u8)engine.flags.C) >= 0x100;
+	}
+
+	engine.A = cast,trunc(u8)temp;
 
 	update_N_and_Z(engine.A);
 }
