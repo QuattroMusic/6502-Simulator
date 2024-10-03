@@ -51,7 +51,7 @@ main :: () {
 	while vp.running {
 		lock_frame_rate();
 		fetch_window_inputs();
-
+		
 		draw_one_frame();
 	}
 	deinit_window();

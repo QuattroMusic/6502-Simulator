@@ -48,9 +48,7 @@ draw_rect_lines :: (pos: Vec2, size: Vec2, layer: f32, col: Col, t: f32 = 1) {
 	draw_rect(pos + .{0, size.y - t}, .{size.x, t}, layer, col);
 }
 
-
-
-draw_text :: (text: string, pos: Vec2, layer: f32, scale: f32, color: Col, wrap: f32 = 0) {
+draw_text :: (text: string, pos: Vec2, layer: f32, scale: f32, color: Col, $wrap: f32 = 0) {
 	x_pos: f32;
 	y_pos: f32;
 
@@ -58,7 +56,7 @@ draw_text :: (text: string, pos: Vec2, layer: f32, scale: f32, color: Col, wrap:
 	uv_y := 8.0 / texture_height;
 
 	s := 8.0 * scale;
-
+	
 	for cast([]u8) text {
 		if it == #char "\n" {
 			x_pos = 0;
@@ -80,7 +78,7 @@ draw_text :: (text: string, pos: Vec2, layer: f32, scale: f32, color: Col, wrap:
 			indices_add(*font_buffer, vert_count + 3);
 		}
 		x_pos += s;
-		if wrap && x_pos + s > wrap {
+		#if wrap if x_pos + s > wrap {
 			x_pos = 0;
 			y_pos += s;
 		}
@@ -119,7 +117,7 @@ get_icon_mapping :: (icon: Icon) -> (uv: Vec2) {
 	}
 }
 
-get_char_mapping :: (c: u8) -> (uv: Vec2) {
+get_char_mapping :: ($$c: u8) -> (uv: Vec2) {
 	// since the font is monospace, we don't need to return the size, it's always the same
 
 	if c >= #char "a" && c <= #char "z" {

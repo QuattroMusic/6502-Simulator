@@ -165,7 +165,7 @@ draw_window :: (pos: Vec2, size: Vec2, layer: f32, $$name: string) {
 	draw_text(name, pos + .{9, 8}, layer + 1, 1, COLOR_WIDGET_BORDER);
 }
 
-draw_popup :: (width: f32, height: f32) {
+draw_popup :: ($width: f32, $height: f32) {
 	x := (vp.width - width) / 2;
 	y := (vp.height - height) / 2;
 
@@ -205,8 +205,10 @@ finalize_widgets :: () {
 	if is_mouse_released(0) then widget_selected = 0;
 	
 	target_fade := ifx ui.show_popup 0.75 else 0;
-	fade_value = lerp(fade_value, target_fade, vp.dt / 0.08);
+	T :: 0.35;  // seconds took from 0 to target_fade (I didn't solve the equation, but it's a nice approx, maybe it's good)
+	k := 1 / (T * vp.dt * 1000);
 	
+	fade_value = lerp(fade_value, target_fade, k);
 	draw_rect(.{0, 0}, .{xx vp.width, xx vp.height}, 9, .{0, 0, 0, fade_value});
 }
 

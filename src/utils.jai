@@ -53,3 +53,30 @@ string_length :: (d: *u8) -> s64 {
 	while d[it] it += 1;
 	return it;
 }
+
+_profile_ident: int;
+
+profile_block :: () #expand {
+	_profile_ident += 1;
+	`_start := current_time_monotonic();
+	
+	`defer {
+		_end := current_time_monotonic();
+		
+		ctx: Context;
+		ctx.allocator = temp;
+		push_context,defer_pop ctx;
+		
+		s: String_Builder;
+		
+		for 1.._profile_ident - 1 {
+			append(*s, "\t");
+		}
+		name :: #procedure_name();
+		delta := to_microseconds(_end - _start);
+		append(*s, tprint("% took %us", name, delta));
+		print(builder_to_string(*s));
+		
+		_profile_ident -= 1;
+	}
+}
