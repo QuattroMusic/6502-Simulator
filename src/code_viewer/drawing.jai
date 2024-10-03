@@ -17,10 +17,12 @@ draw_line_count_bar :: () {
 }
 
 draw_scrollbars :: () {
+	amt := viewer.rows_length.count;
+	if amt == 0 then return;
+	
 	pos := viewer.pos;
 	size := viewer.size;
 	scr_pos := viewer.scrollbar_pos;
-	amt := viewer.rows_length.count;
 	
 	draw_rect(.{pos.x + size.x - 12, pos.y}, .{12, size.y}, 1, COLOR_WIDGET_BG);
 	
