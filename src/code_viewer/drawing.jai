@@ -5,7 +5,7 @@ draw_line_count_bar :: () {
 	draw_rect(off, .{w, viewer.size.y}, 1, COLOR_WIDGET_BG);
 	
 	start: int = xx viewer.scrollbar_pos / 16;
-	end: int = xx (viewer.scrollbar_pos + viewer.size.y + 10) / 16;
+	end: int = xx (viewer.scrollbar_pos + viewer.size.y - 8) / 16;
 	
 	for start..end - 1 {
 		if it == viewer.rows_length.count then return;
@@ -47,7 +47,7 @@ draw_colored_text :: () {
 	off.y += 5 - viewer.scrollbar_pos;
 	
 	start: int = xx viewer.scrollbar_pos / 16;
-	end: int = xx (viewer.scrollbar_pos + viewer.size.y + 10) / 16;
+	end: int = xx (viewer.scrollbar_pos + viewer.size.y - 8) / 16;
 	
 	for viewer.text_line {
 		if it == end then break;  // no need to check forward

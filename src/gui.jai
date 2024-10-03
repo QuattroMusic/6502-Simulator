@@ -91,11 +91,11 @@ draw_code_viewer :: () {
 
 	handle_scrollbar();
 
-	set_drawing_area(offset, viewer.size); {
+	// set_drawing_area(offset, viewer.size); {
 		draw_colored_text();
 		draw_line_count_bar();
 		draw_scrollbars();
-	} reset_drawing_area();
+	// } reset_drawing_area();
 }
 
 handle_memory_scrollbar :: (pos: Vec2, size: Vec2) {
@@ -165,7 +165,7 @@ draw_program_memory :: () {
 
 	draw_rect(pos, .{48, size.y}, 1, COLOR_WIDGET_BG);
 
-	set_drawing_area(pos, size); {
+	// set_drawing_area(pos, size); {
 		aspect_ratio := size.y / (2048 * 16);
 		bar_height := aspect_ratio * size.y;
 
@@ -188,7 +188,7 @@ draw_program_memory :: () {
 		end: int = xx ((ui.memory_scrollbar_pos + size.y - 24) / 16);
 
 		draw_RAM_content(offset, start, end, pos.y, size.y);
-	} reset_drawing_area();
+	// } reset_drawing_area();
 }
 
 draw_program_registers :: () {

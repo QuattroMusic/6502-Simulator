@@ -3,7 +3,6 @@ init_rendering :: () {
 	init_shaders();
 	init_font();
 	init_graphics();
-	reset_drawing_area();
 }
 
 deinit_rendering :: () {
@@ -190,22 +189,21 @@ init_graphics :: () {
 	buff_desc.BindFlags = .CONSTANT_BUFFER;
 	ID3D11Device_CreateBuffer(dev, *buff_desc, null, *camera_buffer);
 
-	quad_buffer.vertices_data = alloc(size_of(quad_buffer.vertex_type) * quad_buffer.vertices_allocated);
-	quad_buffer.indices_data  = alloc(size_of(u32)                     * quad_buffer.indices_allocated);
-	font_buffer.vertices_data = alloc(size_of(font_buffer.vertex_type) * font_buffer.vertices_allocated);
-	font_buffer.indices_data  = alloc(size_of(u32)                     * font_buffer.indices_allocated);
+	quad_buffer.vertices_view.data = quad_vertices.data;
+	font_buffer.vertices_view.data = font_vertices.data;
+	quad_buffer.indices_view.data = quad_indices.data;
+	font_buffer.indices_view.data = font_indices.data;
 
-	create_vertices_buffer_dx11(*quad_buffer);
-	create_indices_buffer_dx11(*quad_buffer);
-	create_vertices_buffer_dx11(*font_buffer);
-	create_indices_buffer_dx11(*font_buffer);
+	create_vertices_buffer_dx11(*quad_buffer, quad_vertices.count);
+	create_indices_buffer_dx11(*quad_buffer, quad_indices.count);
+	create_vertices_buffer_dx11(*font_buffer, font_vertices.count);
+	create_indices_buffer_dx11(*font_buffer, font_indices.count);
 
 	ID3D11DeviceContext_IASetPrimitiveTopology(devcon, .TRIANGLELIST);
 
 	rasterizer_desc: D3D11_RASTERIZER_DESC;
 	rasterizer_desc.FillMode = .SOLID;
 	rasterizer_desc.CullMode = .FRONT;
-	rasterizer_desc.ScissorEnable = xx true;
 	ID3D11Device_CreateRasterizerState(dev, *rasterizer_desc, *rasterizer);
 
 	ID3D11DeviceContext_RSSetState(devcon, rasterizer);
@@ -259,7 +257,7 @@ begin_drawing :: () {
 }
 
 draw_buffer :: (data: *Buffer_Data) {
-	if data.indices_count == 0 then return;
+	if data.indices_view.count == 0 then return;
 
 	ID3D11DeviceContext_VSSetShader(devcon, data.VS, null, 0);
 	ID3D11DeviceContext_PSSetShader(devcon, data.PS, null, 0);
@@ -276,17 +274,17 @@ draw_buffer :: (data: *Buffer_Data) {
 	// Todo - something more performant? Or is this already performant?
 	ms: D3D11_MAPPED_SUBRESOURCE;
 	ID3D11DeviceContext_Map(devcon, data.VBuffer, 0, .WRITE_DISCARD, 0, *ms);
-	memcpy(ms.pData, data.vertices_data, size * data.vertices_count);
+	memcpy(ms.pData, data.vertices_view.data, size * data.vertices_view.count);
 	ID3D11DeviceContext_Unmap(devcon, data.VBuffer, 0);
 
 	ID3D11DeviceContext_Map(devcon, data.IBuffer, 0, .WRITE_DISCARD, 0, *ms);
-	memcpy(ms.pData, data.indices_data, size_of(u32) * data.indices_count);
+	memcpy(ms.pData, data.indices_view.data, size_of(u32) * data.indices_view.count);
 	ID3D11DeviceContext_Unmap(devcon, data.IBuffer, 0);
 
-	ID3D11DeviceContext_DrawIndexed(devcon, data.indices_count, 0, 0);
+	ID3D11DeviceContext_DrawIndexed(devcon, xx data.indices_view.count, 0, 0);
 
-	data.indices_count = 0;
-	data.vertices_count = 0;
+	data.indices_view.count = 0;
+	data.vertices_view.count = 0;
 }
 
 flush_buffers :: () {
@@ -300,50 +298,34 @@ finalize_drawing :: () {
 }
 
 vertices_add :: (using buff: *Buffer_Data, val: buff.vertex_type) {
-	if vertices_count == vertices_allocated then resize_vertices(buff, vertices_allocated * 2);
-	vertices_data[vertices_count] = val;
-
-	vertices_count += 1;
+	// Todo - maybe flush if it's full?
+	#no_abc {
+		vertices_view[vertices_view.count] = val;
+		vertices_view.count += 1;
+	}
 }
 
 indices_add :: (using buff: *Buffer_Data, val: u32) {
-	if indices_count == indices_allocated then resize_indices(buff, indices_allocated * 2);
-	indices_data[indices_count] = val;
-
-	indices_count += 1;
+	// Todo - maybe flush if it's full?
+	#no_abc {
+		indices_view[indices_view.count] = val;
+		indices_view.count += 1;
+	}
 }
 
-resize_vertices :: (using buff: *Buffer_Data, new_amt: u32) {
-	size :: size_of(buff.vertex_type);
-
-	vertices_data = realloc(vertices_data, new_amt * size, vertices_allocated * size);
-	vertices_allocated = new_amt;
-
-	IUnknown_Release(VBuffer);
-	create_vertices_buffer_dx11(buff);
-}
-
-resize_indices :: (using buff: *Buffer_Data, new_amt: u32) {
-	indices_data = realloc(indices_data, new_amt * size_of(u32), indices_allocated * size_of(u32));
-	indices_allocated = new_amt;
-
-	IUnknown_Release(IBuffer);
-	create_indices_buffer_dx11(buff);
-}
-
-create_vertices_buffer_dx11 :: (using buff: *Buffer_Data) {
+create_vertices_buffer_dx11 :: (using buff: *Buffer_Data, amt: s64) {
 	vert_buff_desc: D3D11_BUFFER_DESC;
 	vert_buff_desc.Usage          = .DYNAMIC;
-	vert_buff_desc.ByteWidth      = size_of(buff.vertex_type) * vertices_allocated;
+	vert_buff_desc.ByteWidth      = xx (size_of(buff.vertex_type) * amt);
 	vert_buff_desc.BindFlags      = .VERTEX_BUFFER;
 	vert_buff_desc.CPUAccessFlags = .WRITE;
 	ID3D11Device_CreateBuffer(dev, *vert_buff_desc, null, *VBuffer);
 }
 
-create_indices_buffer_dx11 :: (using buff: *Buffer_Data) {
+create_indices_buffer_dx11 :: (using buff: *Buffer_Data, amt: s64) {
 	idx_buff_desc: D3D11_BUFFER_DESC;
 	idx_buff_desc.Usage          = .DYNAMIC;
-	idx_buff_desc.ByteWidth      = size_of(u32) * indices_allocated;
+	idx_buff_desc.ByteWidth      = xx (size_of(u32) * amt);
 	idx_buff_desc.BindFlags      = .INDEX_BUFFER;
 	idx_buff_desc.CPUAccessFlags = .WRITE;
 	ID3D11Device_CreateBuffer(dev, *idx_buff_desc, null, *IBuffer);
@@ -360,30 +342,6 @@ clear_background :: (col: Col) {
 	ID3D11DeviceContext_ClearRenderTargetView(devcon, back_buffer, *col.component);
 }
 
-set_drawing_area :: (pos: Vec2, size: Vec2) {
-	flush_buffers();
-
-	r: RECT;
-	r.left = xx pos.x;
-	r.top = xx pos.y;
-	r.right = xx (pos.x + size.x);
-	r.bottom = xx (pos.y + size.y);
-
-	ID3D11DeviceContext_RSSetScissorRects(devcon, 1, *r);
-}
-
-reset_drawing_area :: () {
-	flush_buffers();
-
-	r: RECT;
-	r.left = 0;
-	r.right = 0;
-	r.right = xx vp.width;
-	r.bottom = xx vp.height;
-
-	ID3D11DeviceContext_RSSetScissorRects(devcon, 1, *r);
-}
-
 resize_viewport :: () {
 	ID3D11DeviceContext_OMSetRenderTargets(devcon, 0, null, null);
 	IUnknown_Release(back_buffer);
@@ -396,14 +354,10 @@ resize_viewport :: () {
 }
 
 #scope_module
-Buffer_Data :: struct (vertex_type: $T) {
-	vertices_data: *vertex_type;
-	indices_data: *u32;
-	vertices_allocated: u32 = 8;
-	indices_allocated:  u32 = 8;
-	vertices_count:     u32 = 0;
-	indices_count:      u32 = 0;
-
+Buffer_Data :: struct (vertex_type: Type) {
+	indices_view:  [] u32;
+	vertices_view: [] vertex_type;
+	
 	VS: *ID3D11VertexShader;
 	PS: *ID3D11PixelShader;
 
@@ -412,6 +366,13 @@ Buffer_Data :: struct (vertex_type: $T) {
 
 	layout: *ID3D11InputLayout;
 }
+
+quad_indices: [0xFFFF] u32;
+font_indices: [0xFFFF] u32;
+quad_vertices: [0xFFFF] Vertex;
+font_vertices: [0xFFFF] Tex_Vertex;
+
+// working_area_set := false;
 
 quad_buffer: Buffer_Data(Vertex);
 font_buffer: Buffer_Data(Tex_Vertex);

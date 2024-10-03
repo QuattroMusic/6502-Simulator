@@ -1,5 +1,5 @@
 draw_rect :: (pos: Vec2, size: Vec2, layer: f32, col: Col) {
-	vert_count := quad_buffer.vertices_count;
+	vert_count := cast(u32)quad_buffer.vertices_view.count;
 
 	vertices_add(*quad_buffer, .{pos.x         , pos.y         , layer, col.component});
 	vertices_add(*quad_buffer, .{pos.x + size.x, pos.y         , layer, col.component});
@@ -15,7 +15,7 @@ draw_rect :: (pos: Vec2, size: Vec2, layer: f32, col: Col) {
 }
 
 draw_triangle :: (p1: Vec2, p2: Vec2, p3: Vec2, layer: f32, col: Col) {
-	vert_count := quad_buffer.vertices_count;
+	vert_count := cast(u32)quad_buffer.vertices_view.count;
 	
 	vertices_add(*quad_buffer, .{p1.x, p1.y, layer, col.component});
 	vertices_add(*quad_buffer, .{p2.x, p2.y, layer, col.component});
@@ -63,7 +63,7 @@ draw_text :: (text: string, pos: Vec2, layer: f32, scale: f32, color: Col, $wrap
 			y_pos += s;
 		} else if it != #char " " && it != #char "\t" && it != #char "\r" {
 			uv := get_char_mapping(it);
-			vert_count := font_buffer.vertices_count;
+			vert_count := cast(u32)font_buffer.vertices_view.count;
 
 			vertices_add(*font_buffer, .{pos.x + x_pos    , pos.y + y_pos    , layer, color.component, .[uv.x       , uv.y       ]});
 			vertices_add(*font_buffer, .{pos.x + x_pos + s, pos.y + y_pos    , layer, color.component, .[uv.x + uv_x, uv.y       ]});
@@ -88,7 +88,7 @@ draw_text :: (text: string, pos: Vec2, layer: f32, scale: f32, color: Col, $wrap
 draw_icon :: (icon: Icon, pos: Vec2, layer: f32, $scale: f32, color: Col) {
 	uv := get_icon_mapping(icon);
 
-	vert_count := font_buffer.vertices_count;
+	vert_count := cast(u32)font_buffer.vertices_view.count;
 
 	s :: 8.0 * scale;
 
