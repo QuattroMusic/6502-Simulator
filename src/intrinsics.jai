@@ -270,7 +270,7 @@ exec_operation :: (opcode: Opcode) {
 		case .PHP;     stack_push(pack_P());
 		case .PLA;     engine.A = stack_pop();  update_N_and_Z(engine.A);
 		case .PLP;     unpack_P(stack_pop());
-		case .RTI;     log_warn("RTI not supported at the moment");  cpu_stop();
+		case .RTI;     cpu_stop();
 		case .RTS;     RTS();
 		case .TAX;     engine.X = engine.A;  update_N_and_Z(engine.X);
 		case .TAY;     engine.Y = engine.A;  update_N_and_Z(engine.Y);
@@ -403,7 +403,7 @@ exec_operation :: (opcode: Opcode) {
 		case .ASL_ACC; ASLA();
 		case .ASL_ZPX; compact_zero_page_X_address(ASL);
 		case .ASL_ABX; compact_absolute_X_address(ASL);
-		case; log_warn("Found illegal opcode"); cpu_stop();
+		case; cpu_stop();
 	}
 }
 

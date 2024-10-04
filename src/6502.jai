@@ -149,8 +149,6 @@ unpack_P :: (data: u8) {
 cpu_stop :: () {
 	engine.running = false;
 	engine.thread_running = false;
-
-	log_info("CPU Stop");
 }
 
 cpu_reset :: () {
@@ -161,7 +159,6 @@ cpu_reset :: () {
 	engine.A = 0;
 	engine.X = 0;
 	engine.Y = 0;
-	log_info("CPU Reset");
 }
 
 cpu_init :: () {
@@ -173,7 +170,6 @@ cpu_init :: () {
 	engine.A = 0;
 	engine.X = 0;
 	engine.Y = 0;
-	log_info("CPU Init");
 }
 
 virtual_cpu_reset :: () {
@@ -184,7 +180,6 @@ virtual_cpu_reset :: () {
 	engine.A = 0;
 	engine.X = 0;
 	engine.Y = 0;
-	log_info("Virtual CPU Reset");
 }
 
 virtual_cpu_init :: () {
@@ -196,7 +191,6 @@ virtual_cpu_init :: () {
 	engine.A = 0;
 	engine.X = 0;
 	engine.Y = 0;
-	log_info("Virtual CPU Init");
 }
 
 next_instruction :: () {

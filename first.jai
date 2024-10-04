@@ -59,10 +59,6 @@ main :: () {
 	// run_all_tests();
 }
 
-LOG_INFO       :: false;
-LOG_EDITOR     :: false;
-LOG_VERBOSE    :: false;
-
 ROM_SIZE      :: 0x8000;
 RAM_SIZE      :: 0x8000;
 HEADER_HEIGHT :: 35;
@@ -135,7 +131,6 @@ operator + :: (a: Col, b: Col) -> Col {
 #load "src/engine/input.jai";
 #load "src/engine/rendering.jai";
 #load "src/engine/widgets.jai";
-#load "src/engine/logging.jai";
 
 #load "src/code_viewer/drawing.jai";
 #load "src/code_viewer/code_viewer.jai";
