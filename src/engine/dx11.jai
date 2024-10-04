@@ -104,8 +104,8 @@ init_shaders :: () {
 	ID3D11Device_CreatePixelShader( dev, PS.data, xx PS.count, null, *quad_buffer.PS);
 
 	ied :: D3D11_INPUT_ELEMENT_DESC.[
-		.{"POSITION", 0, .R32G32B32_FLOAT,    0,  0, .VERTEX_DATA, 0},
-		.{"COLOR",    0, .R32_UINT, 0, 12, .VERTEX_DATA, 0}
+		.{"POSITION", 0, .R32G32B32_FLOAT, 0,  0, .VERTEX_DATA, 0},
+		.{"COLOR",    0, .R32_UINT,        0, 12, .VERTEX_DATA, 0}
 	];
 	ID3D11Device_CreateInputLayout(dev, ied.data, xx ied.count, VS.data, xx VS.count, *quad_buffer.layout);
 
@@ -128,20 +128,16 @@ init_shaders :: () {
 init_font :: () {
 	// The font is stored internally as lines of bits. If a bit is 1, there's the pixel, and if not, it's empty
 	// so, we should convert the packed data to the format for DX11
-	mem := cast(*u8)alloc(texture_width * texture_height * texture_channels,, temp);
+	mem: [texture_width * texture_height]u8;
 
 	off: int;
 	for texture_data {
 		v := it;
 		for 0..63 {
-			x := ifx (v >> (63 - it)) & 1 then 255 else 0;
-
-			mem[it * 4     + off] = xx x;
-			mem[it * 4 + 1 + off] = xx x;
-			mem[it * 4 + 2 + off] = xx x;
-			mem[it * 4 + 3 + off] = xx x;
+			x := ifx (v >> (63 - it)) & 1 then 255;
+			mem[it + off] = xx x;
 		}
-		off += 64 * 4;
+		off += 64;
 	}
 
 	desc: D3D11_TEXTURE2D_DESC;
@@ -149,20 +145,20 @@ init_font :: () {
 	desc.Height           = xx texture_height;
 	desc.MipLevels        = 1;
 	desc.ArraySize        = 1;
-	desc.Format           = .R8G8B8A8_UNORM;
+	desc.Format           = .A8_UNORM;
 	desc.SampleDesc.Count = 1;
 	desc.Usage            = .IMMUTABLE;
 	desc.BindFlags        = .SHADER_RESOURCE;
 
 	init_data: D3D11_SUBRESOURCE_DATA;
-	init_data.pSysMem = mem;
-	init_data.SysMemPitch = xx (texture_width * 4);
-	init_data.SysMemSlicePitch = xx ((cast(u32)init_data.SysMemPitch) * cast(u32)texture_height);
+	init_data.pSysMem = mem.data;
+	init_data.SysMemPitch = xx texture_width;
+	init_data.SysMemSlicePitch = xx (cast(u32)texture_width * cast(u32)texture_height);
 
 	ID3D11Device_CreateTexture2D(dev, *desc, *init_data, *texture);
 
 	SRVDesc: D3D11_SHADER_RESOURCE_VIEW_DESC;
-	SRVDesc.Format = .R8G8B8A8_UNORM;
+	SRVDesc.Format = desc.Format;
 	SRVDesc.ViewDimension = .TEXTURE2D;
 	SRVDesc.Texture2D.MipLevels = 1;
 	ID3D11Device_CreateShaderResourceView(dev, texture, *SRVDesc, *texture_resource_view);
@@ -225,7 +221,7 @@ init_graphics :: () {
 	ID3D11Device_CreateBlendState(dev, *blend_desc, *transparency);
 
 	ID3D11DeviceContext_OMSetBlendState(devcon, transparency, null, 0xFFFFFFFF);
-	
+
 	update_camera();
 }
 
@@ -268,7 +264,7 @@ draw_buffer :: (data: *Buffer_Data) {
 
 	stride: u32 = size;
 	offset: u32 = 0;
-	
+
 	ID3D11DeviceContext_IASetVertexBuffers(devcon, 0, 1, *data.VBuffer, *stride, *offset);
 	ID3D11DeviceContext_IASetIndexBuffer(devcon, data.IBuffer, .R32_UINT, 0);
 
@@ -276,24 +272,20 @@ draw_buffer :: (data: *Buffer_Data) {
 	ID3D11DeviceContext_Map(devcon, data.VBuffer, 0, .WRITE_DISCARD, 0, *ms);
 	memcpy(ms.pData, data.vertices_view.data, size * data.vertices_view.count);
 	ID3D11DeviceContext_Unmap(devcon, data.VBuffer, 0);
-	
+
 	ID3D11DeviceContext_Map(devcon, data.IBuffer, 0, .WRITE_DISCARD, 0, *ms);
 	memcpy(ms.pData, data.indices_view.data, size_of(u32) * data.indices_view.count);
 	ID3D11DeviceContext_Unmap(devcon, data.IBuffer, 0);
 
 	ID3D11DeviceContext_DrawIndexed(devcon, xx data.indices_view.count, 0, 0);
-	
+
 	data.indices_view.count = 0;
 	data.vertices_view.count = 0;
 }
 
-flush_buffers :: () {
+finalize_drawing :: () {
 	draw_buffer(*quad_buffer);
 	draw_buffer(*font_buffer);
-}
-
-finalize_drawing :: () {
-	flush_buffers();
 	IDXGISwapChain_Present(swapchain, 0, 0);
 }
 
@@ -358,7 +350,7 @@ resize_viewport :: () {
 Buffer_Data :: struct (vertex_type: Type) {
 	indices_view:  [] u32;
 	vertices_view: [] vertex_type;
-	
+
 	VS: *ID3D11VertexShader;
 	PS: *ID3D11PixelShader;
 
@@ -389,9 +381,9 @@ Tex_Vertex :: struct {
 
 camera: Matrix4;
 
-swapchain:  *IDXGISwapChain;
-dev:        *ID3D11Device;
-devcon:     *ID3D11DeviceContext;
+swapchain:   *IDXGISwapChain;
+dev:         *ID3D11Device;
+devcon:      *ID3D11DeviceContext;
 back_buffer: *ID3D11RenderTargetView;
 
 camera_buffer: *ID3D11Buffer;
@@ -439,7 +431,7 @@ texture_data :: u64.[
 
 texture_height   :: #run texture_data.count / 4;
 texture_width    :: #run texture_data.count / texture_height * 64;
-texture_channels :: 4;  // Todo - is there a way to only have one channel? afterall it's just 0 or 255
+texture_channels :: 1;
 
 #scope_file
 quad_shader :: #string DONE
@@ -497,13 +489,13 @@ VS_OUTPUT VShader(float4 inPos : POSITION, uint inCol : COLOR, float2 inTexCoord
 
 float4 PShader(VS_OUTPUT input) : SV_TARGET {
 	float4 f = ObjTexture.Sample(ObjSamplerState, input.TexCoord);
-	
+
 	float4 col;
 	col.x = ( input.Color        & 0xFF) / 255.0f;
 	col.y = ((input.Color >> 8 ) & 0xFF) / 255.0f;
 	col.z = ((input.Color >> 16) & 0xFF) / 255.0f;
 	col.w = ((input.Color >> 24) & 0xFF) / 255.0f;
-	
-	return f * col;
+
+	return float4(col.x, col.y, col.z, f.w);
 }
 DONE
