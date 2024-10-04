@@ -4,7 +4,7 @@ draw_header :: () {
 	draw_rect(.{0, 0}, .{xx vp.width, h}, 0, COLOR_BACKGROUND);
 	draw_rect_lines(.{0, 0}, .{xx vp.width, xx vp.height}, 1, COLOR_LINE);
 	draw_rect(.{0, h - 1}, .{xx vp.width, 1}, 1, COLOR_LINE);
-
+	
 	draw_text("6502 Simulator", .{10, 4}, 1, 3, WHITE);
 
 	if button(.REDUCE, .{cast(f32)vp.width - h * 3, 0}, .{h, h}, 1, 2) {
@@ -165,30 +165,27 @@ draw_program_memory :: () {
 
 	draw_rect(pos, .{48, size.y}, 1, COLOR_WIDGET_BG);
 
-	// set_drawing_area(pos, size); {
-		aspect_ratio := size.y / (2048 * 16);
-		bar_height := aspect_ratio * size.y;
+	aspect_ratio := size.y / (2048 * 16);
+	bar_height := aspect_ratio * size.y;
 
-		draw_rect(pos + .{size.x - 12, 0}, .{12, size.y}, 1, COLOR_WIDGET_BG);
-		
-		scroll_pos := pos + .{size.x - 12, ui.memory_scrollbar_pos * aspect_ratio};
-		
-		state := scrollbar_interaction(scroll_pos, .{12, size.y}, 2);
-		col: Col = ---;
-		if state == {
-			case .NORMAL;  col = COLOR_WIDGET_BORDER;
-			case .HOVER;   col = COLOR_WIDGET_BG_HOVERED;
-			case .PRESSED; col = COLOR_WIDGET_BG_PRESSED;
-		}
-		
-		draw_rect(scroll_pos, .{12, bar_height}, 2, col);
+	draw_rect(pos + .{size.x - 12, 0}, .{12, size.y}, 1, COLOR_WIDGET_BG);
+	
+	scroll_pos := pos + .{size.x - 12, ui.memory_scrollbar_pos * aspect_ratio};
+	
+	state := scrollbar_interaction(scroll_pos, .{12, size.y}, 2);
+	col: Col = ---;
+	if state == {
+		case .NORMAL;  col = COLOR_WIDGET_BORDER;
+		case .HOVER;   col = COLOR_WIDGET_BG_HOVERED;
+		case .PRESSED; col = COLOR_WIDGET_BG_PRESSED;
+	}
+	
+	draw_rect(scroll_pos, .{12, bar_height}, 2, col);
 
-		offset := pos + .{2, -ui.memory_scrollbar_pos};
-		start: int = xx ((ui.memory_scrollbar_pos) / 16);
-		end: int = xx ((ui.memory_scrollbar_pos + size.y - 24) / 16);
-
-		draw_RAM_content(offset, start, end, pos.y, size.y);
-	// } reset_drawing_area();
+	offset := pos + .{2, -ui.memory_scrollbar_pos};
+	start: int = xx ((ui.memory_scrollbar_pos) / 16);
+	end: int = xx ((ui.memory_scrollbar_pos + size.y - 24) / 16);
+	draw_RAM_content(offset, start, end, pos.y, size.y);
 }
 
 draw_program_registers :: () {

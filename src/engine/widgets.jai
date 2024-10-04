@@ -209,7 +209,7 @@ finalize_widgets :: () {
 	k := 1 / (T * vp.dt * 1000);
 	
 	fade_value = lerp(fade_value, target_fade, k);
-	draw_rect(.{0, 0}, .{xx vp.width, xx vp.height}, 9, .{0, 0, 0, fade_value});
+	draw_rect(.{0, 0}, .{xx vp.width, xx vp.height}, 9, .{0, 0, 0, cast(u8)(fade_value * 255)});
 }
 
 handle_widget_layering :: () {

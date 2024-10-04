@@ -1,10 +1,10 @@
 draw_rect :: (pos: Vec2, size: Vec2, layer: f32, col: Col) {
 	vert_count := cast(u32)quad_buffer.vertices_view.count;
 
-	vertices_add(*quad_buffer, .{pos.x         , pos.y         , layer, col.component});
-	vertices_add(*quad_buffer, .{pos.x + size.x, pos.y         , layer, col.component});
-	vertices_add(*quad_buffer, .{pos.x + size.x, pos.y + size.y, layer, col.component});
-	vertices_add(*quad_buffer, .{pos.x         , pos.y + size.y, layer, col.component});
+	vertices_add(*quad_buffer, .{pos.x         , pos.y         , layer, col.data});
+	vertices_add(*quad_buffer, .{pos.x + size.x, pos.y         , layer, col.data});
+	vertices_add(*quad_buffer, .{pos.x + size.x, pos.y + size.y, layer, col.data});
+	vertices_add(*quad_buffer, .{pos.x         , pos.y + size.y, layer, col.data});
 
 	indices_add(*quad_buffer, vert_count + 1);
 	indices_add(*quad_buffer, vert_count    );
@@ -17,9 +17,9 @@ draw_rect :: (pos: Vec2, size: Vec2, layer: f32, col: Col) {
 draw_triangle :: (p1: Vec2, p2: Vec2, p3: Vec2, layer: f32, col: Col) {
 	vert_count := cast(u32)quad_buffer.vertices_view.count;
 	
-	vertices_add(*quad_buffer, .{p1.x, p1.y, layer, col.component});
-	vertices_add(*quad_buffer, .{p2.x, p2.y, layer, col.component});
-	vertices_add(*quad_buffer, .{p3.x, p3.y, layer, col.component});
+	vertices_add(*quad_buffer, .{p1.x, p1.y, layer, col.data});
+	vertices_add(*quad_buffer, .{p2.x, p2.y, layer, col.data});
+	vertices_add(*quad_buffer, .{p3.x, p3.y, layer, col.data});
 	
 	indices_add(*quad_buffer, vert_count + 1);
 	indices_add(*quad_buffer, vert_count    );
@@ -65,10 +65,10 @@ draw_text :: (text: string, pos: Vec2, layer: f32, scale: f32, color: Col, $wrap
 			uv := get_char_mapping(it);
 			vert_count := cast(u32)font_buffer.vertices_view.count;
 
-			vertices_add(*font_buffer, .{pos.x + x_pos    , pos.y + y_pos    , layer, color.component, .[uv.x       , uv.y       ]});
-			vertices_add(*font_buffer, .{pos.x + x_pos + s, pos.y + y_pos    , layer, color.component, .[uv.x + uv_x, uv.y       ]});
-			vertices_add(*font_buffer, .{pos.x + x_pos + s, pos.y + y_pos + s, layer, color.component, .[uv.x + uv_x, uv.y + uv_y]});
-			vertices_add(*font_buffer, .{pos.x + x_pos    , pos.y + y_pos + s, layer, color.component, .[uv.x       , uv.y + uv_y]});
+			vertices_add(*font_buffer, .{pos.x + x_pos    , pos.y + y_pos    , layer, color.data, .[uv.x       , uv.y       ]});
+			vertices_add(*font_buffer, .{pos.x + x_pos + s, pos.y + y_pos    , layer, color.data, .[uv.x + uv_x, uv.y       ]});
+			vertices_add(*font_buffer, .{pos.x + x_pos + s, pos.y + y_pos + s, layer, color.data, .[uv.x + uv_x, uv.y + uv_y]});
+			vertices_add(*font_buffer, .{pos.x + x_pos    , pos.y + y_pos + s, layer, color.data, .[uv.x       , uv.y + uv_y]});
 
 			indices_add(*font_buffer, vert_count + 1);
 			indices_add(*font_buffer, vert_count    );
@@ -95,10 +95,10 @@ draw_icon :: (icon: Icon, pos: Vec2, layer: f32, $scale: f32, color: Col) {
 	uv_x := 8.0 / texture_width;
 	uv_y := 8.0 / texture_height;
 
-	vertices_add(*font_buffer, .{pos.x    , pos.y    , layer, color.component, .[uv.x       , uv.y       ]});
-	vertices_add(*font_buffer, .{pos.x + s, pos.y    , layer, color.component, .[uv.x + uv_x, uv.y       ]});
-	vertices_add(*font_buffer, .{pos.x + s, pos.y + s, layer, color.component, .[uv.x + uv_x, uv.y + uv_y]});
-	vertices_add(*font_buffer, .{pos.x    , pos.y + s, layer, color.component, .[uv.x       , uv.y + uv_y]});
+	vertices_add(*font_buffer, .{pos.x    , pos.y    , layer, color.data, .[uv.x       , uv.y       ]});
+	vertices_add(*font_buffer, .{pos.x + s, pos.y    , layer, color.data, .[uv.x + uv_x, uv.y       ]});
+	vertices_add(*font_buffer, .{pos.x + s, pos.y + s, layer, color.data, .[uv.x + uv_x, uv.y + uv_y]});
+	vertices_add(*font_buffer, .{pos.x    , pos.y + s, layer, color.data, .[uv.x       , uv.y + uv_y]});
 
 	indices_add(*font_buffer, vert_count + 1);
 	indices_add(*font_buffer, vert_count    );
@@ -175,34 +175,34 @@ Icon :: enum {
 	CLOSE;
 }
 
-COLOR_WIDGET_BG             :: #run Col.{  73,  62,  51, 255} / 255;
-COLOR_WIDGET_BG_HOVERED     :: #run Col.{ 188, 126,  59, 255 } / 255;
-COLOR_WIDGET_BG_PRESSED     :: #run Col.{ 246, 164,  76, 255 } / 255;
-COLOR_WIDGET_BORDER         :: #run Col.{ 196, 126,  43, 255 } / 255;
-COLOR_WIDGET_BORDER_HOVERED :: #run Col.{  49,  43,  40, 255 } / 255;
-COLOR_WIDGET_BORDER_PRESSED :: #run Col.{  80,  77,  73, 255 } / 255;
+COLOR_WIDGET_BG             :: Col.{  73,  62,  51, 255};
+COLOR_WIDGET_BG_HOVERED     :: Col.{ 188, 126,  59, 255 };
+COLOR_WIDGET_BG_PRESSED     :: Col.{ 246, 164,  76, 255 };
+COLOR_WIDGET_BORDER         :: Col.{ 196, 126,  43, 255 };
+COLOR_WIDGET_BORDER_HOVERED :: Col.{  49,  43,  40, 255 };
+COLOR_WIDGET_BORDER_PRESSED :: Col.{  80,  77,  73, 255 };
 
-COLOR_TEXT_NORMAL     :: #run Col.{ 246, 151,  48, 255 } / 255;
-COLOR_TEXT_HOVERED    :: #run Col.{ 216, 210, 206, 255 } / 255;
-COLOR_TEXT_PRESSED    :: #run Col.{ 104,  95,  93, 255 } / 255;
+COLOR_TEXT_NORMAL     :: Col.{ 246, 151,  48, 255 };
+COLOR_TEXT_HOVERED    :: Col.{ 216, 210, 206, 255 };
+COLOR_TEXT_PRESSED    :: Col.{ 104,  95,  93, 255 };
 
-COLOR_BACKGROUND      :: #run Col.{  32,  30,  28, 255 } / 255;
-COLOR_DEEP_BACKGROUND :: #run Col.{  10,  10,   5, 255 } / 255;
+COLOR_BACKGROUND      :: Col.{  32,  30,  28, 255 };
+COLOR_DEEP_BACKGROUND :: Col.{  10,  10,   5, 255 };
 
-COLOR_LINE            :: #run Col.{ 254, 170,  55, 255 } / 255;
-COLOR_DISABLED        :: #run Col.{  73,  85,  97, 255 } / 255;
+COLOR_LINE            :: Col.{ 254, 170,  55, 255 };
+COLOR_DISABLED        :: Col.{  73,  85,  97, 255 };
 
-WHITE  :: #run Col.{240, 240, 220, 255} / 255;
-GREEN  :: #run Col.{ 59, 187,  20, 255} / 255;
-RED    :: #run Col.{202,  45,  31, 255} / 255;
-PURPLE :: #run Col.{130, 102, 193, 255} / 255;
-ORANGE :: #run Col.{221, 119,  17, 255} / 255;
-YELLOW :: #run Col.{238, 210,   5, 255} / 255;
-PINK   :: #run Col.{255, 110, 199, 255} / 255;
-GRAY   :: #run Col.{110, 110, 110, 255} / 255;
-BLUE   :: #run Col.{ 64, 104, 200, 255} / 255;
-AMBER  :: #run Col.{234, 191,  21, 255} / 255;
-BLACK  :: #run Col.{ 12,  12,  12, 255} / 255;
+WHITE  :: Col.{240, 240, 220, 255};
+GREEN  :: Col.{ 59, 187,  20, 255};
+RED    :: Col.{202,  45,  31, 255};
+PURPLE :: Col.{130, 102, 193, 255};
+ORANGE :: Col.{221, 119,  17, 255};
+YELLOW :: Col.{238, 210,   5, 255};
+PINK   :: Col.{255, 110, 199, 255};
+GRAY   :: Col.{110, 110, 110, 255};
+BLUE   :: Col.{ 64, 104, 200, 255};
+AMBER  :: Col.{234, 191,  21, 255};
+BLACK  :: Col.{ 12,  12,  12, 255};
 
 DISPLAY_COLOR :: Col.[
 	BLACK, WHITE, GRAY, RED, ORANGE, YELLOW, GREEN, BLUE, PURPLE, PINK

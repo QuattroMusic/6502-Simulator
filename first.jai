@@ -10,7 +10,7 @@ update_6502 :: () {
 	handle_displayed_file();
 
 	if ui.show_popup then draw_popup(800, 400);
-
+	
 	draw_header();
 	draw_buttons_controls();
 	draw_code_viewer();
@@ -88,9 +88,31 @@ APP_MINOR_VERSION :: 0;
 Vec2 :: Vector2;
 Vec3 :: Vector3;
 Vec4 :: Vector4;
-Col  :: Vector4;
 f32  :: float32;
 f64  :: float64;
+
+Col :: struct {
+	r, g, b, a: u8;
+	#place r; data: u32;
+}
+
+operator * :: (col: Col, s: f32) -> Col #symmetric {
+	out: Col = ---;
+	out.r = cast(u8)(col.r * s);
+	out.g = cast(u8)(col.g * s);
+	out.b = cast(u8)(col.b * s);
+	out.a = col.a;
+	return out;
+}
+
+operator + :: (a: Col, b: Col) -> Col {
+	out: Col = ---;
+	out.r = a.r + b.r;
+	out.g = a.g + b.g;
+	out.b = a.b + b.b;
+	out.a = a.a + b.a;
+	return out;
+}
 
 #import "Basic";
 #import "Math";

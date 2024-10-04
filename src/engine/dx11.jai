@@ -105,7 +105,7 @@ init_shaders :: () {
 
 	ied :: D3D11_INPUT_ELEMENT_DESC.[
 		.{"POSITION", 0, .R32G32B32_FLOAT,    0,  0, .VERTEX_DATA, 0},
-		.{"COLOR",    0, .R32G32B32A32_FLOAT, 0, 12, .VERTEX_DATA, 0}
+		.{"COLOR",    0, .R32_UINT, 0, 12, .VERTEX_DATA, 0}
 	];
 	ID3D11Device_CreateInputLayout(dev, ied.data, xx ied.count, VS.data, xx VS.count, *quad_buffer.layout);
 
@@ -118,9 +118,9 @@ init_shaders :: () {
 	ID3D11Device_CreateVertexShader(dev, VS2.data, xx VS2.count, null, *font_buffer.VS);
 	ID3D11Device_CreatePixelShader( dev, PS2.data, xx PS2.count, null, *font_buffer.PS);
 	ied2 :: D3D11_INPUT_ELEMENT_DESC.[
-		.{"POSITION", 0, .R32G32B32_FLOAT,    0,  0, .VERTEX_DATA, 0},
-		.{"COLOR",    0, .R32G32B32A32_FLOAT, 0, 12, .VERTEX_DATA, 0},
-		.{"TEXCOORD", 0, .R32G32_FLOAT,       0, 28, .VERTEX_DATA, 0}
+		.{"POSITION", 0, .R32G32B32_FLOAT, 0,  0, .VERTEX_DATA, 0},
+		.{"COLOR",    0, .R32_UINT,        0, 12, .VERTEX_DATA, 0},
+		.{"TEXCOORD", 0, .R32G32_FLOAT,    0, 16, .VERTEX_DATA, 0}
 	];
 	ID3D11Device_CreateInputLayout(dev, ied2.data, ied2.count, VS2.data, xx VS2.count, *font_buffer.layout);
 }
@@ -268,21 +268,21 @@ draw_buffer :: (data: *Buffer_Data) {
 
 	stride: u32 = size;
 	offset: u32 = 0;
+	
 	ID3D11DeviceContext_IASetVertexBuffers(devcon, 0, 1, *data.VBuffer, *stride, *offset);
 	ID3D11DeviceContext_IASetIndexBuffer(devcon, data.IBuffer, .R32_UINT, 0);
 
-	// Todo - something more performant? Or is this already performant?
 	ms: D3D11_MAPPED_SUBRESOURCE;
 	ID3D11DeviceContext_Map(devcon, data.VBuffer, 0, .WRITE_DISCARD, 0, *ms);
 	memcpy(ms.pData, data.vertices_view.data, size * data.vertices_view.count);
 	ID3D11DeviceContext_Unmap(devcon, data.VBuffer, 0);
-
+	
 	ID3D11DeviceContext_Map(devcon, data.IBuffer, 0, .WRITE_DISCARD, 0, *ms);
 	memcpy(ms.pData, data.indices_view.data, size_of(u32) * data.indices_view.count);
 	ID3D11DeviceContext_Unmap(devcon, data.IBuffer, 0);
 
 	ID3D11DeviceContext_DrawIndexed(devcon, xx data.indices_view.count, 0, 0);
-
+	
 	data.indices_view.count = 0;
 	data.vertices_view.count = 0;
 }
@@ -339,7 +339,8 @@ update_camera :: () {
 }
 
 clear_background :: (col: Col) {
-	ID3D11DeviceContext_ClearRenderTargetView(devcon, back_buffer, *col.component);
+	c: [4]float = .[col.r / 255.0, col.g / 255.0, col.b / 255.0, col.a / 255.0];
+	ID3D11DeviceContext_ClearRenderTargetView(devcon, back_buffer, *c);
 }
 
 resize_viewport :: () {
@@ -367,24 +368,22 @@ Buffer_Data :: struct (vertex_type: Type) {
 	layout: *ID3D11InputLayout;
 }
 
-quad_indices: [0xFFFF] u32;
-font_indices: [0xFFFF] u32;
+quad_indices:  [0xFFFF] u32;
+font_indices:  [0xFFFF] u32;
 quad_vertices: [0xFFFF] Vertex;
 font_vertices: [0xFFFF] Tex_Vertex;
-
-// working_area_set := false;
 
 quad_buffer: Buffer_Data(Vertex);
 font_buffer: Buffer_Data(Tex_Vertex);
 
 Vertex :: struct {
 	x, y, z: f32;
-	col: [4] f32;
+	col: u32;
 }
 
 Tex_Vertex :: struct {
 	x, y, z: f32;
-	col: [4] f32;
+	col: u32;
 	uv: [2] f32;
 }
 
@@ -450,10 +449,10 @@ cbuffer cp_per_object {
 
 struct VOut {
     float4 position: SV_POSITION;
-    float4 color: COLOR;
+    uint color: COLOR;
 };
 
-VOut VShader(float4 position: POSITION, float4 color: COLOR) {
+VOut VShader(float4 position: POSITION, uint color: COLOR) {
     VOut output;
 
     output.position = mul(position + float4(0, 0, 1, 0), camera_data);
@@ -462,8 +461,13 @@ VOut VShader(float4 position: POSITION, float4 color: COLOR) {
     return output;
 }
 
-float4 PShader(float4 position: SV_POSITION, float4 color: COLOR) : SV_TARGET {
-    return color;
+float4 PShader(float4 position: SV_POSITION, uint color: COLOR) : SV_TARGET {
+	float4 col;
+	col.x = ( color        & 0xFF) / 255.0f;
+	col.y = ((color >> 8 ) & 0xFF) / 255.0f;
+	col.z = ((color >> 16) & 0xFF) / 255.0f;
+	col.w = ((color >> 24) & 0xFF) / 255.0f;
+    return col;
 }
 DONE
 
@@ -477,11 +481,11 @@ cbuffer cp_per_object {
 
 struct VS_OUTPUT {
 	float4 Pos : SV_POSITION;
-	float4 Color: COLOR;
+	uint Color: COLOR;
 	float2 TexCoord : TEXCOORD;
 };
 
-VS_OUTPUT VShader(float4 inPos : POSITION, float4 inCol : COLOR, float2 inTexCoord : TEXCOORD) {
+VS_OUTPUT VShader(float4 inPos : POSITION, uint inCol : COLOR, float2 inTexCoord : TEXCOORD) {
     VS_OUTPUT output;
 
     output.Pos = mul(inPos + float4(0, 0, 1, 0), camera_data);
@@ -493,6 +497,13 @@ VS_OUTPUT VShader(float4 inPos : POSITION, float4 inCol : COLOR, float2 inTexCoo
 
 float4 PShader(VS_OUTPUT input) : SV_TARGET {
 	float4 f = ObjTexture.Sample(ObjSamplerState, input.TexCoord);
-	return f * input.Color;
+	
+	float4 col;
+	col.x = ( input.Color        & 0xFF) / 255.0f;
+	col.y = ((input.Color >> 8 ) & 0xFF) / 255.0f;
+	col.z = ((input.Color >> 16) & 0xFF) / 255.0f;
+	col.w = ((input.Color >> 24) & 0xFF) / 255.0f;
+	
+	return f * col;
 }
 DONE
