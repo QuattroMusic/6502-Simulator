@@ -131,11 +131,7 @@ EventsManager :: (hwnd: *void, msg: u32, wparam: u64, lparam: s64) -> s64 #c_cal
 			h := cast,trunc(s32)((lparam >> 16) & 0xFFFF);
 			vp.width = w;
 			vp.height = h;
-			if vp.running {
-				resize_viewport();
-				// Todo - use this when i decide to remove the depth stencil
-				// ID3D11DeviceContext_OMSetRenderTargets(devcon, 1, *back_buffer, null);
-			}
+			if vp.running then resize_viewport();
 		case WM_SYSKEYDOWN; #through;
 		case WM_KEYFIRST;
 			if wparam <= 0xFF {

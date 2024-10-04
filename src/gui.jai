@@ -378,15 +378,29 @@ draw_display :: () {
 	
 	draw_rect_lines(ui.display_pos + .{padding, padding + 24}, .{DISPLAY_WIDTH * 8, DISPLAY_HEIGHT * 8}, 5, COLOR_WIDGET_BORDER, 1);
 	
-	for 0x0200..(0x0200 + DISPLAY_WIDTH * DISPLAY_HEIGHT - 1) {
+	width: int;
+	row_data: u8 = engine.RAM[0x0200];  // first value
+	row_x := ui.display_pos.x + padding;
+	row_y := ui.display_pos.y + padding + 24;
+	
+	draw_internal :: () #expand {
+		col: Col = ifx `data >= 0 && `data < DISPLAY_COLOR.count then DISPLAY_COLOR[`row_data] else BLACK;
+		draw_rect(.{`row_x, `row_y}, .{8.0 * `width, 8}, 5, col);
+		`row_x = (((`it - 0x0200) % DISPLAY_WIDTH) * 8) + ui.display_pos.x + padding;
+		`row_y = (((`it - 0x0200) / DISPLAY_WIDTH) * 8) + ui.display_pos.y + padding + 24;
+	}
+	
+	for 0x0200..(0x0200 + DISPLAY_WIDTH * DISPLAY_HEIGHT) {
 		data := engine.RAM[it];
-		x := (((it - 0x0200) % DISPLAY_WIDTH) * 8) + ui.display_pos.x + padding;
-		y := (((it - 0x0200) / DISPLAY_WIDTH) * 8) + ui.display_pos.y + padding + 24;
 		
-		col: Col = BLACK;
-		if data >= 0 && data < DISPLAY_COLOR.count {
-			col = DISPLAY_COLOR[data];
-		}
-		draw_rect(.{x, y}, .{8, 8}, 5, col);
+		// some sort of greedy meshing (not advanced, works rows per rows)
+		if data != row_data {
+			draw_internal();
+			width = 1;
+			row_data = data;
+		} else if ((it - 0x0200) % DISPLAY_WIDTH) == 0 {
+			draw_internal();
+			width = 1;
+		} else width += 1;
 	}
 }

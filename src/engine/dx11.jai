@@ -205,13 +205,7 @@ init_graphics :: () {
 	ID3D11DeviceContext_RSSetState(devcon, rasterizer);
 
 	rtbd: D3D11_RENDER_TARGET_BLEND_DESC;
-	rtbd.BlendEnable            =  xx true;
-	rtbd.SrcBlend               = .SRC_ALPHA;
-	rtbd.DestBlend              = .INV_SRC_ALPHA;
-	rtbd.BlendOp                = .ADD;
-	rtbd.SrcBlendAlpha          = .ONE;
-	rtbd.BlendOpAlpha           = .ADD;
-	rtbd.DestBlendAlpha         = .ZERO;
+	rtbd.BlendEnable            =  xx false;
 	rtbd.RenderTargetWriteMask  =  xx D3D11_COLOR_WRITE_ENABLE.ALL;
 
 	blend_desc: D3D11_BLEND_DESC;
@@ -252,38 +246,38 @@ begin_drawing :: () {
 	ID3D11DeviceContext_ClearDepthStencilView(devcon, depth_stencil_view, flags, 1, 0);
 }
 
-draw_buffer :: (data: *Buffer_Data) {
-	if data.indices_view.count == 0 then return;
-
-	ID3D11DeviceContext_VSSetShader(devcon, data.VS, null, 0);
-	ID3D11DeviceContext_PSSetShader(devcon, data.PS, null, 0);
-
-	ID3D11DeviceContext_IASetInputLayout(devcon, data.layout);
-
-	size :: size_of(data.vertex_type);
-
-	stride: u32 = size;
-	offset: u32 = 0;
-
-	ID3D11DeviceContext_IASetVertexBuffers(devcon, 0, 1, *data.VBuffer, *stride, *offset);
-	ID3D11DeviceContext_IASetIndexBuffer(devcon, data.IBuffer, .R32_UINT, 0);
-
-	ms: D3D11_MAPPED_SUBRESOURCE;
-	ID3D11DeviceContext_Map(devcon, data.VBuffer, 0, .WRITE_DISCARD, 0, *ms);
-	memcpy(ms.pData, data.vertices_view.data, size * data.vertices_view.count);
-	ID3D11DeviceContext_Unmap(devcon, data.VBuffer, 0);
-
-	ID3D11DeviceContext_Map(devcon, data.IBuffer, 0, .WRITE_DISCARD, 0, *ms);
-	memcpy(ms.pData, data.indices_view.data, size_of(u32) * data.indices_view.count);
-	ID3D11DeviceContext_Unmap(devcon, data.IBuffer, 0);
-
-	ID3D11DeviceContext_DrawIndexed(devcon, xx data.indices_view.count, 0, 0);
-
-	data.indices_view.count = 0;
-	data.vertices_view.count = 0;
-}
-
 finalize_drawing :: () {
+	draw_buffer :: (data: *Buffer_Data) {
+		if data.indices_view.count == 0 then return;
+
+		ID3D11DeviceContext_VSSetShader(devcon, data.VS, null, 0);
+		ID3D11DeviceContext_PSSetShader(devcon, data.PS, null, 0);
+
+		ID3D11DeviceContext_IASetInputLayout(devcon, data.layout);
+
+		size :: size_of(data.vertex_type);
+
+		stride: u32 = size;
+		offset: u32 = 0;
+
+		ID3D11DeviceContext_IASetVertexBuffers(devcon, 0, 1, *data.VBuffer, *stride, *offset);
+		ID3D11DeviceContext_IASetIndexBuffer(devcon, data.IBuffer, .R32_UINT, 0);
+
+		ms: D3D11_MAPPED_SUBRESOURCE;
+		ID3D11DeviceContext_Map(devcon, data.VBuffer, 0, .WRITE_DISCARD, 0, *ms);
+		memcpy(ms.pData, data.vertices_view.data, size * data.vertices_view.count);
+		ID3D11DeviceContext_Unmap(devcon, data.VBuffer, 0);
+
+		ID3D11DeviceContext_Map(devcon, data.IBuffer, 0, .WRITE_DISCARD, 0, *ms);
+		memcpy(ms.pData, data.indices_view.data, size_of(u32) * data.indices_view.count);
+		ID3D11DeviceContext_Unmap(devcon, data.IBuffer, 0);
+
+		ID3D11DeviceContext_DrawIndexed(devcon, xx data.indices_view.count, 0, 0);
+
+		data.indices_view.count = 0;
+		data.vertices_view.count = 0;
+	}
+	
 	draw_buffer(*quad_buffer);
 	draw_buffer(*font_buffer);
 	IDXGISwapChain_Present(swapchain, 0, 0);
