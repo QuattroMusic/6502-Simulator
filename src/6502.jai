@@ -268,7 +268,6 @@ compile_program :: () {
 		return;
 	}
 	
-	
 	engine.compilation_successful = true;
 }
 

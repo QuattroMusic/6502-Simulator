@@ -1,15 +1,49 @@
+draw_popup :: ($width: f32, $height: f32) {
+	if !ui.show_popup then return;
+	
+	x := (vp.width - width) / 2;
+	y := (vp.height - height) / 2;
+
+	window_begin(ui.popup_title, *(Vec2.{x, y}), .{width, height}, *ui.show_popup, modal = true);
+
+	if ui.popup_error_type == {
+		case .FAILED_COMPILATION;
+			draw_text(ui.error_message, .{x + 10, y + 40}, 11, 2, WHITE, wrap = width - 20);
+		case .UNABLE_TO_OPEN_BINARY;
+			draw_text("Unable to open binary file <out.bin> for reading", .{x + 10, y + 40}, 11, 2, WHITE);
+		case .INCOMPATIBLE_ROM_SIZE;
+			draw_text("Incompatible ROM size", .{x + 10, y + 40}, 11, 2, WHITE);
+			draw_text("ROM size must to be 32kB", .{x + 10, y + 56}, 11, 2, WHITE);
+		case .ERROR_OPENING_FILE;
+			draw_text("An error has occured while opening the file", .{x + 10, y + 40}, 11, 2, WHITE);
+		case .READING_FILE_TIMED_OUT;
+			draw_text("Reading file timed out", .{x + 10, y + 40}, 11, 2, WHITE);
+		case .NO_INPUT_FILE_GIVEN;
+			draw_text("No input file given", .{x + 10, y + 40}, 11, 2, WHITE);
+		case .GIVEN_FILE_NOT_VALID;
+			draw_text("Unsupported given file", .{x + 10, y + 40}, 11, 2, WHITE);
+			draw_text("File must to have the '.s' extension", .{x + 10, y + 56}, 11, 2, WHITE);
+		case .UNABLE_TO_FIND_COMPILER;
+			draw_text("Unable to find 'vasm6502_oldstyle.exe', aborting", .{x + 10, y + 40}, 11, 2, WHITE);
+	}
+
+	if !ui.show_popup && ui.popup_error_type == .FAILED_COMPILATION {
+		free(ui.error_message);
+	}
+	
+	widget_end();
+}
+
 update_6502 :: () {
 	// those two should be put before the drawing, see `EventsManager` - `WM_SIZE`
 	handle_viewport_movement();
 	handle_viewport_resize();
 
-	handle_widget_layering();
-
 	handle_input_and_time();
 	
 	handle_displayed_file();
 
-	if ui.show_popup then draw_popup(800, 400);
+	draw_popup(800, 400);
 	
 	draw_header();
 	draw_buttons_controls();
@@ -24,13 +58,19 @@ update_6502 :: () {
 	draw_display();
 }
 
+panel_visible := true;
+panel_pos: Vec2 = .{100, 100};
+panel_visible2 := true;
+panel_pos2: Vec2 = .{250, 0};
+
 draw_one_frame :: () {
 	if !vp.reduced {  // I should find a way to entirely disable this until it's not reduced anymore
+		begin_widgets();
 		begin_drawing();
 		clear_background(COLOR_DEEP_BACKGROUND);
 
 		update_6502();
-
+		
 		finalize_widgets();
 		finalize_drawing();
 	}
@@ -46,7 +86,7 @@ main :: () {
 	cpu_init();
 	init_window(MIN_SCREEN_WIDTH, MIN_SCREEN_HEIGHT);
 
-	// init_code_viewer("examples/paint.s");
+	init_code_viewer("examples/paint.s");
 
 	while vp.running {
 		lock_frame_rate();

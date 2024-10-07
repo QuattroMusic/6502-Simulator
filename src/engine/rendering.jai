@@ -48,7 +48,7 @@ draw_rect_lines :: (pos: Vec2, size: Vec2, layer: f32, col: Col, t: f32 = 1) {
 	draw_rect(pos + .{0, size.y - t}, .{size.x, t}, layer, col);
 }
 
-draw_text :: (text: string, pos: Vec2, layer: f32, scale: f32, color: Col, $wrap: f32 = 0) {
+draw_text :: (text: string, pos: Vec2, layer: f32, scale: f32, color: Col, $wrap: f32 = 0, $global := true) {
 	x_pos: f32;
 	y_pos: f32;
 
@@ -56,6 +56,10 @@ draw_text :: (text: string, pos: Vec2, layer: f32, scale: f32, color: Col, $wrap
 	uv_y := 8.0 / texture_height;
 
 	s := 8.0 * scale;
+	
+	#if !global {
+		pos_off, layer_off := fetch_parent();
+	}
 	
 	for cast([]u8) text {
 		if it == #char "\n" {
@@ -65,11 +69,28 @@ draw_text :: (text: string, pos: Vec2, layer: f32, scale: f32, color: Col, $wrap
 			uv := get_char_mapping(it);
 			vert_count := cast(u32)font_buffer.vertices_view.count;
 
-			vertices_add(*font_buffer, .{pos.x + x_pos    , pos.y + y_pos    , layer, color.data, .[uv.x       , uv.y       ]});
-			vertices_add(*font_buffer, .{pos.x + x_pos + s, pos.y + y_pos    , layer, color.data, .[uv.x + uv_x, uv.y       ]});
-			vertices_add(*font_buffer, .{pos.x + x_pos + s, pos.y + y_pos + s, layer, color.data, .[uv.x + uv_x, uv.y + uv_y]});
-			vertices_add(*font_buffer, .{pos.x + x_pos    , pos.y + y_pos + s, layer, color.data, .[uv.x       , uv.y + uv_y]});
-
+			p1, p2, p3, p4: Vec2 = ---;
+			l: f32 = ---;
+			
+			p1 = pos + .{x_pos, y_pos};
+			p2 = pos + .{x_pos, y_pos} + .{s, 0};
+			p3 = pos + .{x_pos, y_pos} + .{s, s};
+			p4 = pos + .{x_pos, y_pos} + .{0, s};
+			l = layer;
+			
+			#if !global {
+				p1 += pos_off;
+				p2 += pos_off;
+				p3 += pos_off;
+				p4 += pos_off;
+				l += layer_off;
+			}
+			
+			vertices_add(*font_buffer, .{p1.x, p1.y, l, color.data, .[uv.x       , uv.y       ]});
+			vertices_add(*font_buffer, .{p2.x, p2.y, l, color.data, .[uv.x + uv_x, uv.y       ]});
+			vertices_add(*font_buffer, .{p3.x, p3.y, l, color.data, .[uv.x + uv_x, uv.y + uv_y]});
+			vertices_add(*font_buffer, .{p4.x, p4.y, l, color.data, .[uv.x       , uv.y + uv_y]});
+			
 			indices_add(*font_buffer, vert_count + 1);
 			indices_add(*font_buffer, vert_count    );
 			indices_add(*font_buffer, vert_count + 2);
@@ -175,10 +196,10 @@ Icon :: enum {
 	CLOSE;
 }
 
-COLOR_WIDGET_BG             :: Col.{  73,  62,  51, 255};
+COLOR_WIDGET_BG_NORMAL      :: Col.{  73,  62,  51, 255};
 COLOR_WIDGET_BG_HOVERED     :: Col.{ 188, 126,  59, 255 };
 COLOR_WIDGET_BG_PRESSED     :: Col.{ 246, 164,  76, 255 };
-COLOR_WIDGET_BORDER         :: Col.{ 196, 126,  43, 255 };
+COLOR_WIDGET_BORDER_NORMAL  :: Col.{ 196, 126,  43, 255 };
 COLOR_WIDGET_BORDER_HOVERED :: Col.{  49,  43,  40, 255 };
 COLOR_WIDGET_BORDER_PRESSED :: Col.{  80,  77,  73, 255 };
 

@@ -4,7 +4,7 @@ draw_header :: () {
 	draw_rect(.{0, 0}, .{xx vp.width, h}, 0, COLOR_BACKGROUND);
 	draw_rect_lines(.{0, 0}, .{xx vp.width, xx vp.height}, 1, COLOR_LINE);
 	draw_rect(.{0, h - 1}, .{xx vp.width, 1}, 1, COLOR_LINE);
-	
+
 	draw_text("6502 Simulator", .{10, 4}, 1, 3, WHITE);
 
 	if button(.REDUCE, .{cast(f32)vp.width - h * 3, 0}, .{h, h}, 1, 2) {
@@ -13,7 +13,7 @@ draw_header :: () {
 		}
 		vp.reduced = !vp.reduced;
 	}
-	
+
 	icon: Icon = ifx vp.maximized then .MINIMIZE else .MAXIMIZE;
 	if button(icon, .{cast(f32)vp.width - h * 2, 0}, .{h, h}, 1, 2) {
 		if !vp.maximized {
@@ -74,7 +74,7 @@ draw_buttons_controls :: () {
 	if button("Reset", .{370, 40}, .{80, 25}, 1, t) {
 		cpu_reset();
 	}
-	
+
 	if button("Display", .{460, 40}, .{80, 25}, 1, t) {
 		toggle_display();
 	}
@@ -89,37 +89,15 @@ draw_code_viewer :: () {
 	draw_panel(viewer.file_name, viewer.pos, viewer.size, 3);
 	draw_rect(viewer.pos, viewer.size, 0, COLOR_BACKGROUND);
 
-	handle_scrollbar();
-
-	// set_drawing_area(offset, viewer.size); {
-		draw_colored_text();
-		draw_line_count_bar();
-		draw_scrollbars();
-	// } reset_drawing_area();
-}
-
-handle_memory_scrollbar :: (pos: Vec2, size: Vec2) {
-	if is_mouse_inside_rect(pos, size) {
-		if mouse_dz && !ui.show_popup {
-			amt := mouse_dz * 16;
-			ui.memory_scrollbar_pos -= amt;
-		}
-	}
-	if is_mouse_pressed(0) && can_interact_with_widget(0) && is_mouse_inside_rect(.{pos.x + size.x - 12, pos.y}, .{12, size.y}) {
-		ui.memory_scrollbar_selected = true;
-	}
+	draw_colored_text();
+	draw_line_count_bar();
 	
-	if ui.memory_scrollbar_selected {
-		aspect_ratio := size.y / (2048 * 16);
-		bar_height := aspect_ratio * size.y;
-		ui.memory_scrollbar_pos = (mouse_y - pos.y - bar_height / 2) / aspect_ratio;
-	}
-
-	if is_mouse_released(0) && ui.memory_scrollbar_selected {
-		ui.memory_scrollbar_selected = false;
-	}
-	rows_on_screen := floor((size.y - 8) / 16);
-	ui.memory_scrollbar_pos = clamp(round_up(ui.memory_scrollbar_pos, 16), 0, (2048.0 - rows_on_screen) * 16);
+	if viewer.rows_length.count <= 1 then return;
+	
+	// this -1 controls the amount rows viewable at max pos
+	max_value := (viewer.rows_length.count - 1) * 16.0;
+	scroll_size: f32 = viewer.size.y + max_value;
+	draw_scrollbar(viewer.pos, viewer.size, 1, *viewer.scrollbar_pos, scroll_size, max_value);
 }
 
 draw_RAM_content :: (offset: Vec2, start: int, end: int, pos_y: f32, height: f32) {
@@ -158,29 +136,15 @@ draw_program_memory :: () {
 	pos:  Vec2 = .{vp.width + 40.0 - MIN_SCREEN_WIDTH / 2, 74};
 	size: Vec2 = .{MIN_SCREEN_WIDTH / 2 - 50.0, vp.height - MIN_SCREEN_HEIGHT / 2.0 + 10};
 
-	handle_memory_scrollbar(pos, size);
-
-	draw_panel("Memory", pos, size, 3);
+	child_begin("memory", pos, size, 3);
 	draw_rect(pos, size, 0, COLOR_BACKGROUND);
+	draw_rect(pos, .{48, size.y}, 1, COLOR_WIDGET_BG_NORMAL);
 
-	draw_rect(pos, .{48, size.y}, 1, COLOR_WIDGET_BG);
+	rows_on_screen := floor((size.y - 8) / 16);
+	max_value := (2048 - rows_on_screen) * 16;
+	draw_scrollbar(pos, size, 1, *ui.memory_scrollbar_pos, 2048 * 16, max_value);
 
-	aspect_ratio := size.y / (2048 * 16);
-	bar_height := aspect_ratio * size.y;
-
-	draw_rect(pos + .{size.x - 12, 0}, .{12, size.y}, 1, COLOR_WIDGET_BG);
-	
-	scroll_pos := pos + .{size.x - 12, ui.memory_scrollbar_pos * aspect_ratio};
-	
-	state := scrollbar_interaction(scroll_pos, .{12, size.y}, 2);
-	col: Col = ---;
-	if state == {
-		case .NORMAL;  col = COLOR_WIDGET_BORDER;
-		case .HOVER;   col = COLOR_WIDGET_BG_HOVERED;
-		case .PRESSED; col = COLOR_WIDGET_BG_PRESSED;
-	}
-	
-	draw_rect(scroll_pos, .{12, bar_height}, 2, col);
+	widget_end();
 
 	offset := pos + .{2, -ui.memory_scrollbar_pos};
 	start: int = xx ((ui.memory_scrollbar_pos) / 16);
@@ -210,15 +174,10 @@ draw_program_registers :: () {
 	panel_internal("A", engine.A, offset, .{ 10, 15}, .{176, 76}, layer);
 	panel_internal("X", engine.X, offset, .{196, 15}, .{176, 76}, layer);
 	panel_internal("Y", engine.Y, offset, .{382, 15}, .{176, 76}, layer);
-	// {
-		// draw_panel("Key", offset + .{415, 15}, .{85, 50}, layer);
-	// }
 
 	panel_internal("PC", engine.PC, offset, .{ 10, 104}, .{305, 76}, layer);
 	panel_internal("S", engine.S, offset,   .{382, 104}, .{175, 76}, layer);
-	{
-		// draw_panel("Executing", offset + .{365, 130}, .{135, 35}, layer);
-	}
+
 	{
 		x :: 570;
 		draw_panel("Flags", offset + .{x, 15}, .{68, 165}, layer);
@@ -230,12 +189,12 @@ draw_program_registers :: () {
 		draw_text("Z:", offset + .{x + 9, 125 + 10}, layer, 2, WHITE);
 		draw_text("C:", offset + .{x + 9, 145 + 12}, layer, 2, WHITE);
 		using engine.flags;
-		
+
 		fmtBool :: (v: bool) -> string {
 			str := tprint("%", v);
 			return string.{1, str.data};
 		}
-		
+
 		draw_text(tprint("%", cast(u8)N), offset + .{x + 45, 25},  layer, 2, ifx N then GREEN else RED);
 		draw_text(tprint("%", cast(u8)V), offset + .{x + 45, 45 + 2},  layer, 2, ifx V then GREEN else RED);
 		draw_text(tprint("%", cast(u8)B), offset + .{x + 45, 65 + 4},  layer, 2, ifx B then GREEN else RED);
@@ -249,10 +208,9 @@ draw_program_registers :: () {
 draw_program_debug :: () {
 	offset := Vec2.{vp.width + 40.0 - MIN_SCREEN_WIDTH / 2, vp.height - MIN_SCREEN_HEIGHT / 4 + 95.0};
 
-	// draw_panel("Debug", offset, .{MIN_SCREEN_WIDTH / 2 - 450.0, MIN_SCREEN_HEIGHT / 4 - 65.0}, 1);
 	draw_panel("Debug", offset, .{240, MIN_SCREEN_HEIGHT / 4 - 105.0}, 1);
 
-	checkbox(*engine.debug, "Enable debug", offset + .{15, 15}, .{20, 20}, 1);
+	checkbox("Enable debug", offset + .{15, 15}, .{20, 20}, 1, *engine.debug);
 	if engine.debug && engine.thread_running {
 		if button("Step", offset + .{170, 13}, .{60, 25}, 1, 1) {
 			next_instruction();
@@ -271,18 +229,18 @@ draw_program_debug :: () {
 draw_current_instruction :: () {
 	offset := Vec2.{vp.width - MIN_SCREEN_WIDTH / 2 + 290.0, vp.height - MIN_SCREEN_HEIGHT / 4 + 95.0};
 	draw_panel("Executing", offset, .{vp.width - 220.0 - offset.x, 40}, 1);
-	
+
 	intrins := intrinsic_to_string(engine.current_instruction);
-	
+
 	draw_text(intrins, offset + .{12, 11}, 1, 2, WHITE);
 }
 
 draw_input :: () {
 	offset := Vec2.{vp.width - MIN_SCREEN_WIDTH / 2 + 290.0, vp.height - MIN_SCREEN_HEIGHT / 4 + 150.0};
 	draw_panel("Input", offset, .{vp.width - 220.0 - offset.x, 40}, 1);
-	
+
 	data := engine.RAM[MEMORY_INPUT_ADDRESS];
-	
+
 	fmt: string;
 	if data == {
 		case 0;         fmt = "NONE";
@@ -294,7 +252,7 @@ draw_input :: () {
 		case;
 			fmt = tprint("% / KEY_%", data, string.{1, *data});
 	}
-	
+
 	draw_text(fmt, offset + .{12, 11}, 1, 2, WHITE);
 }
 
@@ -302,11 +260,11 @@ draw_program_frequency :: () {
 	offset := Vec2.{vp.width - 210.0, vp.height - MIN_SCREEN_HEIGHT / 4 + 95.0};
 	draw_panel("Frequency", offset, .{200, MIN_SCREEN_HEIGHT / 4 - 105.0}, 1);
 
-	checkbox(*engine.metrics.unlock, "free", offset + .{10, 15}, .{20, 20}, 1);
+	checkbox("free", offset + .{10, 15}, .{20, 20}, 1, *engine.metrics.unlock);
 
 	str: string;
 	freq := engine.metrics.update_rate;
-	
+
 	     if freq < kHz(1) str = tprint(" %Hz", formatInt(freq,                 minimum_digits = 3, padding = #char " "));
 	else if freq < MHz(1) str = tprint("%kHz", formatInt(freq / 1_000,         minimum_digits = 3, padding = #char " "));
 	else if freq < GHz(1) str = tprint("%MHz", formatInt(freq / 1_000_000,     minimum_digits = 3, padding = #char " "));
@@ -340,59 +298,32 @@ toggle_display :: () {
 
 draw_display :: () {
 	padding :: 4;
-	
+
 	w :: DISPLAY_WIDTH  * 8 + padding * 2;
 	h :: DISPLAY_HEIGHT * 8 + padding * 2 + 24;
-	
-	mouse_over_panel = false;
 
 	if !ui.display_visible then return;
-	
-	if is_mouse_inside_rect(.{ui.display_pos.x, ui.display_pos.y}, .{w - 24, 24}) {
-		mouse_over_panel = true;
-		if is_mouse_pressed(0) {
-			ui.display_pressed_pos.x = mouse_x - ui.display_pos.x;
-			ui.display_pressed_pos.y = mouse_y - ui.display_pos.y;
-			ui.display_selected = true;
-		}
-	}
-	if ui.display_selected {
-		delta := Vec2.{xx mouse_x, xx mouse_y} - ui.display_pressed_pos;
-		ui.display_pos = delta;
-	}
-	if is_mouse_released(0) then ui.display_selected = false;
-	
-	ui.display_pos.x = clamp(ui.display_pos.x, -w + 24 * 2, vp.width - 24 * 2.0);
-	ui.display_pos.y = clamp(ui.display_pos.y, HEADER_HEIGHT, cast(f32)vp.height - 24);
-	
-	if is_mouse_inside_rect(.{ui.display_pos.x, ui.display_pos.y + 24}, .{w, h - 24}) {
-		mouse_over_panel = true;
-	}
-	
-	if button(.CLOSE, .{ui.display_pos.x + w - 24, ui.display_pos.y}, .{24, 24}, 5, 2) {
-		ui.display_visible = false;
-		return;
-	}
-	
-	draw_window(ui.display_pos, .{w, h}, 4, "Display");
-	
-	draw_rect_lines(ui.display_pos + .{padding, padding + 24}, .{DISPLAY_WIDTH * 8, DISPLAY_HEIGHT * 8}, 5, COLOR_WIDGET_BORDER, 1);
-	
+
+	window_begin("Display", *ui.display_pos, .{w, h}, *ui.display_visible);
+
+	_, layer := fetch_parent();
+	draw_rect_lines(ui.display_pos + .{padding, padding + 24}, .{DISPLAY_WIDTH * 8, DISPLAY_HEIGHT * 8}, layer + 1, COLOR_WIDGET_BORDER_NORMAL, 1);
+
 	width: int;
 	row_data: u8 = engine.RAM[0x0200];  // first value
 	row_x := ui.display_pos.x + padding;
 	row_y := ui.display_pos.y + padding + 24;
-	
+
 	draw_internal :: () #expand {
 		col: Col = ifx `data >= 0 && `data < DISPLAY_COLOR.count then DISPLAY_COLOR[`row_data] else BLACK;
-		draw_rect(.{`row_x, `row_y}, .{8.0 * `width, 8}, 5, col);
+		draw_rect(.{`row_x, `row_y}, .{8.0 * `width, 8}, `layer + 1, col);
 		`row_x = (((`it - 0x0200) % DISPLAY_WIDTH) * 8) + ui.display_pos.x + padding;
 		`row_y = (((`it - 0x0200) / DISPLAY_WIDTH) * 8) + ui.display_pos.y + padding + 24;
 	}
-	
+
 	for 0x0200..(0x0200 + DISPLAY_WIDTH * DISPLAY_HEIGHT) {
 		data := engine.RAM[it];
-		
+
 		// some sort of greedy meshing (not advanced, works rows per rows)
 		if data != row_data {
 			draw_internal();
@@ -403,4 +334,6 @@ draw_display :: () {
 			width = 1;
 		} else width += 1;
 	}
+
+	widget_end();
 }

@@ -2,7 +2,7 @@ draw_line_count_bar :: () {
 	w := get_width_of_line_count_bar();
 	off := viewer.pos;
 	
-	draw_rect(off, .{w, viewer.size.y}, 1, COLOR_WIDGET_BG);
+	draw_rect(off, .{w, viewer.size.y}, 1, COLOR_WIDGET_BG_NORMAL);
 	
 	start: int = xx viewer.scrollbar_pos / 16;
 	end: int = xx (viewer.scrollbar_pos + viewer.size.y - 8) / 16;
@@ -14,31 +14,6 @@ draw_line_count_bar :: () {
 		fmt := formatInt(it + 1, minimum_digits = viewer.row_digits, padding = #char " ");
 		draw_text(tprint("%", fmt), .{off.x + 8, y}, 2, 1, COLOR_TEXT_NORMAL);
 	}
-}
-
-draw_scrollbars :: () {
-	amt := viewer.rows_length.count;
-	if amt == 0 then return;
-	
-	pos := viewer.pos;
-	size := viewer.size;
-	scr_pos := viewer.scrollbar_pos;
-	
-	draw_rect(.{pos.x + size.x - 12, pos.y}, .{12, size.y}, 1, COLOR_WIDGET_BG);
-	
-	aspect_ratio := size.y / (size.y + (amt - 1) * 16);
-	bar_height := aspect_ratio * size.y;
-	
-	scroll_pos := pos + .{size.x - 12, scr_pos * aspect_ratio};
-	state := scrollbar_interaction(scroll_pos, .{12, size.y}, 2);
-	col: Col = ---;
-	if state == {
-		case .NORMAL;  col = COLOR_WIDGET_BORDER;
-		case .HOVER;   col = COLOR_WIDGET_BG_HOVERED;
-		case .PRESSED; col = COLOR_WIDGET_BG_PRESSED;
-	}
-	
-	draw_rect(scroll_pos, .{12, bar_height}, 2, col);
 }
 
 draw_colored_text :: () {
