@@ -48,56 +48,53 @@ draw_rect_lines :: (pos: Vec2, size: Vec2, layer: f32, col: Col, t: f32 = 1) {
 	draw_rect(pos + .{0, size.y - t}, .{size.x, t}, layer, col);
 }
 
-draw_text :: (text: string, pos: Vec2, layer: f32, scale: f32, color: Col, $wrap: f32 = 0, $global := true) {
+draw_character :: ($$c: u8, pos: Vec2, layer: f32, scale: f32, color: Col) {
+	#if is_constant(c) { #if c == #char " " || c == #char "\t" || c == #char "\r" then return; }
+	else               {  if c == #char " " || c == #char "\t" || c == #char "\r" then return; }
+	
+	uv := get_char_mapping(c);
+	vert_count := cast(u32)font_buffer.vertices_view.count;
+
+	s := scale * 8.0;
+	
+	p1: Vec2 = pos;
+	p2: Vec2 = pos + .{s, 0};
+	p3: Vec2 = pos + .{s, s};
+	p4: Vec2 = pos + .{0, s};
+	
+	uv_x :: 8.0 / texture_width;
+	uv_y :: 8.0 / texture_height;
+
+	vertices_add(*font_buffer, .{p1.x, p1.y, layer, color.data, .[uv.x       , uv.y       ]});
+	vertices_add(*font_buffer, .{p2.x, p2.y, layer, color.data, .[uv.x + uv_x, uv.y       ]});
+	vertices_add(*font_buffer, .{p3.x, p3.y, layer, color.data, .[uv.x + uv_x, uv.y + uv_y]});
+	vertices_add(*font_buffer, .{p4.x, p4.y, layer, color.data, .[uv.x       , uv.y + uv_y]});
+	
+	indices_add(*font_buffer, vert_count + 1);
+	indices_add(*font_buffer, vert_count    );
+	indices_add(*font_buffer, vert_count + 2);
+	indices_add(*font_buffer, vert_count + 2);
+	indices_add(*font_buffer, vert_count    );
+	indices_add(*font_buffer, vert_count + 3);
+}
+
+draw_text :: (text: string, pos: Vec2, layer: f32, scale: f32, color: Col, $wrap: f32 = 0) {
 	x_pos: f32;
 	y_pos: f32;
 
-	uv_x := 8.0 / texture_width;
-	uv_y := 8.0 / texture_height;
+	uv_x :: 8.0 / texture_width;
+	uv_y :: 8.0 / texture_height;
 
 	s := 8.0 * scale;
-	
-	#if !global {
-		pos_off, layer_off := fetch_parent();
-	}
-	
+
 	for cast([]u8) text {
 		if it == #char "\n" {
 			x_pos = 0;
 			y_pos += s;
 		} else if it != #char " " && it != #char "\t" && it != #char "\r" {
-			uv := get_char_mapping(it);
-			vert_count := cast(u32)font_buffer.vertices_view.count;
-
-			p1, p2, p3, p4: Vec2 = ---;
-			l: f32 = ---;
-			
-			p1 = pos + .{x_pos, y_pos};
-			p2 = pos + .{x_pos, y_pos} + .{s, 0};
-			p3 = pos + .{x_pos, y_pos} + .{s, s};
-			p4 = pos + .{x_pos, y_pos} + .{0, s};
-			l = layer;
-			
-			#if !global {
-				p1 += pos_off;
-				p2 += pos_off;
-				p3 += pos_off;
-				p4 += pos_off;
-				l += layer_off;
-			}
-			
-			vertices_add(*font_buffer, .{p1.x, p1.y, l, color.data, .[uv.x       , uv.y       ]});
-			vertices_add(*font_buffer, .{p2.x, p2.y, l, color.data, .[uv.x + uv_x, uv.y       ]});
-			vertices_add(*font_buffer, .{p3.x, p3.y, l, color.data, .[uv.x + uv_x, uv.y + uv_y]});
-			vertices_add(*font_buffer, .{p4.x, p4.y, l, color.data, .[uv.x       , uv.y + uv_y]});
-			
-			indices_add(*font_buffer, vert_count + 1);
-			indices_add(*font_buffer, vert_count    );
-			indices_add(*font_buffer, vert_count + 2);
-			indices_add(*font_buffer, vert_count + 2);
-			indices_add(*font_buffer, vert_count    );
-			indices_add(*font_buffer, vert_count + 3);
+			draw_character(cast,trunc(u8)it, pos + .{x_pos, y_pos}, layer, scale, color);
 		}
+		
 		x_pos += s;
 		#if wrap if x_pos + s > wrap {
 			x_pos = 0;

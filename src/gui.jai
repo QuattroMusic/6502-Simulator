@@ -89,15 +89,17 @@ draw_code_viewer :: () {
 	draw_panel(viewer.file_name, viewer.pos, viewer.size, 3);
 	draw_rect(viewer.pos, viewer.size, 0, COLOR_BACKGROUND);
 
-	draw_colored_text();
-	draw_line_count_bar();
+	char_per_lines := floor(viewer.size.x / 16) - 2;
 	
-	if viewer.rows_length.count <= 1 then return;
+	max_value := Vec2.{(viewer.longest_line) * 16.0, viewer.rows_length.count * 16.0};
+	scroll_size := viewer.size + max_value;
+	min_size := Vec2.{30 * 16.0, 1 * 16.0};
 	
-	// this -1 controls the amount rows viewable at max pos
-	max_value := (viewer.rows_length.count - 1) * 16.0;
-	scroll_size: f32 = viewer.size.y + max_value;
-	draw_scrollbar(viewer.pos, viewer.size, 1, *viewer.scrollbar_pos, scroll_size, max_value);
+	draw_scrollbar(viewer.pos, viewer.size, layer = 3, *viewer.scrollbar_pos, scroll_size, min_size, max_value);
+	
+	x_visible := min_size.x + viewer.size.x < scroll_size.x;
+	draw_colored_text(x_visible);
+	draw_line_count_bar(x_visible);
 }
 
 draw_RAM_content :: (offset: Vec2, start: int, end: int, pos_y: f32, height: f32) {
@@ -141,8 +143,13 @@ draw_program_memory :: () {
 	draw_rect(pos, .{48, size.y}, 1, COLOR_WIDGET_BG_NORMAL);
 
 	rows_on_screen := floor((size.y - 8) / 16);
-	max_value := (2048 - rows_on_screen) * 16;
-	draw_scrollbar(pos, size, 1, *ui.memory_scrollbar_pos, 2048 * 16, max_value);
+	max_value := Vec2.{0, (2048 - rows_on_screen) * 16};
+	scroll_pos := Vec2.{0, ui.memory_scrollbar_pos};
+	min_size := Vec2.{0, 0};
+	
+	draw_scrollbar(pos, size, layer = 1, *scroll_pos, .{0, 2048 * 16}, min_size, max_value);
+
+	ui.memory_scrollbar_pos = scroll_pos.y;
 
 	widget_end();
 

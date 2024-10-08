@@ -4,46 +4,49 @@ get_width_of_line_count_bar :: () -> f32 {
 
 calculate_rows_length :: () {
 	len: u32 = 0;
+	longest_line: u32 = 0;
 	
 	for viewer.content {
 		if it == #char "\n" {
 			array_add(*viewer.rows_length, len);
+			longest_line = max(longest_line, len);
 			len = 0;
 			continue;
 		}
 		len += 1;
 	}
 	array_add(*viewer.rows_length, len);
+	viewer.longest_line = longest_line;
 }
 
 handle_displayed_file :: () {
-	if viewer.file_path {
-		modtime := file_modtime_and_size(viewer.file_path);
+	if !viewer.file_path then return;
+	
+	modtime := file_modtime_and_size(viewer.file_path);
+	
+	if compare_apollo_times(modtime, viewer.file_modtime) {
+		viewer.file_modtime = modtime;
 		
-		if compare_apollo_times(modtime, viewer.file_modtime) {
-			viewer.file_modtime = modtime;
-			
-			init := seconds_since_init();
-			
-			while true {
-				file, success := file_open(viewer.file_path);
-				if success {
-					file_close(*file);
-					break;
-				}
-				if seconds_since_init() - init > 1 {
-					ui.show_popup = true;
-					ui.popup_title = "timed out";
-					ui.popup_error_type = .READING_FILE_TIMED_OUT;
-					deinit_code_viewer();
-					return;
-				}
+		init := seconds_since_init();
+		
+		while true {
+			file, success := file_open(viewer.file_path);
+			if success {
+				file_close(*file);
+				break;
 			}
-			
-			t := copy_string(viewer.file_path,, allocator = temp);
-			deinit_code_viewer();
-			init_code_viewer(t);
+			if seconds_since_init() - init > 1 {
+				ui.show_popup = true;
+				ui.popup_title = "timed out";
+				ui.popup_error_type = .READING_FILE_TIMED_OUT;
+				deinit_code_viewer();
+				return;
+			}
 		}
+		
+		t := copy_string(viewer.file_path,, allocator = temp);
+		deinit_code_viewer();
+		init_code_viewer(t);
 	}
 }
 

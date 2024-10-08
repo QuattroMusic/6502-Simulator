@@ -1,29 +1,31 @@
-draw_line_count_bar :: () {
+draw_line_count_bar :: (x_visible: bool) {
 	w := get_width_of_line_count_bar();
 	off := viewer.pos;
-	
+
 	draw_rect(off, .{w, viewer.size.y}, 1, COLOR_WIDGET_BG_NORMAL);
-	
-	start: int = xx viewer.scrollbar_pos / 16;
-	end: int = xx (viewer.scrollbar_pos + viewer.size.y - 8) / 16;
-	
+
+	start: int = xx viewer.scrollbar_pos.y / 16;
+	end: int = xx (viewer.scrollbar_pos.y + viewer.size.y - 8) / 16;
+
 	for start..end - 1 {
 		if it == viewer.rows_length.count then return;
-		
-		y := off.y + 10 + it * 16 - viewer.scrollbar_pos;
+
+		y := off.y + 10 + it * 16 - viewer.scrollbar_pos.y;
 		fmt := formatInt(it + 1, minimum_digits = viewer.row_digits, padding = #char " ");
 		draw_text(tprint("%", fmt), .{off.x + 8, y}, 2, 1, COLOR_TEXT_NORMAL);
 	}
 }
 
-draw_colored_text :: () {
+draw_colored_text :: (x_visible: bool) {
 	off := viewer.pos;
-	off.x += get_width_of_line_count_bar() + 4;
-	off.y += 5 - viewer.scrollbar_pos;
-	
-	start: int = xx viewer.scrollbar_pos / 16;
-	end: int = xx (viewer.scrollbar_pos + viewer.size.y - 8) / 16;
-	
+	off.x += get_width_of_line_count_bar() + 4 - viewer.scrollbar_pos.x;
+	off.y += 5 - viewer.scrollbar_pos.y;
+
+	start: int = xx viewer.scrollbar_pos.y / 16;
+	end: int = xx (viewer.scrollbar_pos.y + viewer.size.y - 8) / 16;
+
+	w := get_width_of_line_count_bar();
+
 	for viewer.text_line {
 		if it == end then break;  // no need to check forward
 		if start <= it && it <= end {
@@ -31,11 +33,17 @@ draw_colored_text :: () {
 			length := viewer.text_length[it_index];
 			column := viewer.text_column[it_index];
 			color  := parse_token(viewer.text_color[it_index]);
-			
+
 			y := off.y + it * 16;
 			x := off.x + column * 16;
 			str := string.{length, viewer.content.data + index};
-			draw_text(str, .{x, y}, 1, 2, color);
+
+			for cast([]u8)str {
+				p := x + it_index * 16.0;
+				if (p <= viewer.pos.x + w) || (p >= viewer.pos.x + viewer.size.x - 16) then continue;
+
+				draw_character(it, .{x + it_index * 16.0, y}, layer = 1, scale = 2, color);
+			}
 		}
 	}
 }
@@ -76,11 +84,11 @@ code_viewer_coloring_parse_line :: (line: s64, idx: u32, len: s64) {
 		array_add(*viewer.text_column, xx col);
 		array_add(*viewer.text_color,  tok);
 	}
-	
+
 	label_len: u32;
 	it := 0;
 	tab_size := 0;
-	
+
 	while it < len {
 		defer it += 1;
 		c := viewer.content[idx + it];
@@ -147,18 +155,18 @@ is_an_instruction :: (buff: *u8) -> bool {
 		// check if instruction is 3 char long
 		return false;
 	}
-	
+
 	make_u24 :: (c1: u32, c2: u32, c3: u32) -> u32 {
 		return c1 | (c2 << 8) | (c3 << 16);
 	}
-	
+
 	// peak performance moment
 	str := string.{3, buff};
-	
+
 	str[0] = to_lower(str[0]);
 	str[1] = to_lower(str[1]);
 	str[2] = to_lower(str[2]);
-	
+
 	if str == {
 		case "adc"; return true;
 		case "and"; return true;

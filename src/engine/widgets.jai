@@ -104,7 +104,7 @@ checkbox :: ($$text: string, pos: Vec2, size: Vec2, layer: f32, value: *bool) {
 			bg_col = COLOR_WIDGET_BG_PRESSED;
 			text_col = COLOR_TEXT_HOVERED;
 	}
-	
+
 	if value.* || state == .PRESSED then draw_rect(pos + .{4, 4}, size - .{8, 8}, layer, bg_col);
 	draw_rect_lines(pos, size, layer + 1, COLOR_LINE);
 	draw_text(text, pos + .{size.x + 8, (size.y - s.y) / 2}, layer, 1, text_col);
@@ -123,9 +123,9 @@ draw_step_hslider :: (pos: Vec2, size: Vec2, layer: f32, amt: s32, value: *int, 
 		col_step = COLOR_WIDGET_BORDER_NORMAL;
 
 		state := widget_interaction(pos, size, layer);
-		
+
 		col_main, _, _ = fetch_colors(state);
-		
+
 		if state == .PRESSED {
 			value.* = xx clamp((cast(f32)mouse_x - pos.x) / size.x * amt, 0, xx (amt - 1));
 		}
@@ -237,32 +237,67 @@ widget_end :: () {
 	selected_widget.count -= 1;
 }
 
-draw_scrollbar :: (pos: Vec2, size: Vec2, layer: f32, scroll_pos: *f32, scroll_size: f32, max_value: f32) #expand {
-	// Todo - handle horizontal scroll?
-	scroll_pos_x := pos.x + size.x - WIDGET_SCROLLBAR_SIZE;
-	scroll_pos_y := pos.y;
-	state := widget_interaction(.{scroll_pos_x, scroll_pos_y}, .{WIDGET_SCROLLBAR_SIZE, size.y}, layer);
+draw_scrollbar :: (pos: Vec2, size: Vec2, layer: f32, scroll_pos: *Vec2, scroll_size: Vec2, min_size: Vec2, max_value: Vec2) #expand {
+	x_visible := min_size.x + size.x < scroll_size.x;
+	y_visible := min_size.y + size.y < scroll_size.y;
 
-	if is_mouse_inside_rect(pos, size) && mouse_dz && can_interact_with_widget(layer) {
-		amt := mouse_dz * 16 * 3;
-		scroll_pos.* -= amt;
+	if y_visible {
+		scroll_pos_x := pos.x + size.x - WIDGET_SCROLLBAR_SIZE;
+		scroll_pos_y := pos.y;
+		off := ifx x_visible then WIDGET_SCROLLBAR_SIZE;
+
+		state := widget_interaction(.{scroll_pos_x, scroll_pos_y - off}, .{WIDGET_SCROLLBAR_SIZE, size.y}, layer);
+
+		if is_mouse_inside_rect(pos, size) && mouse_dz && !is_key_down(KEY_SHIFT) && can_interact_with_widget(layer) {
+			amt := mouse_dz * 16 * 3;
+			scroll_pos.*.y -= amt;
+		}
+
+		aspect_ratio := (size.y - off) / (scroll_size.y - min_size.y);
+		bar_height := ceil(aspect_ratio * size.y);
+
+		if state == .PRESSED {
+			scroll_pos.*.y = (mouse_y - pos.y - bar_height / 2) / aspect_ratio;
+		}
+
+		bar_col := ifx state == .NORMAL then COLOR_WIDGET_BORDER_NORMAL else COLOR_WIDGET_BG_PRESSED;
+
+		val := round_up(scroll_pos.y, 16);
+		scroll_pos.*.y = clamp(val, 0, max_value.y - min_size.y);
+
+		// drawing
+		draw_rect(.{scroll_pos_x, scroll_pos_y}, .{WIDGET_SCROLLBAR_SIZE, size.y}, layer, COLOR_WIDGET_BG_NORMAL);
+		draw_rect(.{scroll_pos_x, floor(scroll_pos_y + aspect_ratio * scroll_pos.*.y)}, .{WIDGET_SCROLLBAR_SIZE, bar_height}, layer + 1, bar_col);
 	}
 
-	aspect_ratio := size.y / scroll_size;
-	bar_height := floor(aspect_ratio * size.y);
+	if x_visible {
+		scroll_pos_x := pos.x;
+		scroll_pos_y := pos.y + size.y - WIDGET_SCROLLBAR_SIZE;
+		off := ifx y_visible then WIDGET_SCROLLBAR_SIZE;
 
-	if state == .PRESSED {
-		scroll_pos.* = (mouse_y - pos.y - bar_height / 2) / aspect_ratio;
+		state := widget_interaction(.{scroll_pos_x, scroll_pos_y}, .{size.x - off, WIDGET_SCROLLBAR_SIZE}, layer);
+
+		if is_mouse_inside_rect(pos, size) && mouse_dz && is_key_down(KEY_SHIFT) && can_interact_with_widget(layer) {
+			amt := mouse_dz * 16 * 3;
+			scroll_pos.*.x -= amt;
+		}
+
+		aspect_ratio := (size.x - off) / (scroll_size.x - min_size.x);
+		bar_width := ceil(aspect_ratio * size.x);
+
+		if state == .PRESSED {
+			scroll_pos.*.x = (mouse_x - pos.x - bar_width / 2) / aspect_ratio;
+		}
+
+		bar_col := ifx state == .NORMAL then COLOR_WIDGET_BORDER_NORMAL else COLOR_WIDGET_BG_PRESSED;
+
+		val := round_up(scroll_pos.x, 16);
+		scroll_pos.*.x = clamp(val, 0, max_value.x - min_size.x);
+
+		// drawing
+		draw_rect(.{scroll_pos_x, scroll_pos_y}, .{size.x, WIDGET_SCROLLBAR_SIZE}, layer, COLOR_WIDGET_BG_NORMAL);
+		draw_rect(.{floor(scroll_pos_x + aspect_ratio * scroll_pos.*.x), scroll_pos_y}, .{bar_width, WIDGET_SCROLLBAR_SIZE}, layer + 1, bar_col);
 	}
-	
-	bar_col := ifx state == .NORMAL then COLOR_WIDGET_BORDER_NORMAL else COLOR_WIDGET_BG_PRESSED;
-
-	val := round_up(scroll_pos.*, 16);
-	scroll_pos.* = clamp(val, 0, max_value);
-
-	// drawing
-	draw_rect(.{scroll_pos_x, scroll_pos_y}, .{WIDGET_SCROLLBAR_SIZE, size.y}, layer, COLOR_WIDGET_BG_NORMAL);
-	draw_rect(.{scroll_pos_x, floor(scroll_pos_y + aspect_ratio * scroll_pos.*)}, .{WIDGET_SCROLLBAR_SIZE, bar_height}, layer + 1, bar_col);
 }
 
 can_interact_with_widget :: (layer: f32) -> bool {
@@ -271,11 +306,11 @@ can_interact_with_widget :: (layer: f32) -> bool {
 	} else {
 		if closed_a_window then return false;
 		if focused_uuid != -1 then return false;
-		
+
 		for all_panels if it.layer != -1 {
 			if is_mouse_inside_rect(it.pos, it.size) {
 				if layer >= it.layer then continue;
-				
+
 				return false;
 			}
 		}
@@ -304,7 +339,7 @@ begin_widgets :: () {
 		it.*.layer = layer;
 		layer += 5;
 	}
-	
+
 	if is_mouse_released(0) then focused_uuid = -1;
 }
 
@@ -320,7 +355,7 @@ finalize_widgets :: () {
 	k := 1 / (T * vp.dt * 1000);
 
 	fade_value = lerp(fade_value, target_fade, k);
-	
+
 	layer := ifx all_panels.count then all_panels[all_panels.count - 1].layer;
 	draw_rect(.{0, 0}, .{xx vp.width, xx vp.height}, layer, .{0, 0, 0, cast(u8)(fade_value * 255)});
 

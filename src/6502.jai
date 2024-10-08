@@ -1,5 +1,4 @@
 General_UI :: struct {
-	memory_scrollbar_selected: bool;
 	memory_scrollbar_pos: f32;
 
 	show_popup: bool;
@@ -7,9 +6,7 @@ General_UI :: struct {
 	error_message: string;
 	popup_error_type: Error_Type;
 
-	display_pressed_pos: Vec2;
 	display_pos: Vec2;
-	display_selected: bool;
 	display_visible: bool;
 }
 
@@ -38,8 +35,8 @@ Code_Viewer :: struct {
 	pos: Vec2;
 	size: Vec2;
 
-	scrollbar_selected: bool;
-	scrollbar_pos: f32;
+	scrollbar_pos: Vec2;
+	longest_line: u32;
 	row_digits: u32;
 	
 	file_modtime: Apollo_Time;
