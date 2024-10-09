@@ -154,7 +154,22 @@ init:
 - [ ] error handling
 - [ ] code editor instead of code viewer
 
----
+
+# License
+
+I don't like the way the license system works, so instead of searching for a license that satisfies me, I'm making my own version.
+
+#### What this software allows you to do
+You can keep the source code on your devices; you may compile it and use it for private or public use.
+
+#### What this software doesn't allow you to do
+Even if you've modified it, I don't want you to use this product for commercial use or to distribute under your name;
+I put a lot of effort on this project, for learning purposes, and to make it possible for everyone to use a 6502 simulator to learn assembly in the easiest possible way.
+
+#### In short
+Use it wherever you want, but please do not use this project for commercial purposes; it's an educational tool that I want accessible to everyone.
+
+## Contact me
 
 Questions? Bugs? Ideas? Feel free to contact me on Discord `@quattromusic`!
 
