@@ -308,9 +308,7 @@ can_interact_with_widget :: (layer: f32) -> bool {
 		if focused_uuid != -1 then return false;
 
 		for all_panels if it.layer != -1 {
-			if is_mouse_inside_rect(it.pos, it.size) {
-				if layer >= it.layer then continue;
-
+			if is_mouse_inside_rect(it.pos, it.size) && layer < it.layer {
 				return false;
 			}
 		}
@@ -333,6 +331,9 @@ Selected_Widget :: struct {
 }
 
 begin_widgets :: () {
+	// all panels starts at layer 10
+	// then each panel has 5 layers to add widgets on top of it
+	// not that robust, but effective on this use case
 	layer: f32 = 10;
 
 	for * all_panels if it.layer != -1 {
@@ -351,7 +352,7 @@ make_panel_topmost :: (idx: int) {
 
 finalize_widgets :: () {
 	target_fade := ifx ui.show_popup 0.75 else 0;
-	T :: 0.35;  // seconds took from 0 to target_fade (I didn't solve the equation, but it's a nice approx, maybe it's good)
+	T :: 0.35;  // seconds took to reach target_fade (I didn't solve the equation, but it's a nice approx, maybe it actually works)
 	k := 1 / (T * vp.dt * 1000);
 
 	fade_value = lerp(fade_value, target_fade, k);
@@ -360,10 +361,8 @@ finalize_widgets :: () {
 	draw_rect(.{0, 0}, .{xx vp.width, xx vp.height}, layer, .{0, 0, 0, cast(u8)(fade_value * 255)});
 
 	// make the selected window the topmost
-	// p: Panel;
 	idx := -1;
 	for all_panels if it.pressed {
-		// p = it;
 		idx = it_index;
 		break;
 	}

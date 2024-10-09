@@ -26,10 +26,6 @@ draw_popup :: ($width: f32, $height: f32) {
 		case .UNABLE_TO_FIND_COMPILER;
 			draw_text("Unable to find 'vasm6502_oldstyle.exe', aborting", .{x + 10, y + 40}, 11, 2, WHITE);
 	}
-
-	if !ui.show_popup && ui.popup_error_type == .FAILED_COMPILATION {
-		free(ui.error_message);
-	}
 	
 	widget_end();
 }
@@ -86,7 +82,7 @@ main :: () {
 	cpu_init();
 	init_window(MIN_SCREEN_WIDTH, MIN_SCREEN_HEIGHT);
 
-	init_code_viewer("examples/paint.s");
+	init_code_viewer("examples\\paint.s");
 
 	while vp.running {
 		lock_frame_rate();

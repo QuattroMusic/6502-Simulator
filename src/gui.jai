@@ -328,7 +328,7 @@ draw_display :: () {
 		`row_y = (((`it - 0x0200) / DISPLAY_WIDTH) * 8) + ui.display_pos.y + padding + 24;
 	}
 
-	for 0x0200..(0x0200 + DISPLAY_WIDTH * DISPLAY_HEIGHT) {
+	for 0x0200..(0x0200 + DISPLAY_WIDTH * DISPLAY_HEIGHT - 1) {
 		data := engine.RAM[it];
 
 		// some sort of greedy meshing (not advanced, works rows per rows)
@@ -341,6 +341,8 @@ draw_display :: () {
 			width = 1;
 		} else width += 1;
 	}
+	col: Col = DISPLAY_COLOR[row_data];
+	draw_rect(.{row_x, row_y}, .{8.0 * width, 8}, layer + 1, col);
 
 	widget_end();
 }

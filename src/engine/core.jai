@@ -124,7 +124,7 @@ EventsManager :: (hwnd: *void, msg: u32, wparam: u64, lparam: s64) -> s64 #c_cal
 	if msg == {
 		case WM_CLOSE; #through;
 		case WM_QUIT;  vp.running = false;
-		case WM_SETFOCUS; vp.reduced = false;
+		case WM_SETFOCUS; vp.reduced = false; focused_uuid = -1;
 		case WM_KILLFOCUS; reset_input();
 		case WM_SIZE;
 			w := cast,trunc(s32)(lparam & 0xFFFF);

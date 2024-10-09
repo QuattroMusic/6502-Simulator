@@ -110,8 +110,8 @@ draw_icon :: (icon: Icon, pos: Vec2, layer: f32, $scale: f32, color: Col) {
 
 	s :: 8.0 * scale;
 
-	uv_x := 8.0 / texture_width;
-	uv_y := 8.0 / texture_height;
+	uv_x :: 8.0 / texture_width;
+	uv_y :: 8.0 / texture_height;
 
 	vertices_add(*font_buffer, .{pos.x    , pos.y    , layer, color.data, .[uv.x       , uv.y       ]});
 	vertices_add(*font_buffer, .{pos.x + s, pos.y    , layer, color.data, .[uv.x + uv_x, uv.y       ]});
@@ -128,15 +128,15 @@ draw_icon :: (icon: Icon, pos: Vec2, layer: f32, $scale: f32, color: Col) {
 
 get_icon_mapping :: (icon: Icon) -> (uv: Vec2) {
 	if #complete icon == {
-		case .REDUCE;      return .{64.0 / texture_width, 16.0 / texture_height};
-		case .MINIMIZE;    return .{72.0 / texture_width, 16.0 / texture_height};
-		case .MAXIMIZE;    return .{80.0 / texture_width, 16.0 / texture_height};
-		case .CLOSE;       return .{88.0 / texture_width, 16.0 / texture_height};
+		case .REDUCE;      return #run Vec2.{64.0 / texture_width, 16.0 / texture_height};
+		case .MINIMIZE;    return #run Vec2.{72.0 / texture_width, 16.0 / texture_height};
+		case .MAXIMIZE;    return #run Vec2.{80.0 / texture_width, 16.0 / texture_height};
+		case .CLOSE;       return #run Vec2.{88.0 / texture_width, 16.0 / texture_height};
 	}
 }
 
 get_char_mapping :: ($$c: u8) -> (uv: Vec2) {
-	// since the font is monospace, we don't need to return the size, it's always the same
+	// since the font is monospace, there's no need to return the size
 
 	if c >= #char "a" && c <= #char "z" {
 		x: f32 = ((c - #char "a") * 8.0) / texture_width;
@@ -193,7 +193,7 @@ Icon :: enum {
 	CLOSE;
 }
 
-COLOR_WIDGET_BG_NORMAL      :: Col.{  73,  62,  51, 255};
+COLOR_WIDGET_BG_NORMAL      :: Col.{  73,  62,  51, 255 };
 COLOR_WIDGET_BG_HOVERED     :: Col.{ 188, 126,  59, 255 };
 COLOR_WIDGET_BG_PRESSED     :: Col.{ 246, 164,  76, 255 };
 COLOR_WIDGET_BORDER_NORMAL  :: Col.{ 196, 126,  43, 255 };
