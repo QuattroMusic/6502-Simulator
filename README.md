@@ -141,7 +141,7 @@ init:
 - [x] fix / improve 6502 engine
 
 ### Version 2.0
-- [ ] render revamp
+- [x] render and gui revamp
 - [ ] calculator / conversion panel
 - [ ] options panel + save configurations to file
 - [ ] browser panel
