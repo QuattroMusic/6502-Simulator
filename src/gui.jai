@@ -16,11 +16,8 @@ draw_header :: () {
 
 	icon: Icon = ifx vp.maximized then .MINIMIZE else .MAXIMIZE;
 	if button(icon, .{cast(f32)vp.width - h * 2, 0}, .{h, h}, 1, 2) {
-		if !vp.maximized {
-			ShowWindow(vp.window, SW_MAXIMIZE);
-		} else {
-			ShowWindow(vp.window, SW_RESTORE);
-		}
+		if !vp.maximized then ShowWindow(vp.window, SW_MAXIMIZE);
+		else                  ShowWindow(vp.window, SW_RESTORE);
 
 		vp.maximized = !vp.maximized;
 	}
@@ -76,7 +73,23 @@ draw_buttons_controls :: () {
 	}
 
 	if button("Display", .{460, 40}, .{80, 25}, 1, t) {
-		toggle_display();
+		padding :: 4;
+		w :: DISPLAY_WIDTH  * 8 + padding * 2;
+		h :: DISPLAY_HEIGHT * 8 + padding * 2 + 24;
+
+		x := (vp.width - w) / 2;
+		y := (vp.height - h) / 2;
+		ui.display_pos = .{xx x, xx y};
+		
+		ui.display_visible = !ui.display_visible;
+	}
+	
+	if button("Calculator", .{550, 40}, .{100, 25}, 1, t) {
+		x := (vp.width - CALCULATOR_WIDTH) / 2;
+		y := (vp.height - CALCULATOR_HEIGHT) / 2;
+		ui.calculator_pos = .{xx x, xx y};
+		
+		ui.calculator_visible = !ui.calculator_visible;
 	}
 }
 
@@ -290,19 +303,6 @@ draw_program_frequency :: () {
 	draw_text(str, offset + .{90, 16}, 1, 2, ifx engine.metrics.unlock then GRAY else COLOR_TEXT_NORMAL);
 }
 
-toggle_display :: () {
-	ui.display_visible = !ui.display_visible;
-
-	padding :: 4;
-
-	w :: DISPLAY_WIDTH  * 8 + padding * 2;
-	h :: DISPLAY_HEIGHT * 8 + padding * 2 + 24;
-
-	x := (vp.width - w) / 2;
-	y := (vp.height - h) / 2;
-	ui.display_pos = .{xx x, xx y};
-}
-
 draw_display :: () {
 	padding :: 4;
 
@@ -344,5 +344,60 @@ draw_display :: () {
 	col: Col = DISPLAY_COLOR[row_data];
 	draw_rect(.{row_x, row_y}, .{8.0 * width, 8}, layer + 1, col);
 
+	widget_end();
+}
+
+draw_modal :: ($width: f32, $height: f32) {
+	if !ui.modal_visible then return;
+	
+	x := (vp.width - width) / 2;
+	y := (vp.height - height) / 2;
+
+	window_begin(ui.modal_title, *(Vec2.{x, y}), .{width, height}, *ui.modal_visible, modal = true);
+
+	if ui.modal_error_type == {
+		case .FAILED_COMPILATION;
+			draw_text(ui.modal_error_message, .{x + 10, y + 40}, 11, 2, WHITE, wrap = width - 20);
+		case .UNABLE_TO_OPEN_BINARY;
+			draw_text("Unable to open binary file <out.bin> for reading", .{x + 10, y + 40}, 11, 2, WHITE);
+		case .INCOMPATIBLE_ROM_SIZE;
+			draw_text("Incompatible ROM size", .{x + 10, y + 40}, 11, 2, WHITE);
+			draw_text("ROM size must to be 32kB", .{x + 10, y + 56}, 11, 2, WHITE);
+		case .ERROR_OPENING_FILE;
+			draw_text("An error has occured while opening the file", .{x + 10, y + 40}, 11, 2, WHITE);
+		case .READING_FILE_TIMED_OUT;
+			draw_text("Reading file timed out", .{x + 10, y + 40}, 11, 2, WHITE);
+		case .NO_INPUT_FILE_GIVEN;
+			draw_text("No input file given", .{x + 10, y + 40}, 11, 2, WHITE);
+		case .GIVEN_FILE_NOT_VALID;
+			draw_text("Unsupported given file", .{x + 10, y + 40}, 11, 2, WHITE);
+			draw_text("File must to have the '.s' extension", .{x + 10, y + 56}, 11, 2, WHITE);
+		case .UNABLE_TO_FIND_COMPILER;
+			draw_text("Unable to find 'vasm6502_oldstyle.exe', aborting", .{x + 10, y + 40}, 11, 2, WHITE);
+	}
+	
+	widget_end();
+}
+
+draw_calculator :: () {
+	if !ui.calculator_visible then return;
+	
+	window_begin("Calculator", *ui.calculator_pos, .{CALCULATOR_WIDTH, CALCULATOR_HEIGHT}, *ui.calculator_visible);
+	
+	PADDING :: 12;
+	if button("calculator", .{PADDING, PADDING / 2}, .{100, 20}, 1) {
+		
+	}
+	if button("conversion", .{PADDING + 110, PADDING / 2}, .{100, 20}, 1) {
+		
+	}
+	if button("binop", .{PADDING + 220, PADDING / 2}, .{60, 20}, 1) {
+		
+	}
+	pos_off, layer_off := fetch_parent();
+	draw_rect(pos_off + .{6, PADDING / 2 + 26}, .{CALCULATOR_WIDTH - 12, 1}, layer_off + 1, COLOR_LINE);
+	
+	
+	
 	widget_end();
 }

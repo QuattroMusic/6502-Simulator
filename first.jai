@@ -1,35 +1,3 @@
-draw_popup :: ($width: f32, $height: f32) {
-	if !ui.show_popup then return;
-	
-	x := (vp.width - width) / 2;
-	y := (vp.height - height) / 2;
-
-	window_begin(ui.popup_title, *(Vec2.{x, y}), .{width, height}, *ui.show_popup, modal = true);
-
-	if ui.popup_error_type == {
-		case .FAILED_COMPILATION;
-			draw_text(ui.error_message, .{x + 10, y + 40}, 11, 2, WHITE, wrap = width - 20);
-		case .UNABLE_TO_OPEN_BINARY;
-			draw_text("Unable to open binary file <out.bin> for reading", .{x + 10, y + 40}, 11, 2, WHITE);
-		case .INCOMPATIBLE_ROM_SIZE;
-			draw_text("Incompatible ROM size", .{x + 10, y + 40}, 11, 2, WHITE);
-			draw_text("ROM size must to be 32kB", .{x + 10, y + 56}, 11, 2, WHITE);
-		case .ERROR_OPENING_FILE;
-			draw_text("An error has occured while opening the file", .{x + 10, y + 40}, 11, 2, WHITE);
-		case .READING_FILE_TIMED_OUT;
-			draw_text("Reading file timed out", .{x + 10, y + 40}, 11, 2, WHITE);
-		case .NO_INPUT_FILE_GIVEN;
-			draw_text("No input file given", .{x + 10, y + 40}, 11, 2, WHITE);
-		case .GIVEN_FILE_NOT_VALID;
-			draw_text("Unsupported given file", .{x + 10, y + 40}, 11, 2, WHITE);
-			draw_text("File must to have the '.s' extension", .{x + 10, y + 56}, 11, 2, WHITE);
-		case .UNABLE_TO_FIND_COMPILER;
-			draw_text("Unable to find 'vasm6502_oldstyle.exe', aborting", .{x + 10, y + 40}, 11, 2, WHITE);
-	}
-	
-	widget_end();
-}
-
 update_6502 :: () {
 	// those two should be put before the drawing, see `EventsManager` - `WM_SIZE`
 	handle_viewport_movement();
@@ -38,8 +6,8 @@ update_6502 :: () {
 	handle_input_and_time();
 	
 	handle_displayed_file();
-
-	draw_popup(800, 400);
+	
+	draw_modal(800, 400);
 	
 	draw_header();
 	draw_buttons_controls();
@@ -52,6 +20,7 @@ update_6502 :: () {
 	draw_input();
 
 	draw_display();
+	draw_calculator();
 }
 
 panel_visible := true;
@@ -111,8 +80,11 @@ MEMORY_MILLISECOND_ADDRESS :: 0x2788;  // 2 bytes
 MIN_SCREEN_WIDTH  :: 1400;
 MIN_SCREEN_HEIGHT :: 800;
 
-DISPLAY_WIDTH :: 120;
+DISPLAY_WIDTH  :: 120;
 DISPLAY_HEIGHT :: 80;
+
+CALCULATOR_WIDTH  :: 600;
+CALCULATOR_HEIGHT :: 400;
 
 APP_MAJOR_VERSION :: 1;
 APP_MINOR_VERSION :: 0;

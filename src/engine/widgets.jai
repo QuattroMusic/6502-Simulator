@@ -4,9 +4,6 @@ Interaction_State :: enum {
 	PRESSED;
 }
 
-WIDGET_HEADER_HEIGHT :: 24;
-WIDGET_SCROLLBAR_SIZE :: 12;
-
 generate_new_uuid :: () -> int #compile_time {
 	// since the widgets have `#expand` and this procedure could be only called at compile time
 	// we're creating a new UUID per widget
@@ -156,16 +153,16 @@ window_begin :: ($$text: string, pos: *Vec2, size: Vec2, visible: *bool, $modal 
 		break;
 	}
 	if index == -1 {
-		new := Panel.{uuid, 1, pos, size, .{0, 0}, false};
+		new := Panel.{uuid, 1, pos, size, .{0, 0}, false, visible, visible.*};
 		array_add(*all_panels, new);
 		index = all_panels.count - 1;
-	} else if all_panels[index].layer == -1 {  // if become visible after being closed
+	} else if !all_panels[index].prev_state_visible {  // if become visible after being closed
 		all_panels[index].layer = 0;
 		make_panel_topmost(index);
 		index = all_panels.count - 1;
 	}
 	p := *all_panels[index];
-
+	
 	// window movement
 	#if !modal {
 		if is_mouse_inside_rect(p.pos, .{size.x - WIDGET_HEADER_HEIGHT, WIDGET_HEADER_HEIGHT}) && can_interact_with_widget(p.layer) {
@@ -178,6 +175,7 @@ window_begin :: ($$text: string, pos: *Vec2, size: Vec2, visible: *bool, $modal 
 		if p.pressed {
 			delta := Vec2.{xx mouse_x, xx mouse_y} - p.pressed_pos;
 			p.pos.* = delta;
+			p.pos.*.y = max(p.pos.*.y, HEADER_HEIGHT);  // clamp because of window header
 		}
 		if is_mouse_released(0) then p.*.pressed = false;
 	} else {
@@ -307,7 +305,7 @@ can_interact_with_widget :: (layer: f32) -> bool {
 		if closed_a_window then return false;
 		if focused_uuid != -1 then return false;
 
-		for all_panels if it.layer != -1 {
+		for all_panels if it.visible {
 			if is_mouse_inside_rect(it.pos, it.size) && layer < it.layer {
 				return false;
 			}
@@ -323,6 +321,8 @@ Panel :: struct {
 	size: Vec2;
 	pressed_pos: Vec2;
 	pressed := false;
+	visible: *bool;
+	prev_state_visible: bool;
 }
 
 Selected_Widget :: struct {
@@ -351,12 +351,14 @@ make_panel_topmost :: (idx: int) {
 }
 
 finalize_widgets :: () {
-	target_fade := ifx ui.show_popup 0.75 else 0;
+	// print(all_panels);
+	target_fade := ifx ui.modal_visible 0.75 else 0;
 	T :: 0.35;  // seconds took to reach target_fade (I didn't solve the equation, but it's a nice approx, maybe it actually works)
 	k := 1 / (T * vp.dt * 1000);
 
 	fade_value = lerp(fade_value, target_fade, k);
 
+	// black background when modal is enabled
 	layer := ifx all_panels.count then all_panels[all_panels.count - 1].layer;
 	draw_rect(.{0, 0}, .{xx vp.width, xx vp.height}, layer, .{0, 0, 0, cast(u8)(fade_value * 255)});
 
@@ -368,14 +370,24 @@ finalize_widgets :: () {
 	}
 	if idx != -1 then make_panel_topmost(idx);
 	closed_a_window = false;
+	
+	for * all_panels {
+		it.prev_state_visible = it.visible.*;
+	}
 }
 
+#scope_file
 widget_uuid: u32;  // used only at compile time
 
 fade_value: f32;
 
-focused_uuid: int = -1;
 closed_a_window := false;
 modal_open := false;
 selected_widget: [..]Selected_Widget;  // handled as a stack
 all_panels: [..]Panel;
+
+#scope_export
+focused_uuid: int = -1;  // exposed to the core (`WM_SETFOCUS`)
+
+WIDGET_HEADER_HEIGHT :: 24;
+WIDGET_SCROLLBAR_SIZE :: 12;

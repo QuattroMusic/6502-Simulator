@@ -35,10 +35,10 @@ handle_displayed_file :: () {
 				file_close(*file);
 				break;
 			}
-			if seconds_since_init() - init > 1 {
-				ui.show_popup = true;
-				ui.popup_title = "timed out";
-				ui.popup_error_type = .READING_FILE_TIMED_OUT;
+			if seconds_since_init() - init > 1 {  // time out if operation took more than 1 second
+				ui.modal_visible = true;
+				ui.modal_title = "timed out";
+				ui.modal_error_type = .READING_FILE_TIMED_OUT;
 				deinit_code_viewer();
 				return;
 			}
@@ -60,9 +60,9 @@ init_code_viewer :: (path: string) {
 	viewer.file_modtime = modtime;
 	
 	if !success {
-		ui.show_popup = true;
-		ui.popup_title = "error opening file";
-		ui.popup_error_type = .ERROR_OPENING_FILE;
+		ui.modal_visible = true;
+		ui.modal_title = "error opening file";
+		ui.modal_error_type = .ERROR_OPENING_FILE;
 		viewer.content.count = 0;
 		viewer.file_name = "";
 		return;
@@ -87,9 +87,9 @@ deinit_code_viewer :: () {
 handle_dropped_file :: (file: string) {
 	ext := split_from_right(file, #char ".");
 	if ext != "s" {
-		ui.show_popup = true;
-		ui.popup_title = "unsupported file";
-		ui.popup_error_type = .GIVEN_FILE_NOT_VALID;
+		ui.modal_visible = true;
+		ui.modal_title = "unsupported file";
+		ui.modal_error_type = .GIVEN_FILE_NOT_VALID;
 		return;
 	}
 

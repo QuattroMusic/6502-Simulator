@@ -1,13 +1,16 @@
 General_UI :: struct {
 	memory_scrollbar_pos: f32;
 
-	show_popup: bool;
-	popup_title: string;
-	error_message: string;
-	popup_error_type: Error_Type;
+	modal_visible: bool;
+	modal_title: string;
+	modal_error_message: string;
+	modal_error_type: Error_Type;
 
 	display_pos: Vec2;
 	display_visible: bool;
+	
+	calculator_pos: Vec2;
+	calculator_visible: bool;
 }
 
 Error_Type :: enum {
@@ -236,16 +239,16 @@ compile_program :: () {
 	file, success := file_open("vasm6502_oldstyle.exe");
 	defer file_close(*file);
 	if !success {
-		ui.show_popup = true;
-		ui.popup_title = "No compiler found";
-		ui.popup_error_type = .UNABLE_TO_FIND_COMPILER;
+		ui.modal_visible = true;
+		ui.modal_title = "No compiler found";
+		ui.modal_error_type = .UNABLE_TO_FIND_COMPILER;
 		return;
 	}
 	
 	if !viewer.file_path {
-		ui.show_popup = true;
-		ui.popup_title = "No input file";
-		ui.popup_error_type = .NO_INPUT_FILE_GIVEN;
+		ui.modal_visible = true;
+		ui.modal_title = "No input file";
+		ui.modal_error_type = .NO_INPUT_FILE_GIVEN;
 		return;
 	}
 	
@@ -258,10 +261,10 @@ compile_program :: () {
 	engine.compilation_successful = false;
 	
 	if res.exit_code != 0 {
-		ui.show_popup = true;
-		ui.popup_title = "Compilation failed";
-		ui.error_message = copy_string(error_string);
-		ui.popup_error_type = .FAILED_COMPILATION;
+		ui.modal_visible = true;
+		ui.modal_title = "Compilation failed";
+		ui.modal_error_message = copy_string(error_string);
+		ui.modal_error_type = .FAILED_COMPILATION;
 		return;
 	}
 	

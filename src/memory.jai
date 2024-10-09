@@ -2,9 +2,9 @@ read_ROM :: (name: string) {
 	file, res := file_open(name);
 	defer file_close(*file);
 	if !res {
-		ui.show_popup = true;
-		ui.popup_title = "BIN error";
-		ui.popup_error_type = .UNABLE_TO_OPEN_BINARY;
+		ui.modal_visible = true;
+		ui.modal_title = "BIN error";
+		ui.modal_error_type = .UNABLE_TO_OPEN_BINARY;
 		return;
 	}
 	
@@ -12,9 +12,9 @@ read_ROM :: (name: string) {
 	result, size := file_tell(file);
 
 	if size != ROM_SIZE {
-		ui.show_popup = true;
-		ui.popup_title = "ROM error";
-		ui.popup_error_type = .INCOMPATIBLE_ROM_SIZE;
+		ui.modal_visible = true;
+		ui.modal_title = "ROM error";
+		ui.modal_error_type = .INCOMPATIBLE_ROM_SIZE;
 		return;
 	}
 	file_seek(file, 0, .START);
