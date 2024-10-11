@@ -79,17 +79,16 @@ draw_buttons_controls :: () {
 
 		x := (vp.width - w) / 2;
 		y := (vp.height - h) / 2;
-		ui.display_pos = .{xx x, xx y};
-		
-		ui.display_visible = !ui.display_visible;
+
+		toggle_panel(ui.display_window, .{xx x, xx y});
 	}
-	
+
 	if button("Calculator", .{550, 40}, .{100, 25}, 1, t) {
-		x := (vp.width - CALCULATOR_WIDTH) / 2;
-		y := (vp.height - CALCULATOR_HEIGHT) / 2;
-		ui.calculator_pos = .{xx x, xx y};
-		
-		ui.calculator_visible = !ui.calculator_visible;
+		// x := (vp.width - CALCULATOR_WIDTH) / 2;
+		// y := (vp.height - CALCULATOR_HEIGHT) / 2;
+		// ui.calculator_pos = .{xx x, xx y};
+
+		// ui.calculator_visible = !ui.calculator_visible;
 	}
 }
 
@@ -103,13 +102,13 @@ draw_code_viewer :: () {
 	draw_rect(viewer.pos, viewer.size, 0, COLOR_BACKGROUND);
 
 	char_per_lines := floor(viewer.size.x / 16) - 2;
-	
+
 	max_value := Vec2.{(viewer.longest_line) * 16.0, viewer.rows_length.count * 16.0};
 	scroll_size := viewer.size + max_value;
 	min_size := Vec2.{30 * 16.0, 1 * 16.0};
-	
-	draw_scrollbar(viewer.pos, viewer.size, layer = 3, *viewer.scrollbar_pos, scroll_size, min_size, max_value);
-	
+
+	draw_scrollbar(viewer.pos, viewer.size, z = 3, *viewer.scrollbar_pos, scroll_size, min_size, max_value);
+
 	x_visible := min_size.x + viewer.size.x < scroll_size.x;
 	draw_colored_text(x_visible);
 	draw_line_count_bar(x_visible);
@@ -151,20 +150,19 @@ draw_program_memory :: () {
 	pos:  Vec2 = .{vp.width + 40.0 - MIN_SCREEN_WIDTH / 2, 74};
 	size: Vec2 = .{MIN_SCREEN_WIDTH / 2 - 50.0, vp.height - MIN_SCREEN_HEIGHT / 2.0 + 10};
 
-	child_begin("memory", pos, size, 3);
+	child_begin("memory", pos, size, 3);  child_end();
+
 	draw_rect(pos, size, 0, COLOR_BACKGROUND);
 	draw_rect(pos, .{48, size.y}, 1, COLOR_WIDGET_BG_NORMAL);
 
 	rows_on_screen := floor((size.y - 8) / 16);
-	max_value := Vec2.{0, (2048 - rows_on_screen) * 16};
-	scroll_pos := Vec2.{0, ui.memory_scrollbar_pos};
-	min_size := Vec2.{0, 0};
-	
-	draw_scrollbar(pos, size, layer = 1, *scroll_pos, .{0, 2048 * 16}, min_size, max_value);
+	scroll_pos     := Vec2.{0, ui.memory_scrollbar_pos};
+	min_size       := Vec2.{0, 0};
+	max_value      := Vec2.{0, (2048 - rows_on_screen) * 16};
+
+	draw_scrollbar(pos, size, z = 1, *scroll_pos, .{0, 2048 * 16}, min_size, max_value);
 
 	ui.memory_scrollbar_pos = scroll_pos.y;
-
-	widget_end();
 
 	offset := pos + .{2, -ui.memory_scrollbar_pos};
 	start: int = xx ((ui.memory_scrollbar_pos) / 16);
@@ -304,28 +302,24 @@ draw_program_frequency :: () {
 }
 
 draw_display :: () {
+
+	handle_input_and_time();
+
 	padding :: 4;
 
-	w :: DISPLAY_WIDTH  * 8 + padding * 2;
-	h :: DISPLAY_HEIGHT * 8 + padding * 2 + 24;
-
-	if !ui.display_visible then return;
-
-	window_begin("Display", *ui.display_pos, .{w, h}, *ui.display_visible);
-
-	_, layer := fetch_parent();
-	draw_rect_lines(ui.display_pos + .{padding, padding + 24}, .{DISPLAY_WIDTH * 8, DISPLAY_HEIGHT * 8}, layer + 1, COLOR_WIDGET_BORDER_NORMAL, 1);
+	p := fetch_parent();
+	draw_rect_lines(p.pos + .{padding, padding}, .{DISPLAY_WIDTH * 8, DISPLAY_HEIGHT * 8}, p.z + 1, COLOR_WIDGET_BORDER_NORMAL, 1);
 
 	width: int;
 	row_data: u8 = engine.RAM[0x0200];  // first value
-	row_x := ui.display_pos.x + padding;
-	row_y := ui.display_pos.y + padding + 24;
+	row_x := p.pos.x + padding;
+	row_y := p.pos.y + padding;
 
 	draw_internal :: () #expand {
 		col: Col = ifx `data >= 0 && `data < DISPLAY_COLOR.count then DISPLAY_COLOR[`row_data] else BLACK;
-		draw_rect(.{`row_x, `row_y}, .{8.0 * `width, 8}, `layer + 1, col);
-		`row_x = (((`it - 0x0200) % DISPLAY_WIDTH) * 8) + ui.display_pos.x + padding;
-		`row_y = (((`it - 0x0200) / DISPLAY_WIDTH) * 8) + ui.display_pos.y + padding + 24;
+		draw_rect(.{`row_x, `row_y}, .{8.0 * `width, 8}, `p.z + 1, col);
+		`row_x = (((`it - 0x0200) % DISPLAY_WIDTH) * 8) + p.pos.x + padding;
+		`row_y = (((`it - 0x0200) / DISPLAY_WIDTH) * 8) + p.pos.y + padding;
 	}
 
 	for 0x0200..(0x0200 + DISPLAY_WIDTH * DISPLAY_HEIGHT - 1) {
@@ -342,62 +336,68 @@ draw_display :: () {
 		} else width += 1;
 	}
 	col: Col = DISPLAY_COLOR[row_data];
-	draw_rect(.{row_x, row_y}, .{8.0 * width, 8}, layer + 1, col);
-
-	widget_end();
+	draw_rect(.{row_x, row_y}, .{8.0 * width, 8}, p.z + 1, col);
 }
 
-draw_modal :: ($width: f32, $height: f32) {
-	if !ui.modal_visible then return;
-	
-	x := (vp.width - width) / 2;
-	y := (vp.height - height) / 2;
+draw_modal :: () {
+	x := (vp.width  - MODAL_WIDTH)  / 2.0;
+	y := (vp.height - MODAL_HEIGHT) / 2.0;
 
-	window_begin(ui.modal_title, *(Vec2.{x, y}), .{width, height}, *ui.modal_visible, modal = true);
+	parent := fetch_parent();
+	p := parent.pos;
+	z := 1 + parent.z;
 
-	if ui.modal_error_type == {
+	if #complete ui.modal_error_type == {
 		case .FAILED_COMPILATION;
-			draw_text(ui.modal_error_message, .{x + 10, y + 40}, 11, 2, WHITE, wrap = width - 20);
+			set_panel_name(ui.modal_window, "compilation failed");
+			draw_text(ui.modal_error_message, p + .{10, 10}, z, 2, WHITE, wrap = MODAL_WIDTH - 20);
 		case .UNABLE_TO_OPEN_BINARY;
-			draw_text("Unable to open binary file <out.bin> for reading", .{x + 10, y + 40}, 11, 2, WHITE);
+			set_panel_name(ui.modal_window, "bin error");
+			draw_text("Unable to open binary file <out.bin> for reading", p + .{10, 10}, z, 2, WHITE);
 		case .INCOMPATIBLE_ROM_SIZE;
-			draw_text("Incompatible ROM size", .{x + 10, y + 40}, 11, 2, WHITE);
-			draw_text("ROM size must to be 32kB", .{x + 10, y + 56}, 11, 2, WHITE);
+			set_panel_name(ui.modal_window, "rom error");
+			draw_text("Incompatible ROM size", p + .{10, 10}, z, 2, WHITE);
+			draw_text("ROM size must to be 32kB", p + .{10, 26}, z, 2, WHITE);
 		case .ERROR_OPENING_FILE;
-			draw_text("An error has occured while opening the file", .{x + 10, y + 40}, 11, 2, WHITE);
+			set_panel_name(ui.modal_window, "error opening file");
+			draw_text("An error has occured while opening the file", p + .{10, 10}, z, 2, WHITE);
 		case .READING_FILE_TIMED_OUT;
-			draw_text("Reading file timed out", .{x + 10, y + 40}, 11, 2, WHITE);
+			set_panel_name(ui.modal_window, "timed out");
+			draw_text("Reading file timed out", p + .{10, 10}, z, 2, WHITE);
 		case .NO_INPUT_FILE_GIVEN;
-			draw_text("No input file given", .{x + 10, y + 40}, 11, 2, WHITE);
+			set_panel_name(ui.modal_window, "no input file");
+			draw_text("No input file given", p + .{10, 10}, z, 2, WHITE);
 		case .GIVEN_FILE_NOT_VALID;
-			draw_text("Unsupported given file", .{x + 10, y + 40}, 11, 2, WHITE);
-			draw_text("File must to have the '.s' extension", .{x + 10, y + 56}, 11, 2, WHITE);
+			set_panel_name(ui.modal_window, "unsupported file");
+			draw_text("Unsupported given file", p + .{10, 10}, z, 2, WHITE);
+			draw_text("File must to have the '.s' extension", p + .{10, 26}, z, 2, WHITE);
 		case .UNABLE_TO_FIND_COMPILER;
-			draw_text("Unable to find 'vasm6502_oldstyle.exe', aborting", .{x + 10, y + 40}, 11, 2, WHITE);
+			set_panel_name(ui.modal_window, "no compiler found");
+			draw_text("Unable to find 'vasm6502_oldstyle.exe', aborting", p + .{10, 10}, z, 2, WHITE);
 	}
 	
-	widget_end();
+	engine.compilation_successful = false;
 }
 
 draw_calculator :: () {
-	if !ui.calculator_visible then return;
-	
+	/*if !ui.calculator_visible then return;
+
 	window_begin("Calculator", *ui.calculator_pos, .{CALCULATOR_WIDTH, CALCULATOR_HEIGHT}, *ui.calculator_visible);
-	
+
 	PADDING :: 12;
 	if button("calculator", .{PADDING, PADDING / 2}, .{100, 20}, 1) {
-		
+		ui.calculator_page = .CALCULATOR;
 	}
 	if button("conversion", .{PADDING + 110, PADDING / 2}, .{100, 20}, 1) {
-		
-	}
-	if button("binop", .{PADDING + 220, PADDING / 2}, .{60, 20}, 1) {
-		
+		ui.calculator_page = .CONVERSION;
 	}
 	pos_off, layer_off := fetch_parent();
 	draw_rect(pos_off + .{6, PADDING / 2 + 26}, .{CALCULATOR_WIDTH - 12, 1}, layer_off + 1, COLOR_LINE);
-	
-	
-	
-	widget_end();
+
+	if #complete ui.calculator_page == {
+		case .CALCULATOR;
+		case .CONVERSION;
+	}
+
+	widget_end();*/
 }

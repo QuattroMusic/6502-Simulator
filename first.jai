@@ -3,12 +3,8 @@ update_6502 :: () {
 	handle_viewport_movement();
 	handle_viewport_resize();
 
-	handle_input_and_time();
-	
 	handle_displayed_file();
-	
-	draw_modal(800, 400);
-	
+
 	draw_header();
 	draw_buttons_controls();
 	draw_code_viewer();
@@ -19,14 +15,8 @@ update_6502 :: () {
 	draw_current_instruction();
 	draw_input();
 
-	draw_display();
-	draw_calculator();
+	widgets_draw_panels();
 }
-
-panel_visible := true;
-panel_pos: Vec2 = .{100, 100};
-panel_visible2 := true;
-panel_pos2: Vec2 = .{250, 0};
 
 draw_one_frame :: () {
 	if !vp.reduced {  // I should find a way to entirely disable this until it's not reduced anymore
@@ -35,11 +25,32 @@ draw_one_frame :: () {
 		clear_background(COLOR_DEEP_BACKGROUND);
 
 		update_6502();
-		
+
 		finalize_widgets();
 		finalize_drawing();
 	}
 	reset_temporary_storage();
+}
+
+setup_windows :: () {
+	padding :: 4;
+	w :: DISPLAY_WIDTH  * 8 + padding * 2;
+	h :: DISPLAY_HEIGHT * 8 + padding * 2 + 24;
+	ui.display_window = create_new_window(draw_display, "display", .{w, h});
+	
+	ui.calculator_window = create_new_window(draw_calculator, "calculator", .{CALCULATOR_WIDTH, CALCULATOR_HEIGHT});
+	
+	modal_on_close :: () {  // Todo - Temporary!
+		// there's a silly bug about this that I cannot explaint
+		// the Basic()(MEMORY_DEBUG = true) sometimes shows an allocation and sometimes it doesn't
+		// even if I free the memory, the bytes aren't decreasing (?)
+		// with my good sense, I'm stil free-ing the memory, you know
+		// I absolutely need to throw away the vasm compiler and build one
+		// ~ Quattro 2024 / 10 / 11
+		if ui.modal_error_type == .FAILED_COMPILATION then free(ui.modal_error_message);
+	}
+	
+	ui.modal_window = create_new_window(draw_modal, "", .{800, 600}, on_close = modal_on_close, modal = true);
 }
 
 main :: () {
@@ -47,20 +58,26 @@ main :: () {
 		WR :: #import "Windows_Resources";
 		#run WR.disable_runtime_console();
 	}
-	
+
 	cpu_init();
 	init_window(MIN_SCREEN_WIDTH, MIN_SCREEN_HEIGHT);
 
 	init_code_viewer("examples\\paint.s");
 
+	setup_windows();
+
 	while vp.running {
 		lock_frame_rate();
 		fetch_window_inputs();
-		
+
+		// if is_key_pressed(KEY_ESC) then break;
+
+		if is_mouse_pressed(2) then report_memory_leaks();
+
 		draw_one_frame();
 	}
 	deinit_window();
-	
+
 	// run_all_tests();
 }
 
@@ -82,6 +99,9 @@ MIN_SCREEN_HEIGHT :: 800;
 
 DISPLAY_WIDTH  :: 120;
 DISPLAY_HEIGHT :: 80;
+
+MODAL_WIDTH  :: 800;
+MODAL_HEIGHT :: 600;
 
 CALCULATOR_WIDTH  :: 600;
 CALCULATOR_HEIGHT :: 400;
@@ -118,12 +138,15 @@ operator + :: (a: Col, b: Col) -> Col {
 	return out;
 }
 
-#import "Basic";
+#import "Basic"()(MEMORY_DEBUGGER = true);
 #import "Math";
 #import "File";
 #import "Thread";
 #import "Process";
 #import "File_Utilities";
+#import "Hash";
+#import "Hash_Table";
+#import "Sort";
 
 #import "d3d11";
 #import "d3d_compiler";

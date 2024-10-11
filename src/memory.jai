@@ -2,9 +2,7 @@ read_ROM :: (name: string) {
 	file, res := file_open(name);
 	defer file_close(*file);
 	if !res {
-		ui.modal_visible = true;
-		ui.modal_title = "BIN error";
-		ui.modal_error_type = .UNABLE_TO_OPEN_BINARY;
+		display_error_panel(.UNABLE_TO_OPEN_BINARY);
 		return;
 	}
 	
@@ -12,9 +10,7 @@ read_ROM :: (name: string) {
 	result, size := file_tell(file);
 
 	if size != ROM_SIZE {
-		ui.modal_visible = true;
-		ui.modal_title = "ROM error";
-		ui.modal_error_type = .INCOMPATIBLE_ROM_SIZE;
+		display_error_panel(.INCOMPATIBLE_ROM_SIZE);
 		return;
 	}
 	file_seek(file, 0, .START);
@@ -64,7 +60,7 @@ handle_input_and_time :: () {
 	engine.RAM[MEMORY_MILLISECOND_ADDRESS]     = cast,trunc(u8)(calendar.millisecond & 0xFF);
 	engine.RAM[MEMORY_MILLISECOND_ADDRESS + 1] = cast,trunc(u8)((calendar.millisecond >> 8) & 0xFF);
 
-	if !ui.display_visible then return;
+	if !is_panel_visible(ui.display_window) then return;
 	
 	c := last_pressed_char;
 	allowed_chars := (#char "A" <= c && c <= #char "Z") || 
