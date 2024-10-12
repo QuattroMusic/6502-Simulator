@@ -163,6 +163,8 @@ EventsManager :: (hwnd: *void, msg: u32, wparam: u64, lparam: s64) -> s64 #c_cal
 			amt := DragQueryFileA(data, 0xFFFFFFFF, null, 0);  // fetch the dropped file amount
 			if amt > 1 then return DefWindowProcA(hwnd, msg, wparam, lparam);
 
+			engine.compilation_successful = false;
+
 			buff: [MAX_PATH]u8;
 			DragQueryFileA(data, 0, buff.data, buff.count);
 			len := string_length(buff.data);
