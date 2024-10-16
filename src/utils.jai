@@ -54,9 +54,10 @@ string_length :: (d: *u8) -> s64 {
 	return it;
 }
 
-display_error_panel :: (error: Error_Type) {
+display_error_panel :: (error: Error_Type, title: string) {
 	ui.modal_error_type = error;
-	toggle_panel(ui.modal_window);
+	set_panel_name(ui.modal_panel, title);
+	toggle_panel(ui.modal_panel);
 }
 
 _profile_ident: int;

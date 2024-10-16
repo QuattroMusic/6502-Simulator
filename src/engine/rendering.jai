@@ -14,6 +14,10 @@ draw_rect :: (pos: Vec2, size: Vec2, layer: f32, col: Col) {
 	indices_add(*quad_buffer, vert_count + 3);
 }
 
+draw_rect2 :: (pos: Vec2, size: Vec2, z: f32, col: Col) {
+	vertices_add(*test_buffer, .{pos.x, pos.y, z, size.x, size.y, col.data});
+}
+
 draw_triangle :: (p1: Vec2, p2: Vec2, p3: Vec2, layer: f32, col: Col) {
 	vert_count := cast(u32)quad_buffer.vertices_view.count;
 	
@@ -76,6 +80,37 @@ draw_character :: ($$c: u8, pos: Vec2, layer: f32, scale: f32, color: Col) {
 	indices_add(*font_buffer, vert_count + 2);
 	indices_add(*font_buffer, vert_count    );
 	indices_add(*font_buffer, vert_count + 3);
+}
+
+draw_character2 :: ($$c: u8, pos: Vec2, z: f32, scale: u32, col: Col) {
+	#if is_constant(c) { #if c == #char " " || c == #char "\t" || c == #char "\r" then return; }
+	else               {  if c == #char " " || c == #char "\t" || c == #char "\r" then return; }
+	
+	uv := get_char_mapping(c);
+	vert_count := cast(u32)font_buffer.vertices_view.count;
+
+	s := scale * 8;
+	
+	// p1: Vec2 = pos;
+	// p2: Vec2 = pos + .{s, 0};
+	// p3: Vec2 = pos + .{s, s};
+	// p4: Vec2 = pos + .{0, s};
+	
+	uv_x :: 8.0 / texture_width;
+	uv_y :: 8.0 / texture_height;
+
+	// vertices_add(*font_buffer, .{p1.x, p1.y, z, color.data, .[uv.x       , uv.y       ]});
+	// vertices_add(*font_buffer, .{p2.x, p2.y, z, color.data, .[uv.x + uv_x, uv.y       ]});
+	// vertices_add(*font_buffer, .{p3.x, p3.y, z, color.data, .[uv.x + uv_x, uv.y + uv_y]});
+	// vertices_add(*font_buffer, .{p4.x, p4.y, z, color.data, .[uv.x       , uv.y + uv_y]});
+	
+	// indices_add(*font_buffer, vert_count + 1);
+	// indices_add(*font_buffer, vert_count    );
+	// indices_add(*font_buffer, vert_count + 2);
+	// indices_add(*font_buffer, vert_count + 2);
+	// indices_add(*font_buffer, vert_count    );
+	// indices_add(*font_buffer, vert_count + 3);
+	vertices_add(*test_font_buffer, .{pos.x, pos.y, z, s, col.data, uv.component});
 }
 
 draw_text :: (text: string, pos: Vec2, layer: f32, scale: f32, color: Col, $wrap: f32 = 0) {

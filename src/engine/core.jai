@@ -137,12 +137,16 @@ EventsManager :: (hwnd: *void, msg: u32, wparam: u64, lparam: s64) -> s64 #c_cal
 		case WM_SYSKEYDOWN; #through;
 		case WM_KEYFIRST;
 			if wparam <= 0xFF {
-				input_keyboard_states[cast,no_check(u8)wparam] = true;
-				last_pressed_char = cast,no_check(u8)wparam;
+				key := cast,no_check(u8)wparam;
+				input_keyboard_states[key] = true;
+				last_down_char      = key;
 			}
 		case WM_SYSKEYUP; #through;
 		case WM_KEYUP;
-			if wparam <= 0xFF then input_keyboard_states[wparam] = false;
+			if wparam <= 0xFF {
+				key := cast,no_check(u8)wparam;
+				input_keyboard_states[key] = false;
+			}
 		case WM_MOUSEMOVE;
 			mouse_x =  lparam        & 0xFFFF;
 			mouse_y = (lparam >> 16) & 0xFFFF;

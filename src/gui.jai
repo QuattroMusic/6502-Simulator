@@ -73,22 +73,7 @@ draw_buttons_controls :: () {
 	}
 
 	if button("Display", .{460, 40}, .{80, 25}, 1, t) {
-		padding :: 4;
-		w :: DISPLAY_WIDTH  * 8 + padding * 2;
-		h :: DISPLAY_HEIGHT * 8 + padding * 2 + 24;
-
-		x := (vp.width - w) / 2;
-		y := (vp.height - h) / 2;
-
-		toggle_panel(ui.display_window, .{xx x, xx y});
-	}
-
-	if button("Calculator", .{550, 40}, .{100, 25}, 1, t) {
-		// x := (vp.width - CALCULATOR_WIDTH) / 2;
-		// y := (vp.height - CALCULATOR_HEIGHT) / 2;
-		// ui.calculator_pos = .{xx x, xx y};
-
-		// ui.calculator_visible = !ui.calculator_visible;
+		toggle_panel(ui.display_panel, centered = true);
 	}
 }
 
@@ -349,55 +334,38 @@ draw_modal :: () {
 
 	if #complete ui.modal_error_type == {
 		case .FAILED_COMPILATION;
-			set_panel_name(ui.modal_window, "compilation failed");
 			draw_text(ui.modal_error_message, p + .{10, 10}, z, 2, WHITE, wrap = MODAL_WIDTH - 20);
 		case .UNABLE_TO_OPEN_BINARY;
-			set_panel_name(ui.modal_window, "bin error");
 			draw_text("Unable to open binary file <out.bin> for reading", p + .{10, 10}, z, 2, WHITE);
 		case .INCOMPATIBLE_ROM_SIZE;
-			set_panel_name(ui.modal_window, "rom error");
 			draw_text("Incompatible ROM size", p + .{10, 10}, z, 2, WHITE);
 			draw_text("ROM size must to be 32kB", p + .{10, 26}, z, 2, WHITE);
 		case .ERROR_OPENING_FILE;
-			set_panel_name(ui.modal_window, "error opening file");
 			draw_text("An error has occured while opening the file", p + .{10, 10}, z, 2, WHITE);
 		case .READING_FILE_TIMED_OUT;
-			set_panel_name(ui.modal_window, "timed out");
 			draw_text("Reading file timed out", p + .{10, 10}, z, 2, WHITE);
 		case .NO_INPUT_FILE_GIVEN;
-			set_panel_name(ui.modal_window, "no input file");
 			draw_text("No input file given", p + .{10, 10}, z, 2, WHITE);
 		case .GIVEN_FILE_NOT_VALID;
-			set_panel_name(ui.modal_window, "unsupported file");
 			draw_text("Unsupported given file", p + .{10, 10}, z, 2, WHITE);
 			draw_text("File must to have the '.s' extension", p + .{10, 26}, z, 2, WHITE);
 		case .UNABLE_TO_FIND_COMPILER;
-			set_panel_name(ui.modal_window, "no compiler found");
 			draw_text("Unable to find 'vasm6502_oldstyle.exe', aborting", p + .{10, 10}, z, 2, WHITE);
 	}
 	
 	engine.compilation_successful = false;
 }
 
-draw_calculator :: () {
-	/*if !ui.calculator_visible then return;
-
-	window_begin("Calculator", *ui.calculator_pos, .{CALCULATOR_WIDTH, CALCULATOR_HEIGHT}, *ui.calculator_visible);
-
-	PADDING :: 12;
-	if button("calculator", .{PADDING, PADDING / 2}, .{100, 20}, 1) {
-		ui.calculator_page = .CALCULATOR;
+draw_settings :: () {
+	p := fetch_parent();
+	
+	tab_bar(.{10, 10}, SETTINGS_WIDTH - 20, 1, .["platform", "theming"], *ui.settings_focused_tab);
+	
+	if ui.settings_focused_tab == {
+		case 0;  // platform
+			
+		case 1;  // theming
 	}
-	if button("conversion", .{PADDING + 110, PADDING / 2}, .{100, 20}, 1) {
-		ui.calculator_page = .CONVERSION;
-	}
-	pos_off, layer_off := fetch_parent();
-	draw_rect(pos_off + .{6, PADDING / 2 + 26}, .{CALCULATOR_WIDTH - 12, 1}, layer_off + 1, COLOR_LINE);
-
-	if #complete ui.calculator_page == {
-		case .CALCULATOR;
-		case .CONVERSION;
-	}
-
-	widget_end();*/
+	
+	h_separator("colors", p.pos + .{10, 80}, SETTINGS_WIDTH - 20, p.z + 1);
 }

@@ -36,10 +36,7 @@ handle_displayed_file :: () {
 				break;
 			}
 			if seconds_since_init() - init > 1 {  // time out if operation took more than 1 second
-				// ui.modal_title = "timed out";
-				// ui.modal_error_type = .READING_FILE_TIMED_OUT;
-				// toggle_panel(ui.modal_window);
-				display_error_panel(.READING_FILE_TIMED_OUT);
+				display_error_panel(.READING_FILE_TIMED_OUT, "timed out");
 				deinit_code_viewer();
 				return;
 			}
@@ -63,7 +60,7 @@ init_code_viewer :: (path: string) {
 	if !success {
 		viewer.content.count = 0;
 		viewer.file_name = "";
-		display_error_panel(.ERROR_OPENING_FILE);
+		display_error_panel(.ERROR_OPENING_FILE, "error opening file");
 		return;
 	}
 	viewer.content.data = data.data;
@@ -85,8 +82,8 @@ deinit_code_viewer :: () {
 
 handle_dropped_file :: (file: string) {
 	ext := split_from_right(file, #char ".");
-	if ext != "s" {  // only '.s' as extension
-		display_error_panel(.GIVEN_FILE_NOT_VALID);
+	if ext != "s" {  // allow only '.s' as extension
+		display_error_panel(.GIVEN_FILE_NOT_VALID, "unsupported file");
 		return;
 	}
 

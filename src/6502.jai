@@ -4,9 +4,11 @@ General_UI :: struct {
 	modal_error_message: string;
 	modal_error_type: Error_Type;
 
-	display_window: ID;
-	modal_window: ID;
-	calculator_window: ID;
+	settings_focused_tab: int;
+
+	display_panel:  ID;
+	modal_panel:    ID;
+	settings_panel: ID;
 }
 
 Calculator_Page :: enum {
@@ -42,7 +44,7 @@ Code_Viewer :: struct {
 	scrollbar_pos: Vec2;
 	longest_line: u32;
 	row_digits: u32;
-	
+
 	file_modtime: Apollo_Time;
 
 	content:     [..] u8;
@@ -240,29 +242,29 @@ compile_program :: () {
 	file, success := file_open("vasm6502_oldstyle.exe");
 	defer file_close(*file);
 	if !success {
-		display_error_panel(.UNABLE_TO_FIND_COMPILER);
+		display_error_panel(.UNABLE_TO_FIND_COMPILER, "no compiler found");
 		return;
 	}
-	
+
 	if !viewer.file_path {
-		display_error_panel(.NO_INPUT_FILE_GIVEN);
+		display_error_panel(.NO_INPUT_FILE_GIVEN, "no input file");
 		return;
 	}
-	
+
 	path := get_absolute_path(viewer.file_path,, temp);
 	fmt := tprint("vasm6502_oldstyle.exe -Fbin -o \"out.bin\" -dotdir \"%\"", path);
-	
+
 	out := break_command_into_strings(fmt);
 	res, output_string, error_string := run_command(..out, capture_and_return_output = true,, allocator = temp);
-	
+
 	engine.compilation_successful = false;
-	
+
 	if res.exit_code != 0 {
 		ui.modal_error_message = copy_string(error_string);
-		display_error_panel(.FAILED_COMPILATION);
+		display_error_panel(.FAILED_COMPILATION, "compilation failed");
 		return;
 	}
-	
+
 	engine.compilation_successful = true;
 }
 
@@ -371,7 +373,7 @@ intrinsic_to_string :: (code: Opcode) -> string {
 	s: string;
 
 	for info.values if it == c then s = info.names[it_index];
-	
+
 	if s.count == 3 then return s;
 	else {
 		t := s;

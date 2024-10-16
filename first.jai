@@ -15,18 +15,22 @@ update_6502 :: () {
 	draw_current_instruction();
 	draw_input();
 
+	if is_key_pressed(KEY_ESC) then toggle_panel(ui.settings_panel, centered = true);
+
 	widgets_draw_panels();
 }
 
 draw_one_frame :: () {
-	if !vp.reduced {  // I should find a way to entirely disable this until it's not reduced anymore
-		begin_widgets();
+	if !vp.reduced {  // Todo - I should find a way to entirely disable this until it's not reduced anymore
+		// begin_widgets();
 		begin_drawing();
 		clear_background(COLOR_DEEP_BACKGROUND);
 
-		update_6502();
+		// update_6502();
+		// draw_rect2(.{20, 20}, .{200, 100}, 1, RED);
+		draw_character2(#char "a", .{0, 0}, z = 1, scale = 50, RED);
 
-		finalize_widgets();
+		// finalize_widgets();
 		finalize_drawing();
 	}
 	reset_temporary_storage();
@@ -36,10 +40,8 @@ setup_windows :: () {
 	padding :: 4;
 	w :: DISPLAY_WIDTH  * 8 + padding * 2;
 	h :: DISPLAY_HEIGHT * 8 + padding * 2 + 24;
-	ui.display_window = create_new_window(draw_display, "display", .{w, h});
-	
-	ui.calculator_window = create_new_window(draw_calculator, "calculator", .{CALCULATOR_WIDTH, CALCULATOR_HEIGHT});
-	
+	ui.display_panel = create_new_panel(draw_display, "display", .{w, h});
+
 	modal_on_close :: () {  // Todo - Temporary!
 		// there's a silly bug about this that I cannot explaint
 		// the Basic()(MEMORY_DEBUG = true) sometimes shows an allocation and sometimes it doesn't
@@ -49,8 +51,10 @@ setup_windows :: () {
 		// ~ Quattro 2024 / 10 / 11
 		if ui.modal_error_type == .FAILED_COMPILATION then free(ui.modal_error_message);
 	}
-	
-	ui.modal_window = create_new_window(draw_modal, "", .{800, 600}, on_close = modal_on_close, modal = true);
+
+	ui.modal_panel = create_new_panel(draw_modal, "", .{800, 600}, on_close = modal_on_close, modal = true);
+
+	ui.settings_panel = create_new_panel(draw_settings, "settings", .{SETTINGS_WIDTH, SETTINGS_HEIGHT});
 }
 
 main :: () {
@@ -70,7 +74,7 @@ main :: () {
 		lock_frame_rate();
 		fetch_window_inputs();
 
-		// if is_key_pressed(KEY_ESC) then break;
+		if is_key_pressed(KEY_ESC) then break;
 
 		if is_mouse_pressed(2) then report_memory_leaks();
 
@@ -103,8 +107,8 @@ DISPLAY_HEIGHT :: 80;
 MODAL_WIDTH  :: 800;
 MODAL_HEIGHT :: 600;
 
-CALCULATOR_WIDTH  :: 600;
-CALCULATOR_HEIGHT :: 400;
+SETTINGS_WIDTH  :: 800;
+SETTINGS_HEIGHT :: 600;
 
 APP_MAJOR_VERSION :: 1;
 APP_MINOR_VERSION :: 0;
