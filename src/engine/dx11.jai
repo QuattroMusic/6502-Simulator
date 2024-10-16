@@ -7,11 +7,11 @@ init_rendering :: () {
 
 deinit_rendering :: () {
 	release_buffer :: (buff: Buffer_Data) {
-		if buff.layout  then IUnknown_Release(buff.layout);
-		if buff.VS      then IUnknown_Release(buff.VS);
-		if buff.PS      then IUnknown_Release(buff.PS);
-		if buff.VBuffer then IUnknown_Release(buff.VBuffer);
-		if buff.IBuffer then IUnknown_Release(buff.IBuffer);
+		if buff.layout          then IUnknown_Release(buff.layout);
+		if buff.VS              then IUnknown_Release(buff.VS);
+		if buff.GS              then IUnknown_Release(buff.GS);
+		if buff.PS              then IUnknown_Release(buff.PS);
+		if buff.elements_buffer then IUnknown_Release(buff.elements_buffer);
 	}
 
 	release_buffer(quad_buffer);
@@ -94,75 +94,42 @@ create_depth_stencil :: () {
 }
 
 init_shaders :: () {
-	// VS, vertex_error, vertex_res :: #run D3DCompile(quad_shader, "basic", .[], null, "VShader", "vs_5_0", 0, 0);
-	// PS, pixel_error,  pixel_res  :: #run D3DCompile(quad_shader, "basic", .[], null, "PShader", "ps_5_0", 0, 0);
-
-	// #if vertex_res then log_error("[%]: %\n", vertex_res, vertex_error);
-	// #if pixel_res  then log_error("[%]: %\n", pixel_res,  pixel_error);
-
-	// ID3D11Device_CreateVertexShader(dev, VS.data, xx VS.count, null, *quad_buffer.VS);
-	// ID3D11Device_CreatePixelShader( dev, PS.data, xx PS.count, null, *quad_buffer.PS);
-
-	// ied :: D3D11_INPUT_ELEMENT_DESC.[
-		// .{"POSITION", 0, .R32G32B32_FLOAT, 0,  0, .VERTEX_DATA, 0},
-		// .{"COLOR",    0, .R32_UINT,        0, 12, .VERTEX_DATA, 0}
-	// ];
-	// ID3D11Device_CreateInputLayout(dev, ied.data, xx ied.count, VS.data, xx VS.count, *quad_buffer.layout);
-
 	//
-	// VS2, vertex_error2, vertex_res2 :: #run D3DCompile(texture_shader, "texture", .[], null, "VShader", "vs_5_0", 0, 0);
-	// PS2, pixel_error2, pixel_res2   :: #run D3DCompile(texture_shader, "texture", .[], null, "PShader", "ps_5_0", 0, 0);
+	VS1, error1, result1 :: #run D3DCompile(quad_shader, "quad", .[], null, "VShader", "vs_5_0", 0, 0);
+	GS1                  :: #run D3DCompile(quad_shader, "quad", .[], null, "GShader", "gs_5_0", 0, 0);
+	PS1                  :: #run D3DCompile(quad_shader, "quad", .[], null, "PShader", "ps_5_0", 0, 0);
 
-	// #if vertex_res2 then log_error("[%]: %\n", vertex_res2, vertex_error2);
-	// #if pixel_res2  then log_error("[%]: %\n", pixel_res2, pixel_error2);
+	// just one error check, since all the three components are in the same file
+	#if result1 then log_error("[%]: %\n", result1, error1);
 
-	// ID3D11Device_CreateVertexShader(dev, VS2.data, xx VS2.count, null, *font_buffer.VS);
-	// ID3D11Device_CreatePixelShader( dev, PS2.data, xx PS2.count, null, *font_buffer.PS);
-	// ied2 :: D3D11_INPUT_ELEMENT_DESC.[
-		// .{"POSITION", 0, .R32G32B32_FLOAT, 0,  0, .VERTEX_DATA, 0},
-		// .{"COLOR",    0, .R32_UINT,        0, 12, .VERTEX_DATA, 0},
-		// .{"TEXCOORD", 0, .R32G32_FLOAT,    0, 16, .VERTEX_DATA, 0}
-	// ];
-	// ID3D11Device_CreateInputLayout(dev, ied2.data, ied2.count, VS2.data, xx VS2.count, *font_buffer.layout);
-	
-	//
-	VS3, vertex_error3, vertex_res3 :: #run D3DCompile(test_shader, "test", .[], null, "VShader", "vs_5_0", 0, 0);
-	GS3, geom_error3, geom_res3     :: #run D3DCompile(test_shader, "test", .[], null, "GShader", "gs_5_0", 0, 0);
-	PS3, pixel_error3, pixel_res3   :: #run D3DCompile(test_shader, "test", .[], null, "PShader", "ps_5_0", 0, 0);
-
-	#if vertex_res3 then log_error("[%]: %\n", vertex_res3, vertex_error3);
-	#if geom_error3 then log_error("[%]: %\n", geom_res3, geom_error3);
-	#if pixel_res3  then log_error("[%]: %\n", pixel_res3, pixel_error3);
-
-	ID3D11Device_CreateVertexShader(  dev, VS3.data, xx VS3.count, null, *test_buffer.VS);
-	ID3D11Device_CreateGeometryShader(dev, GS3.data, xx GS3.count, null, *test_buffer.GS);
-	ID3D11Device_CreatePixelShader(   dev, PS3.data, xx PS3.count, null, *test_buffer.PS);
-	ied3 :: D3D11_INPUT_ELEMENT_DESC.[
+	ID3D11Device_CreateVertexShader(  dev, VS1.data, xx VS1.count, null, *quad_buffer.VS);
+	ID3D11Device_CreateGeometryShader(dev, GS1.data, xx GS1.count, null, *quad_buffer.GS);
+	ID3D11Device_CreatePixelShader(   dev, PS1.data, xx PS1.count, null, *quad_buffer.PS);
+	ied1 :: D3D11_INPUT_ELEMENT_DESC.[
 		.{"POSITION", 0, .R32G32B32_FLOAT, 0,  0, .VERTEX_DATA, 0},
 		.{"SIZE",     0, .R32G32_FLOAT,    0, 12, .VERTEX_DATA, 0},
 		.{"COLOR",    0, .R32_UINT,        0, 20, .VERTEX_DATA, 0}
 	];
-	ID3D11Device_CreateInputLayout(dev, ied3.data, ied3.count, VS3.data, xx VS3.count, *test_buffer.layout);
+	ID3D11Device_CreateInputLayout(dev, ied1.data, ied1.count, VS1.data, xx VS1.count, *quad_buffer.layout);
 	
 	//
-	VS4, vertex_error4, vertex_res4 :: #run D3DCompile(test_font_shader, "test_font", .[], null, "VShader", "vs_5_0", 0, 0);
-	GS4, geom_error4, geom_res4     :: #run D3DCompile(test_font_shader, "test_font", .[], null, "GShader", "gs_5_0", 0, 0);
-	PS4, pixel_error4, pixel_res4   :: #run D3DCompile(test_font_shader, "test_font", .[], null, "PShader", "ps_5_0", 0, 0);
+	fmt :: #run tprint(font_shader, texture_width, texture_height);
+	VS2, error2, result2 :: #run D3DCompile(fmt, "font", .[], null, "VShader", "vs_5_0", 0, 0);
+	GS2                  :: #run D3DCompile(fmt, "font", .[], null, "GShader", "gs_5_0", 0, 0);
+	PS2                  :: #run D3DCompile(fmt, "font", .[], null, "PShader", "ps_5_0", 0, 0);
 
-	#if vertex_res4 then log_error("[%]: %\n", vertex_res4, vertex_error4);
-	#if geom_error4 then log_error("[%]: %\n", geom_res4, geom_error4);
-	#if pixel_res4  then log_error("[%]: %\n", pixel_res4, pixel_error4);
+	#if result2 then log_error("[%]: %\n", result2, error2);
 
-	ID3D11Device_CreateVertexShader(  dev, VS4.data, xx VS4.count, null, *test_font_buffer.VS);
-	ID3D11Device_CreateGeometryShader(dev, GS4.data, xx GS4.count, null, *test_font_buffer.GS);
-	ID3D11Device_CreatePixelShader(   dev, PS4.data, xx PS4.count, null, *test_font_buffer.PS);
-	ied4 :: D3D11_INPUT_ELEMENT_DESC.[
+	ID3D11Device_CreateVertexShader(  dev, VS2.data, xx VS2.count, null, *font_buffer.VS);
+	ID3D11Device_CreateGeometryShader(dev, GS2.data, xx GS2.count, null, *font_buffer.GS);
+	ID3D11Device_CreatePixelShader(   dev, PS2.data, xx PS2.count, null, *font_buffer.PS);
+	ied2 :: D3D11_INPUT_ELEMENT_DESC.[
 		.{"POSITION", 0, .R32G32B32_FLOAT, 0,  0, .VERTEX_DATA, 0},
 		.{"SIZE",     0, .R32_UINT,        0, 12, .VERTEX_DATA, 0},
 		.{"COLOR",    0, .R32_UINT,        0, 16, .VERTEX_DATA, 0},
 		.{"TEXCOORD", 0, .R32G32_FLOAT,    0, 20, .VERTEX_DATA, 0},
 	];
-	ID3D11Device_CreateInputLayout(dev, ied4.data, ied4.count, VS4.data, xx VS4.count, *test_font_buffer.layout);
+	ID3D11Device_CreateInputLayout(dev, ied2.data, ied2.count, VS2.data, xx VS2.count, *font_buffer.layout);
 }
 
 init_font :: () {
@@ -225,28 +192,12 @@ init_graphics :: () {
 	buff_desc.BindFlags = .CONSTANT_BUFFER;
 	ID3D11Device_CreateBuffer(dev, *buff_desc, null, *camera_buffer);
 
-	// quad_buffer.vertices_view.data = quad_vertices.data;
-	// font_buffer.vertices_view.data = font_vertices.data;
-	// quad_buffer.indices_view.data = quad_indices.data;
-	// font_buffer.indices_view.data = font_indices.data;
-	
-	test_buffer.indices_view.data = test_indices.data;
-	test_buffer.vertices_view.data = test_vertices.data;
-	
-	test_font_buffer.vertices_view.data = test_font_vertices.data;
-	test_font_buffer.indices_view.data = test_font_indices.data;
+	quad_buffer.elements_view.data = quad_elements.data;
+	font_buffer.elements_view.data = font_elements.data;
 
-	// create_vertices_buffer_dx11(*quad_buffer, quad_vertices.count);
-	// create_indices_buffer_dx11(*quad_buffer, quad_indices.count);
-	// create_vertices_buffer_dx11(*font_buffer, font_vertices.count);
-	// create_indices_buffer_dx11(*font_buffer, font_indices.count);
+	create_elements_buffer_dx11(*quad_buffer, quad_elements.count);
+	create_elements_buffer_dx11(*font_buffer, font_elements.count);
 	
-	create_vertices_buffer_dx11(*test_buffer, test_vertices.count);
-	create_indices_buffer_dx11(*test_buffer, test_indices.count);
-	
-	create_vertices_buffer_dx11(*test_font_buffer, test_font_vertices.count);
-	create_indices_buffer_dx11(*test_font_buffer, test_font_indices.count);
-
 	ID3D11DeviceContext_IASetPrimitiveTopology(devcon, .POINTLIST);
 
 	rasterizer_desc: D3D11_RASTERIZER_DESC;
@@ -298,78 +249,54 @@ begin_drawing :: () {
 	ID3D11DeviceContext_ClearDepthStencilView(devcon, depth_stencil_view, flags, 1, 0);
 }
 
+flush_buffer :: (data: *Buffer_Data) {
+	if data.elements_view.count == 0 then return;
+
+	ID3D11DeviceContext_VSSetShader(devcon, data.VS, null, 0);
+	ID3D11DeviceContext_GSSetShader(devcon, data.GS, null, 0);
+	ID3D11DeviceContext_PSSetShader(devcon, data.PS, null, 0);
+
+	ID3D11DeviceContext_IASetInputLayout(devcon, data.layout);
+
+	size :: size_of(data.vertex_type);
+
+	stride: u32 = size;
+	offset: u32 = 0;
+
+	ID3D11DeviceContext_IASetVertexBuffers(devcon, 0, 1, *data.elements_buffer, *stride, *offset);
+
+	ms: D3D11_MAPPED_SUBRESOURCE;
+	ID3D11DeviceContext_Map(devcon, data.elements_buffer, 0, .WRITE_DISCARD, 0, *ms);
+	memcpy(ms.pData, data.elements_view.data, size * data.elements_view.count);
+	ID3D11DeviceContext_Unmap(devcon, data.elements_buffer, 0);
+
+	ID3D11DeviceContext_Draw(devcon, xx data.elements_view.count, 0);
+
+	data.elements_view.count = 0;
+}
+
 finalize_drawing :: () {
-	draw_buffer :: (data: *Buffer_Data) {
-		// if data.indices_view.count == 0 then return;
-
-		ID3D11DeviceContext_VSSetShader(devcon, data.VS, null, 0);
-		ID3D11DeviceContext_GSSetShader(devcon, data.GS, null, 0);
-		ID3D11DeviceContext_PSSetShader(devcon, data.PS, null, 0);
-
-		ID3D11DeviceContext_IASetInputLayout(devcon, data.layout);
-
-		size :: size_of(data.vertex_type);
-
-		stride: u32 = size;
-		offset: u32 = 0;
-
-		ID3D11DeviceContext_IASetVertexBuffers(devcon, 0, 1, *data.VBuffer, *stride, *offset);
-		ID3D11DeviceContext_IASetIndexBuffer(devcon, data.IBuffer, .R32_UINT, 0);
-
-		ms: D3D11_MAPPED_SUBRESOURCE;
-		ID3D11DeviceContext_Map(devcon, data.VBuffer, 0, .WRITE_DISCARD, 0, *ms);
-		memcpy(ms.pData, data.vertices_view.data, size * data.vertices_view.count);
-		ID3D11DeviceContext_Unmap(devcon, data.VBuffer, 0);
-
-		ID3D11DeviceContext_Map(devcon, data.IBuffer, 0, .WRITE_DISCARD, 0, *ms);
-		memcpy(ms.pData, data.indices_view.data, size_of(u32) * data.indices_view.count);
-		ID3D11DeviceContext_Unmap(devcon, data.IBuffer, 0);
-
-		ID3D11DeviceContext_Draw(devcon, 1, 0);
-
-		data.indices_view.count = 0;
-		data.vertices_view.count = 0;
-	}
-	
-	// draw_buffer(*quad_buffer);
-	// draw_buffer(*font_buffer);
-	// draw_buffer(*test_buffer);
-	draw_buffer(*test_font_buffer);
+	flush_buffer(*quad_buffer);
+	flush_buffer(*font_buffer);
 	IDXGISwapChain_Present(swapchain, 0, 0);
 }
 
-vertices_add :: (using buff: *Buffer_Data, val: buff.vertex_type) {
-	// Todo - maybe flush if it's full?
+element_add :: (using buff: *Buffer_Data, val: buff.vertex_type) {
+	if elements_view.count == BUFFER_MAX_SIZE then flush_buffer(buff);
+	
 	#no_abc {
-		vertices_view[vertices_view.count] = val;
-		vertices_view.count += 1;
+		elements_view[elements_view.count] = val;
+		elements_view.count += 1;
 	}
 }
 
-indices_add :: (using buff: *Buffer_Data, val: u32) {
-	// Todo - maybe flush if it's full?
-	#no_abc {
-		indices_view[indices_view.count] = val;
-		indices_view.count += 1;
-	}
-}
-
-create_vertices_buffer_dx11 :: (using buff: *Buffer_Data, amt: s64) {
-	vert_buff_desc: D3D11_BUFFER_DESC;
-	vert_buff_desc.Usage          = .DYNAMIC;
-	vert_buff_desc.ByteWidth      = xx (size_of(buff.vertex_type) * amt);
-	vert_buff_desc.BindFlags      = .VERTEX_BUFFER;
-	vert_buff_desc.CPUAccessFlags = .WRITE;
-	ID3D11Device_CreateBuffer(dev, *vert_buff_desc, null, *VBuffer);
-}
-
-create_indices_buffer_dx11 :: (using buff: *Buffer_Data, amt: s64) {
-	idx_buff_desc: D3D11_BUFFER_DESC;
-	idx_buff_desc.Usage          = .DYNAMIC;
-	idx_buff_desc.ByteWidth      = xx (size_of(u32) * amt);
-	idx_buff_desc.BindFlags      = .INDEX_BUFFER;
-	idx_buff_desc.CPUAccessFlags = .WRITE;
-	ID3D11Device_CreateBuffer(dev, *idx_buff_desc, null, *IBuffer);
+create_elements_buffer_dx11 :: (using buff: *Buffer_Data, amt: s64) {
+	buff_desc: D3D11_BUFFER_DESC;
+	buff_desc.Usage          = .DYNAMIC;
+	buff_desc.ByteWidth      = xx (size_of(buff.vertex_type) * amt);
+	buff_desc.BindFlags      = .VERTEX_BUFFER;
+	buff_desc.CPUAccessFlags = .WRITE;
+	ID3D11Device_CreateBuffer(dev, *buff_desc, null, *elements_buffer);
 }
 
 update_camera :: () {
@@ -397,57 +324,36 @@ resize_viewport :: () {
 
 #scope_module
 Buffer_Data :: struct (vertex_type: Type) {
-	indices_view:  [] u32;
-	vertices_view: [] vertex_type;
+	elements_view: [] vertex_type;
 
 	VS: *ID3D11VertexShader;
 	PS: *ID3D11PixelShader;
 	GS: *ID3D11GeometryShader;
 
-	VBuffer: *ID3D11Buffer;
-	IBuffer: *ID3D11Buffer;
+	elements_buffer: *ID3D11Buffer;
 
 	layout: *ID3D11InputLayout;
 }
 
-quad_indices:  [0xFFFF] u32;
-font_indices:  [0xFFFF] u32;
-quad_vertices: [0xFFFF] Vertex;
-font_vertices: [0xFFFF] Tex_Vertex;
+BUFFER_MAX_SIZE :: 0xFFF;
 
-test_indices:  [0xFFFF] u32;
-test_vertices: [0xFFFF] Test_Vertex;
+quad_elements: [BUFFER_MAX_SIZE] Quad_Vertex;
+font_elements: [BUFFER_MAX_SIZE] Font_Vertex;
 
-test_font_indices: [0xFFFF] u32;
-test_font_vertices: [0xFFFF] Test_Font_Vertex;
+quad_buffer: Buffer_Data(Quad_Vertex);
+font_buffer: Buffer_Data(Font_Vertex);
 
-quad_buffer: Buffer_Data(Vertex);
-font_buffer: Buffer_Data(Tex_Vertex);
-test_buffer: Buffer_Data(Test_Vertex);
-test_font_buffer: Buffer_Data(Test_Font_Vertex);
-
-Test_Font_Vertex :: struct {
+Font_Vertex :: struct {
 	x, y, z: f32;
 	s: u32;
 	col: u32;
 	uv: [2] f32;
 }
 
-Test_Vertex :: struct {
+Quad_Vertex :: struct {
 	x, y, z: f32;
 	w, h: f32;
 	col: u32;
-}
-
-Vertex :: struct {
-	x, y, z: f32;
-	col: u32;
-}
-
-Tex_Vertex :: struct {
-	x, y, z: f32;
-	col: u32;
-	uv: [2] f32;
 }
 
 camera: Matrix4;
@@ -510,99 +416,26 @@ cbuffer cp_per_object {
 	float4x4 camera_data;
 }
 
-struct VOut {
-    float4 position: SV_POSITION;
-    uint color: COLOR;
-};
-
-VOut VShader(float4 position: POSITION, uint color: COLOR) {
-    VOut output;
-
-    output.position = mul(position + float4(0, 0, 1, 0), camera_data);
-    output.color    = color;
-
-    return output;
-}
-
-float4 PShader(float4 position: SV_POSITION, uint color: COLOR) : SV_TARGET {
-	float4 col;
-	col.x = ( color        & 0xFF) / 255.0f;
-	col.y = ((color >> 8 ) & 0xFF) / 255.0f;
-	col.z = ((color >> 16) & 0xFF) / 255.0f;
-	col.w = ((color >> 24) & 0xFF) / 255.0f;
-    return col;
-}
-DONE
-
-texture_shader :: #string DONE
-Texture2D ObjTexture;
-SamplerState ObjSamplerState;
-
-cbuffer cp_per_object {
-	float4x4 camera_data;
-}
-
-struct VS_OUTPUT {
-	float4 Pos : SV_POSITION;
-	uint Color: COLOR;
-	float2 TexCoord : TEXCOORD;
-};
-
-VS_OUTPUT VShader(float4 inPos : POSITION, uint inCol : COLOR, float2 inTexCoord : TEXCOORD) {
-    VS_OUTPUT output;
-
-    output.Pos = mul(inPos + float4(0, 0, 1, 0), camera_data);
-	output.Color = inCol;
-    output.TexCoord = inTexCoord;
-
-    return output;
-}
-
-float4 PShader(VS_OUTPUT input) : SV_TARGET {
-	float4 f = ObjTexture.Sample(ObjSamplerState, input.TexCoord);
-
-	float4 col;
-	col.x = ( input.Color        & 0xFF) / 255.0f;
-	col.y = ((input.Color >> 8 ) & 0xFF) / 255.0f;
-	col.z = ((input.Color >> 16) & 0xFF) / 255.0f;
-	col.w = ((input.Color >> 24) & 0xFF) / 255.0f;
-
-	return float4(col.x, col.y, col.z, f.w);
-}
-DONE
-
-
-test_shader :: #string DONE
-cbuffer cp_per_object {
-	float4x4 camera_data;
-}
-
-struct Vertex_In {
-    float4 position: SV_POSITION;
-	float2 size: SIZE;
-    uint color: COLOR;
-};
-
 struct Vertex_Out {
 	float4 pos: SV_POSITION;
 	float2 size: SIZE;
-	uint color: COLOR;
+	uint col: COLOR;
 };
 
 struct Geom_Output {
     float4 pos: SV_POSITION;
-	uint color: COLOR;
+	uint col: COLOR;
 };
 
-Vertex_Out VShader(float4 position: POSITION, float2 input_size: SIZE, uint inCol: COLOR) {
+Vertex_Out VShader(float4 pos: POSITION, float2 size: SIZE, uint col: COLOR) {
 	Vertex_Out output;
 	
-	output.pos = mul(position + float4(0, 0, 1, 0), camera_data);
+	output.pos = mul(pos + float4(0, 0, 1, 0), camera_data);
 	
-	output.size.x = input_size.x * camera_data[0][0] + input_size.y * camera_data[1][0];
-	output.size.y = input_size.x * camera_data[0][1] + input_size.y * camera_data[1][1];
+	output.size.x = size.x * camera_data[0][0];
+	output.size.y = size.y * camera_data[1][1];
 	
-	output.color = inCol;
+	output.col = col;
 
     return output;
 }
@@ -612,45 +445,38 @@ void GShader(point Vertex_Out input[1], inout TriangleStream<Geom_Output> triStr
 	Vertex_Out inp = input[0];
 
 	Geom_Output output;
-	output.color = inp.color;
+	output.col = inp.col;
 	
 	output.pos = inp.pos;
 	triStream.Append(output);
 	
-	output.pos = inp.pos + float4(0,          inp.size.y, 0, 0);
+	output.pos = inp.pos + float4(0, inp.size.y, 0, 0);
 	triStream.Append(output);
 	
-	output.pos = inp.pos + float4(inp.size.x,          0, 0, 0);
+	output.pos = inp.pos + float4(inp.size.x, 0, 0, 0);
 	triStream.Append(output);
 	
 	output.pos = inp.pos + float4(inp.size.x, inp.size.y, 0, 0);
 	triStream.Append(output);
 }
 
-float4 PShader(uint color: COLOR) : SV_TARGET {
+float4 PShader(Geom_Output input) : SV_TARGET {
 	float4 col;
-	col.x = ( color        & 0xFF) / 255.0f;
-	col.y = ((color >> 8 ) & 0xFF) / 255.0f;
-	col.z = ((color >> 16) & 0xFF) / 255.0f;
-	col.w = ((color >> 24) & 0xFF) / 255.0f;
+	col.x = ( input.col        & 0xFF) / 255.0f;
+	col.y = ((input.col >> 8 ) & 0xFF) / 255.0f;
+	col.z = ((input.col >> 16) & 0xFF) / 255.0f;
+	col.w = ((input.col >> 24) & 0xFF) / 255.0f;
     return col;
 }
 DONE
 
-test_font_shader :: #string DONE
+font_shader :: #string DONE
 Texture2D ObjTexture;
 SamplerState ObjSamplerState;
 
 cbuffer cp_per_object {
 	float4x4 camera_data;
 }
-
-struct Vertex_In {
-    float4 position: SV_POSITION;
-	uint size: SIZE;
-    uint color: COLOR;
-	float2 TexCoord : TEXCOORD;
-};
 
 struct Vertex_Out {
 	float4 pos: SV_POSITION;
@@ -665,13 +491,18 @@ struct Geom_Output {
 	float2 TexCoord : TEXCOORD;
 };
 
-Vertex_Out VShader(float4 position: POSITION, uint input_size: SIZE, uint inCol: COLOR, float2 in_texcoord: TEXCOORD) {
+// since this file is a string and the texture_[width / height] is calculated at compile time,
+// we're formatting the string and then passing it to the shader
+#define uv_x_increment (8.0 / %1)
+#define uv_y_increment (8.0 / %2)
+
+Vertex_Out VShader(float4 position: POSITION, uint size: SIZE, uint inCol: COLOR, float2 in_texcoord: TEXCOORD) {
 	Vertex_Out output;
 	
 	output.pos = mul(position + float4(0, 0, 1, 0), camera_data);
 	
-	output.size.x = input_size * camera_data[0][0] + input_size * camera_data[1][0];
-	output.size.y = input_size * camera_data[0][1] + input_size * camera_data[1][1];
+	output.size.x = size * camera_data[0][0];
+	output.size.y = size * camera_data[1][1];
 	
 	output.color = inCol;
 	
@@ -683,40 +514,35 @@ Vertex_Out VShader(float4 position: POSITION, uint input_size: SIZE, uint inCol:
 [maxvertexcount(4)]
 void GShader(point Vertex_Out input[1], inout TriangleStream<Geom_Output> triStream) {
 	Vertex_Out inp = input[0];
-
+	
 	Geom_Output output;
 	output.color = inp.color;
 	
 	output.pos = inp.pos;
 	output.TexCoord = inp.TexCoord;
-	// output.TexCoord = float2(0, 0);
 	triStream.Append(output);
 	
-	output.pos = inp.pos + float4(0,        inp.size.y, 0, 0);
-	output.TexCoord = inp.TexCoord + float2(0, 8.0 / 24);
-	// output.TexCoord = float2(0, 1);
+	output.pos = inp.pos + float4(0, inp.size.y, 0, 0);
+	output.TexCoord = inp.TexCoord + float2(0, uv_y_increment);
 	triStream.Append(output);
 	
-	output.pos = inp.pos + float4(inp.size.x,          0, 0, 0);
-	output.TexCoord = inp.TexCoord + float2(8.0 / 256, 0);
-	// output.TexCoord = float2(1, 0);
+	output.pos = inp.pos + float4(inp.size.x, 0, 0, 0);
+	output.TexCoord = inp.TexCoord + float2(uv_x_increment, 0);
 	triStream.Append(output);
 	
 	output.pos = inp.pos + float4(inp.size.x, inp.size.y, 0, 0);
-	output.TexCoord = inp.TexCoord + float2(8.0 / 256, 8.0 / 24);
-	// output.TexCoord = float2(1, 1);
+	output.TexCoord = inp.TexCoord + float2(uv_x_increment, uv_y_increment);
 	triStream.Append(output);
 }
 
 float4 PShader(Geom_Output input) : SV_TARGET {
-	float4 f = ObjTexture.Sample(ObjSamplerState, input.TexCoord);
+	float alpha = ObjTexture.Sample(ObjSamplerState, input.TexCoord).w;
 
 	float4 col;
 	col.x = ( input.color        & 0xFF) / 255.0f;
 	col.y = ((input.color >> 8 ) & 0xFF) / 255.0f;
 	col.z = ((input.color >> 16) & 0xFF) / 255.0f;
-	// col.w = ((color >> 24) & 0xFF) / 255.0f;
 
-	return float4(col.x, col.y, col.z, f.w);
+	return float4(col.x, col.y, col.z, alpha);
 }
 DONE

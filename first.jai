@@ -22,15 +22,13 @@ update_6502 :: () {
 
 draw_one_frame :: () {
 	if !vp.reduced {  // Todo - I should find a way to entirely disable this until it's not reduced anymore
-		// begin_widgets();
+		begin_widgets();
 		begin_drawing();
 		clear_background(COLOR_DEEP_BACKGROUND);
 
-		// update_6502();
-		// draw_rect2(.{20, 20}, .{200, 100}, 1, RED);
-		draw_character2(#char "a", .{0, 0}, z = 1, scale = 50, RED);
+		update_6502();
 
-		// finalize_widgets();
+		finalize_widgets();
 		finalize_drawing();
 	}
 	reset_temporary_storage();

@@ -246,10 +246,10 @@ handle_viewport_resize :: () {
 	}
 	if is_mouse_released(0) then vp.enable_resizing = false;
 
-	p1 := Vec2.{xx vp.width, xx vp.height};
-	p2 := Vec2.{xx (vp.width - s), xx vp.height};
-	p3 := Vec2.{xx vp.width, xx (vp.height - s)};
-	draw_triangle(p1, p2, p3, 1, COLOR_LINE);
+	// p1 := Vec2.{xx vp.width, xx vp.height};
+	// p2 := Vec2.{xx (vp.width - s), xx vp.height};
+	// p3 := Vec2.{xx vp.width, xx (vp.height - s)};
+	// draw_triangle(p1, p2, p3, 1, COLOR_LINE);
 }
 
 Viewport :: struct {
