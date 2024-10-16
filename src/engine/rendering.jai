@@ -2,18 +2,6 @@ draw_rect :: inline (pos: Vec2, size: Vec2, z: f32, col: Col) {
 	element_add(*quad_buffer, .{pos.x, pos.y, z, size.x, size.y, col.data});
 }
 
-draw_triangle :: (p1: Vec2, p2: Vec2, p3: Vec2, layer: f32, col: Col) {
-	// vert_count := cast(u32)quad_buffer.vertices_view.count;
-	
-	// vertices_add(*quad_buffer, .{p1.x, p1.y, layer, col.data});
-	// vertices_add(*quad_buffer, .{p2.x, p2.y, layer, col.data});
-	// vertices_add(*quad_buffer, .{p3.x, p3.y, layer, col.data});
-	
-	// indices_add(*quad_buffer, vert_count + 1);
-	// indices_add(*quad_buffer, vert_count    );
-	// indices_add(*quad_buffer, vert_count + 2);
-}
-
 draw_panel :: ($$text: string, pos: Vec2, size: Vec2, layer: f32) {
 	p :: 4;
 
@@ -44,15 +32,12 @@ draw_character :: ($$c: u8, pos: Vec2, layer: f32, scale: f32, col: Col) {
 
 	s := scale * 8;
 	
-	element_add(*font_buffer, .{pos.x, pos.y, layer, xx s, col.data, uv.component});
+	element_add(*font_buffer, .{pos.x, pos.y, layer, xx s, col.data, uv});
 }
 
 draw_text :: (text: string, pos: Vec2, layer: f32, scale: f32, color: Col, $wrap: f32 = 0) {
 	x_pos: f32;
 	y_pos: f32;
-
-	uv_x :: 8.0 / texture_width;
-	uv_y :: 8.0 / texture_height;
 
 	s := 8.0 * scale;
 
@@ -77,46 +62,22 @@ draw_icon :: (icon: Icon, pos: Vec2, layer: f32, $scale: f32, col: Col) {
 
 	s :: 8.0 * scale;
 
-	element_add(*font_buffer, .{pos.x, pos.y, layer, xx s, col.data, uv.component});
+	element_add(*font_buffer, .{pos.x, pos.y, layer, xx s, col.data, uv});
 }
 
-get_icon_mapping :: (icon: Icon) -> (uv: Vec2) {
+get_icon_mapping :: (icon: Icon) -> uvx: f32 {
 	if #complete icon == {
-		case .REDUCE;      return #run Vec2.{64.0 / texture_width, 16.0 / texture_height};
-		case .MINIMIZE;    return #run Vec2.{72.0 / texture_width, 16.0 / texture_height};
-		case .MAXIMIZE;    return #run Vec2.{80.0 / texture_width, 16.0 / texture_height};
-		case .CLOSE;       return #run Vec2.{88.0 / texture_width, 16.0 / texture_height};
+		case .REDUCE;      return #run  0.0 / texture_width;
+		case .MINIMIZE;    return #run  8.0 / texture_width;
+		case .MAXIMIZE;    return #run 16.0 / texture_width;
+		case .CLOSE;       return #run 24.0 / texture_width;
 	}
 }
 
-get_char_mapping :: ($$c: u8) -> (uv: Vec2) {
+get_char_mapping :: inline ($$c: u8) -> uvx: f32 {
 	// since the font is monospace, there's no need to return the size
-
-	if c >= #char "a" && c <= #char "z" {
-		x: f32 = ((c - #char "a") * 8.0) / texture_width;
-		y: f32 = 0;
-		return .{x, y};
-	} else if c >= #char "A" && c <= #char "Z" {
-		x: f32 = ((c - #char "A") * 8.0) / texture_width;
-		y: f32 = 0;
-		return .{x, y};
-	} else if c >= #char "!" && c <= #char "@" {
-		x: f32 = ((c - #char "!") * 8.0) / texture_width;
-		y: f32 = 8.0 / texture_height;
-		return .{x, y};
-	} else if c >= #char "[" && c <= #char "`" {
-		x: f32 = (208.0 + ((c - #char "[") * 8.0)) / texture_width;
-		y: f32 = 0.0 / texture_height;
-		return .{x, y};
-	} else if c >= #char "{" && c <= #char "~" {
-		x: f32 = ((c - #char "{") * 8.0) / texture_width;
-		y: f32 = 16.0 / texture_height;
-		return .{x, y};
-	} else {
-		x: f32 = 32.0 / texture_width;
-		y: f32 = 16.0 / texture_height;
-		return .{x, y};
-	}
+	char := clamp(c, 32, 127);
+	return 8.0 * char / texture_width;
 }
 
 measure_text :: ($$text: string, $scale: f32) -> Vec2 {
