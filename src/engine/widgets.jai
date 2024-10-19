@@ -217,10 +217,6 @@ h_separator :: ($name: string, pos: Vec2, width: f32, z: f32) {
 	draw_rect(pos + .{p + 8 + s.x, 0}, .{width - p - 8 - s.x, 1}, z, COLOR_LINE);
 }
 
-combo_box :: (pos: Vec2, size: Vec2, z: f32, $items: []string, selected: *int, it: int = 0, loc := #caller_location) {
-	
-}
-
 window :: (uuid: ID, p: *Panel) {
 	// handle window movement
 	if !(p.flags & .MODAL) {

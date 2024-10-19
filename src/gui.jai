@@ -363,9 +363,19 @@ draw_settings :: () {
 	
 	if ui.settings_focused_tab == {
 		case 0;  // platform
+			if button(">", .{460, 56}, .{24, 24}, 1, t = 2) {
+				max_value :: #run enum_highest_value(At_Startup);
+				settings.at_startup = xx ((cast(u32)settings.at_startup + 1) % (max_value + 1));
+			}
 			
+			if #complete settings.at_startup == {
+				case .OPEN_EMPTY_FILE;
+					draw_text("at startup, open empty file", p.pos + .{20, 60}, p.z + 1, 2, COLOR_TEXT_NORMAL);
+				case .OPEN_LAST_FILE;
+					draw_text("at startup, open last file", p.pos + .{20, 60}, p.z + 1, 2, COLOR_TEXT_NORMAL);
+			}
 		case 1;  // theming
 	}
 	
-	h_separator("colors", p.pos + .{10, 80}, SETTINGS_WIDTH - 20, p.z + 1);
+	// h_separator("colors", p.pos + .{10, 80}, SETTINGS_WIDTH - 20, p.z + 1);
 }

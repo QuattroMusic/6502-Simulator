@@ -72,7 +72,7 @@ main :: () {
 		lock_frame_rate();
 		fetch_window_inputs();
 
-		if is_key_pressed(KEY_ESC) then break;
+		// if is_key_pressed(KEY_ESC) then break;
 
 		if is_mouse_pressed(2) then report_memory_leaks();
 

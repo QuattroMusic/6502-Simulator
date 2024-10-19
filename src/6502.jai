@@ -1,3 +1,12 @@
+At_Startup :: enum {
+	OPEN_EMPTY_FILE;
+	OPEN_LAST_FILE;
+}
+
+Settings :: struct {
+	at_startup: At_Startup = .OPEN_EMPTY_FILE;
+}
+
 General_UI :: struct {
 	memory_scrollbar_pos: f32;
 
@@ -94,6 +103,7 @@ Emulator :: struct {
 }
 
 ui: General_UI;
+settings: Settings;
 viewer: Code_Viewer;
 
 Hz  :: (f: type_of(engine.metrics.update_rate)) -> type_of(engine.metrics.update_rate) { return f; }
