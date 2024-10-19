@@ -100,7 +100,7 @@ init_shaders :: () {
 	PS1                  :: #run D3DCompile(quad_shader, "quad", .[], null, "PShader", "ps_5_0", 0, 0);
 
 	// just one error check, since all the three components are in the same file
-	#if result1 then log_error("[%]: %\n", result1, error1);
+	#if result1 { log_error("[%]: %\n", result1, error1); while true {} }
 
 	ID3D11Device_CreateVertexShader(  dev, VS1.data, xx VS1.count, null, *quad_buffer.VS);
 	ID3D11Device_CreateGeometryShader(dev, GS1.data, xx GS1.count, null, *quad_buffer.GS);
@@ -117,7 +117,7 @@ init_shaders :: () {
 	GS2                  :: #run D3DCompile(font_shader, "font", .[], null, "GShader", "gs_5_0", 0, 0);
 	PS2                  :: #run D3DCompile(font_shader, "font", .[], null, "PShader", "ps_5_0", 0, 0);
 
-	#if result2 then log_error("[%]: %\n", result2, error2);
+	#if result2 { log_error("[%]: %\n", result2, error2); while true {} }
 
 	ID3D11Device_CreateVertexShader(  dev, VS2.data, xx VS2.count, null, *font_buffer.VS);
 	ID3D11Device_CreateGeometryShader(dev, GS2.data, xx GS2.count, null, *font_buffer.GS);
@@ -483,7 +483,7 @@ Vertex_Out VShader(float4 position: POSITION, uint size: SIZE, uint inCol: COLOR
 
 	output.col = inCol;
 
-	output.tex = float2(in_texcoord, 0);
+	output.tex = in_texcoord;
 
     return output;
 }
