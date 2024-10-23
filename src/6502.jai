@@ -4,7 +4,15 @@ At_Startup :: enum {
 }
 
 Settings :: struct {
+	// platform
 	at_startup: At_Startup = .OPEN_EMPTY_FILE;
+	
+	code_cursor_speed_slow: int = 2;
+	code_cursor_speed_fast: int = 5;
+	memory_cursor_speed_slow: int = 0;
+	memory_cursor_speed_fast: int = 7;
+	
+	// theming
 }
 
 General_UI :: struct {
@@ -14,6 +22,7 @@ General_UI :: struct {
 	modal_error_type: Error_Type;
 
 	settings_focused_tab: int;
+	settings_combo_box_open: bool;
 
 	display_panel:  ID;
 	modal_panel:    ID;

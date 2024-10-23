@@ -59,23 +59,23 @@ checkbox :: ($$text: string, pos: Vec2, size: Vec2, z: f32, value: *bool, it: in
 }
 
 draw_step_hslider :: (pos: Vec2, size: Vec2, z: f32, amt: s32, value: *int, disabled: bool = false, it: int = 0, loc := #caller_location) {
-	draw_rect(.{pos.x, pos.y + size.y / 2 - 1}, .{size.x, 2}, z, ifx disabled then GRAY else COLOR_LINE);
+	p := fetch_parent();
+	
+	draw_rect(p.pos + pos + .{0, size.y / 2 - 1}, .{size.x, 2}, p.z + z, ifx disabled then GRAY else COLOR_LINE);
 
 	col_main: Col = ---;
 	col_step: Col = ---;
 
 	if !disabled {
-		col_main = COLOR_WIDGET_BG_NORMAL;
+		col_main = COLOR_WIDGET_BG_HOVERED;
 		col_step = COLOR_WIDGET_BORDER_NORMAL;
 
 		uuid := hash_widget(loc, it);
-		p := fetch_parent();
 		state, fire := widget_interaction(uuid, pos, size, z, p);
-
-		col_main, _, _ = fetch_colors(state);
-
+		
 		if state == .PRESSED {
-			value.* = xx clamp((cast(f32)mouse_x - pos.x) / size.x * amt, 0, xx (amt - 1));
+			col_main = COLOR_WIDGET_BG_PRESSED;
+			value.* = xx clamp((cast(f32)mouse_x - pos.x - p.pos.x) / size.x * amt, 0, xx (amt - 1));
 		}
 	} else {
 		col_main = GRAY;
@@ -87,14 +87,14 @@ draw_step_hslider :: (pos: Vec2, size: Vec2, z: f32, amt: s32, value: *int, disa
 		s := size.y / 2;
 		if it % 3 == 0 then s = size.y / 3 * 2;
 
-		draw_rect(.{pos.x + x - 1, pos.y + size.y / 2 - s / 2}, .{2, s}, z + 1, col_step);
+		draw_rect(p.pos + pos + .{x - 1, size.y / 2 - s / 2}, .{2, s}, p.z + z + 1, col_step);
 	}
 
 	pos_x := pos.x + cast(f32)value.* / (amt - 1) * size.x;
-	draw_rect(.{pos_x - 4, pos.y}, .{8, size.y}, z + 2, col_main);
+	draw_rect(p.pos + .{pos_x - 4, pos.y}, .{8, size.y}, p.z + z + 2, col_main);
 }
 
-draw_scrollbar :: (pos: Vec2, size: Vec2, z: f32, scroll_pos: *Vec2, scroll_size: Vec2, min_size: Vec2, max_value: Vec2, it: int = 0, loc := #caller_location) {
+draw_scrollbar :: (pos: Vec2, size: Vec2, z: f32, scroll_pos: *Vec2, scroll_size: Vec2, min_size: Vec2, max_value: Vec2, speed_slow: int, speed_fast: int, it: int = 0, loc := #caller_location) {
 	x_visible := min_size.x + size.x < scroll_size.x;
 	y_visible := min_size.y + size.y < scroll_size.y;
 
@@ -108,7 +108,8 @@ draw_scrollbar :: (pos: Vec2, size: Vec2, z: f32, scroll_pos: *Vec2, scroll_size
 		state, fire := widget_interaction(uuid, .{scroll_pos_x, scroll_pos_y}, .{WIDGET_SCROLLBAR_SIZE, size.y - off}, z, p);
 
 		if mouse_dz && !is_key_down(KEY_SHIFT) && can_interact_with_widget(uuid, pos, size, z, p){
-			amt := mouse_dz * 16 * 3;
+			true_speed := ifx is_key_down(KEY_CTRL) then speed_fast else speed_slow;
+			amt := mouse_dz * 16 * true_speed;
 			scroll_pos.*.y -= amt;
 		}
 
@@ -165,27 +166,27 @@ tab_bar :: (pos: Vec2, width: f32, z: f32, $tabs: []string, focused_tab: *int, i
 		draw_rect(pos, .{size.x, 1}, z, COLOR_LINE);
 		draw_rect(pos + .{size.x, 0}, .{1, size.y}, z, COLOR_LINE);
 	}
-	
+
 	p := fetch_parent();
-	
+
 	s :: 24;
-	
+
 	x: f32;
 	for tabs {
 		d := measure_text(it, 2);
 		uuid := hash_widget(loc, it_ + it_index);
 		_, fire := widget_interaction(uuid, pos + .{4 + x, 0}, .{d.x + 8, s}, z, p);
 		if fire then focused_tab.* = it_index;
-		
+
 		x += d.x + 16;
 	}
-	
+
 	x = 0;
 	w: f32 = 4;
 	w_continue: f32;
 	for tabs {
 		d := measure_text(it, 2);
-		
+
 		text_col: Col = ---;
 		if it_index == focused_tab.* {
 			text_col = COLOR_TEXT_NORMAL;
@@ -197,60 +198,116 @@ tab_bar :: (pos: Vec2, width: f32, z: f32, $tabs: []string, focused_tab: *int, i
 			draw_selected_rect(p.pos + .{4 + pos.x + x, pos.y}, .{d.x + 8, s}, p.z + z);
 			w += d.x + 16;
 		}
-		
+
 		draw_text(it, p.pos + .{8 + pos.x + x, pos.y + 4}, p.z + z, 2, text_col);
-		
+
 		x += d.x + 16;
 	}
-	
+
 	draw_rect(p.pos + pos + .{w_continue, s - 1}, .{width - w_continue, 1}, p.z + z, COLOR_LINE);
 }
 
 h_separator :: ($name: string, pos: Vec2, width: f32, z: f32) {
 	p :: 12;
-	
+
 	draw_rect(pos, .{p, 1}, z, COLOR_LINE);
-	
+
 	draw_text(name, pos + .{p + 4, -5}, z, 1, COLOR_TEXT_NORMAL);
 	s :: #run measure_text(name, 1);
-	
+
 	draw_rect(pos + .{p + 8 + s.x, 0}, .{width - p - 8 - s.x, 1}, z, COLOR_LINE);
+}
+
+combo_box :: (pos: Vec2, size: Vec2, z: f32, items: []string, selected: *int, opened: *bool, it_: int = 0, loc := #caller_location) {
+	uuid := hash_widget(loc, it_);
+	p := fetch_parent();
+	state, fire := widget_interaction(uuid, pos, size, z, p);
+
+	_, border_col, text_col := fetch_colors(state);
+
+	draw_rect_lines(p.pos + pos, size, p.z + z, border_col);
+	draw_text(items[selected.*], p.pos + pos + .{2, 1}, p.z + z, 2, text_col);
+
+	if fire then opened.* = !opened.*;
+	
+	h := items.count * 20.0;
+	
+	if is_mouse_pressed(0) && !is_mouse_inside_rect(p.pos + pos, .{size.x, h + 20.0}) then opened.* = false;
+	
+	if state == .HOVER && mouse_dz {
+		selected.* = clamp(selected.* - mouse_dz, 0, items.count - 1);
+	}
+	
+	if opened.* {
+		draw_icon(.ARROW_DOWN, p.pos + pos + .{size.x - 20 + 2, 2}, p.z + z + 1, 2, text_col);
+		draw_rect_lines(p.pos + pos + .{size.x - 20, 0}, .{20, 20}, p.z + z + 1, border_col);
+		
+		draw_rect(p.pos + pos + .{0, 20.0}, .{size.x, h}, p.z + z + 1, COLOR_WIDGET_BG_NORMAL);
+		
+		for items {
+			x := p.pos.x + pos.x;
+			y := p.pos.y + pos.y + 20.0 * (it_index + 1);
+			
+			item_uuid := hash_widget(loc, it_ + it_index + 1);
+			state_internal, fire_internal := widget_interaction(item_uuid, pos + .{0, 20.0 * (it_index + 1)}, .{size.x, 20.0}, z, p);
+			
+			_, border_col, text_col := fetch_colors(state_internal);
+			
+			draw_rect_lines(.{x, y}, .{size.x, 20.0}, p.z + z + 2, border_col);
+			draw_text(it, .{x + 2, y + 1}, p.z + z + 2, 2, text_col);
+			
+			if fire_internal {
+				selected.* = it_index;
+				opened.* = false;
+				break;
+			}
+		}
+	} else {
+		draw_icon(.ARROW_LEFT, p.pos + pos + .{size.x - 20 + 2, 2}, p.z + z + 1, 2, text_col);
+		draw_rect_lines(p.pos + pos + .{size.x - 20, 0}, .{20, 20}, p.z + z + 1, border_col);
+	}
 }
 
 window :: (uuid: ID, p: *Panel) {
 	// handle window movement
-	if !(p.flags & .MODAL) {
-		if can_interact_with_widget(uuid, p.pos, .{p.size.x - WIDGET_HEADER_HEIGHT, WIDGET_HEADER_HEIGHT}, p.z, .{}) {
-			if is_mouse_pressed(0) {
-				p.pressed_pos.x = mouse_x - p.pos.x;
-				p.pressed_pos.y = mouse_y - p.pos.y;
-				p.pressed = true;
-				make_panel_topmost(p);
+	if p.flags & .HEADER {
+		if !(p.flags & .MODAL) {
+			if can_interact_with_widget(uuid, p.pos, .{p.size.x - WIDGET_HEADER_HEIGHT, WIDGET_HEADER_HEIGHT}, p.z, .{}) {
+				if is_mouse_pressed(0) {
+					p.pressed_pos.x = mouse_x - p.pos.x;
+					p.pressed_pos.y = mouse_y - p.pos.y;
+					p.pressed = true;
+					make_panel_topmost(p);
+				}
 			}
+			if p.pressed {
+				delta := Vec2.{xx mouse_x, xx mouse_y} - p.pressed_pos;
+				p.pos = delta;
+			}
+			if is_mouse_released(0) then p.pressed = false;
+		} else {
+			p.pos.x = (vp.width - p.size.x) / 2;
+			p.pos.y = (vp.height - p.size.y) / 2;
 		}
-		if p.pressed {
-			delta := Vec2.{xx mouse_x, xx mouse_y} - p.pressed_pos;
-			p.pos = delta;
-		}
-		if is_mouse_released(0) then p.pressed = false;
-	} else {
-		p.pos.x = (vp.width - p.size.x) / 2;
-		p.pos.y = (vp.height - p.size.y) / 2;
+		p.pos.x = clamp(p.pos.x, -p.size.x + 40, cast(f32)vp.width - 40);
+		p.pos.y = clamp(p.pos.y, HEADER_HEIGHT,  cast(f32)vp.height - WIDGET_HEADER_HEIGHT);
 	}
-	
-	p.pos.x = clamp(p.pos.x, -p.size.x + 40, cast(f32)vp.width - 40);
-	p.pos.y = clamp(p.pos.y, HEADER_HEIGHT,  cast(f32)vp.height - WIDGET_HEADER_HEIGHT);
 
-	parent: Parent_Panels = ---;
+	parent: Panel = ---;
 	parent.pos = p.pos + .{0, WIDGET_HEADER_HEIGHT};
 	parent.z = p.z;
+	parent.uuid = uuid;
 	array_add(*parent_panels, parent);
-	fire := button(.CLOSE, .{p.size.x - WIDGET_HEADER_HEIGHT, -WIDGET_HEADER_HEIGHT}, .{WIDGET_HEADER_HEIGHT, WIDGET_HEADER_HEIGHT}, z = 1, it = uuid);
 
 	draw_rect(p.pos, p.size, p.z, COLOR_WIDGET_BG_NORMAL);
 	draw_rect_lines(p.pos, p.size, p.z + 1, COLOR_WIDGET_BORDER_NORMAL);
-	draw_rect(p.pos + .{0, WIDGET_HEADER_HEIGHT - 1}, .{p.size.x, 1}, p.z + 1, COLOR_WIDGET_BORDER_NORMAL);
-	draw_text(p.name, p.pos + .{9, 8}, p.z + 1, 1, COLOR_TEXT_NORMAL);
+	if p.name then draw_text(p.name, p.pos + .{9, 8}, p.z + 1, 1, COLOR_TEXT_NORMAL);
+
+	fire: bool;
+	if p.flags & .HEADER {
+		fire = button(.CLOSE, .{p.size.x - WIDGET_HEADER_HEIGHT, -WIDGET_HEADER_HEIGHT}, .{WIDGET_HEADER_HEIGHT, WIDGET_HEADER_HEIGHT}, z = 1, it = uuid);
+		draw_rect(p.pos + .{0, WIDGET_HEADER_HEIGHT - 1}, .{p.size.x, 1}, p.z + 1, COLOR_WIDGET_BORDER_NORMAL);
+	}
 
 	if p.flags & .MODAL then fire |= is_key_pressed(KEY_ESC);
 	if fire    then {
@@ -258,7 +315,7 @@ window :: (uuid: ID, p: *Panel) {
 		if p.on_close then p.on_close();
 	}
 
-	p.draw_func();
+	if p.draw_func then p.draw_func();
 
 	parent_panels.count -= 1;
 }
@@ -279,7 +336,7 @@ child_begin :: ($$text: string, pos: Vec2, size: Vec2, z: f32) {
 
 	draw_rect(pos + p.pos + .{padding + 8 + m.x, 0}, .{size.x - padding - 8 - m.x, 1}, z + p.z, COLOR_LINE);
 
-	parent: Parent_Panels;
+	parent: Panel = ---;
 	parent.pos = pos + p.pos;
 	parent.z = z + p.z;
 	array_add(*parent_panels, parent);
@@ -384,7 +441,7 @@ toggle_panel :: (uuid: ID, pos: Vec2 = .{}, $centered := false) {
 	} else {
 		p.*.pos = pos;
 	}
-	
+
 	make_panel_topmost(p);
 }
 
@@ -404,8 +461,8 @@ set_panel_name :: (uuid: ID, name: string) {
 	p.*.name = name;
 }
 
-fetch_parent :: () -> Parent_Panels {
-	p: Parent_Panels;
+fetch_parent :: () -> Panel {
+	p: Panel;
 
 	if parent_panels.count {
 		p = parent_panels[parent_panels.count - 1];
@@ -416,7 +473,7 @@ fetch_parent :: () -> Parent_Panels {
 
 #scope_file
 
-can_interact_with_widget :: (uuid: ID, pos: Vec2, size: Vec2, z: f32, p: Parent_Panels) -> bool {
+can_interact_with_widget :: (uuid: ID, pos: Vec2, size: Vec2, z: f32, p: Panel) -> bool {
 	if !is_mouse_inside_rect(pos + p.pos, size) then return false;  // mouse inside widget
 
 	if modal_visible then return z + p.z >= 10 + (panels.count - 1) * 5.0;
@@ -440,7 +497,7 @@ fetch_colors :: (state: Interaction_State) -> (main: Col, border: Col, text: Col
 	}
 }
 
-widget_interaction :: (uuid: ID, pos: Vec2, size: Vec2, z: f32, p: Parent_Panels) -> (Interaction_State, fire: bool) {
+widget_interaction :: (uuid: ID, pos: Vec2, size: Vec2, z: f32, p: Panel) -> (Interaction_State, fire: bool) {
 	state: Interaction_State = .NORMAL;
 
 	fire := false;
@@ -449,7 +506,7 @@ widget_interaction :: (uuid: ID, pos: Vec2, size: Vec2, z: f32, p: Parent_Panels
 		state = .HOVER;
 
 		if is_mouse_pressed(0) {
-			focused_uuid = uuid;
+			ifx !focused_uuid then focused_uuid = uuid;
 			fire = true;
 		}
 	}
@@ -474,8 +531,6 @@ hash_widget :: (loc: Source_Code_Location, it: int) -> ID {
 	return out;
 }
 
-fade_value: f32;
-
 Interaction_State :: enum {
 	NORMAL;
 	HOVER;
@@ -488,35 +543,32 @@ Panel_Flags :: enum_flags {
 	MODAL;
 }
 
+panels: Table(ID, Panel);
+parent_panels: [..]Panel;
+
+modal_visible: bool;
+
+fade_value: f32;
+
+#scope_export
 Panel :: struct {
 	pos: Vec2;
 	size: Vec2;
 	z: f32;
-	
+	uuid: ID;
+
 	pressed_pos: Vec2;
 	pressed: bool;
-	
+
 	visible: bool;
 	name: string;
-	
+
 	flags: Panel_Flags;
-	
+
 	draw_func: () -> ();
 	on_close:  () -> ();
 }
 
-Parent_Panels :: struct {
-	pos: Vec2;
-	z: f32;
-}
-
-panels: Table(ID, Panel);
-
-parent_panels: [..]Parent_Panels;
-
-modal_visible: bool;
-
-#scope_export
 ID :: #type u32;
 
 WIDGET_HEADER_HEIGHT  :: 24;

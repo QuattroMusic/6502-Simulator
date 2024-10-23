@@ -71,6 +71,8 @@ get_icon_mapping :: (icon: Icon) -> uvx: f32 {
 		case .MINIMIZE;    return #run  8.0 / texture_width;
 		case .MAXIMIZE;    return #run 16.0 / texture_width;
 		case .CLOSE;       return #run 24.0 / texture_width;
+		case .ARROW_LEFT;  return #run 32.0 / texture_width;
+		case .ARROW_DOWN;  return #run 40.0 / texture_width;
 	}
 }
 
@@ -106,6 +108,8 @@ Icon :: enum {
 	MINIMIZE;
 	MAXIMIZE;
 	CLOSE;
+	ARROW_LEFT;
+	ARROW_DOWN;
 }
 
 COLOR_WIDGET_BG_NORMAL      :: Col.{  73,  62,  51, 255 };

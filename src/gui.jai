@@ -92,7 +92,7 @@ draw_code_viewer :: () {
 	scroll_size := viewer.size + max_value;
 	min_size := Vec2.{30 * 16.0, 1 * 16.0};
 
-	draw_scrollbar(viewer.pos, viewer.size, z = 3, *viewer.scrollbar_pos, scroll_size, min_size, max_value);
+	draw_scrollbar(viewer.pos, viewer.size, z = 3, *viewer.scrollbar_pos, scroll_size, min_size, max_value, settings.code_cursor_speed_slow + 1, settings.code_cursor_speed_fast + 1);
 
 	x_visible := min_size.x + viewer.size.x < scroll_size.x;
 	draw_colored_text(x_visible);
@@ -145,7 +145,7 @@ draw_program_memory :: () {
 	min_size       := Vec2.{0, 0};
 	max_value      := Vec2.{0, (2048 - rows_on_screen) * 16};
 
-	draw_scrollbar(pos, size, z = 1, *scroll_pos, .{0, 2048 * 16}, min_size, max_value);
+	draw_scrollbar(pos, size, z = 1, *scroll_pos, .{0, 2048 * 16}, min_size, max_value, settings.memory_cursor_speed_slow + 1, settings.memory_cursor_speed_fast + 1);
 
 	ui.memory_scrollbar_pos = scroll_pos.y;
 
@@ -363,19 +363,27 @@ draw_settings :: () {
 	
 	if ui.settings_focused_tab == {
 		case 0;  // platform
-			if button(">", .{460, 56}, .{24, 24}, 1, t = 2) {
-				max_value :: #run enum_highest_value(At_Startup);
-				settings.at_startup = xx ((cast(u32)settings.at_startup + 1) % (max_value + 1));
+			draw_text("at startup, open: ", p.pos + .{20, 50}, p.z + 1, 2, COLOR_TEXT_NORMAL);
+			w :: #run measure_text("at startup, open", 2).x;
+			
+			value := cast(int)settings.at_startup;
+			combo_box(.{40 + w, 50 - 2}, .{190, 20}, 1, .["empty file", "last file"], *value, *ui.settings_combo_box_open);
+			settings.at_startup = xx value;
+			
+			internal_scroll :: ($text: string, p: Panel, var: *int, y: f32) {
+				draw_text(text, p.pos + .{20, y}, p.z + 1, 2, COLOR_TEXT_NORMAL);
+				w :: #run measure_text(text, 2).x;
+				draw_step_hslider(.{40 + w, y}, .{150, 20}, 1, 20, var, it = xx y);
+				draw_text(tprint("%", var.* + 1), p.pos + .{200 + w, y}, p.z + 1, 2, COLOR_TEXT_NORMAL);
 			}
 			
-			if #complete settings.at_startup == {
-				case .OPEN_EMPTY_FILE;
-					draw_text("at startup, open empty file", p.pos + .{20, 60}, p.z + 1, 2, COLOR_TEXT_NORMAL);
-				case .OPEN_LAST_FILE;
-					draw_text("at startup, open last file", p.pos + .{20, 60}, p.z + 1, 2, COLOR_TEXT_NORMAL);
-			}
+			h_separator("scrollbars", p.pos + .{10, 80}, SETTINGS_WIDTH - 20, p.z + 1);
+			
+			internal_scroll("code viewer scroll slow speed", p, *settings.code_cursor_speed_slow, 100);
+			internal_scroll("code viewer scroll fast speed", p, *settings.code_cursor_speed_fast, 125);
+			internal_scroll("memory viewer scroll slow speed", p, *settings.memory_cursor_speed_slow, 150);
+			internal_scroll("memory viewer scroll fast speed", p, *settings.memory_cursor_speed_fast, 175);
 		case 1;  // theming
 	}
 	
-	// h_separator("colors", p.pos + .{10, 80}, SETTINGS_WIDTH - 20, p.z + 1);
 }

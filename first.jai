@@ -15,7 +15,10 @@ update_6502 :: () {
 	draw_current_instruction();
 	draw_input();
 
-	if is_key_pressed(KEY_ESC) then toggle_panel(ui.settings_panel, centered = true);
+	if is_key_pressed(KEY_ESC) {
+		toggle_panel(ui.settings_panel, centered = true);
+		ui.settings_combo_box_open = false;
+	}
 
 	widgets_draw_panels();
 }
@@ -74,7 +77,7 @@ main :: () {
 
 		// if is_key_pressed(KEY_ESC) then break;
 
-		if is_mouse_pressed(2) then report_memory_leaks();
+		// if is_mouse_pressed(2) then report_memory_leaks();
 
 		draw_one_frame();
 	}
@@ -140,7 +143,7 @@ operator + :: (a: Col, b: Col) -> Col {
 	return out;
 }
 
-#import "Basic"()(MEMORY_DEBUGGER = true);
+#import "Basic";
 #import "Math";
 #import "File";
 #import "Thread";
