@@ -1,5 +1,17 @@
-draw_rect :: inline (pos: Vec2, size: Vec2, z: f32, col: Col) {
-	element_add(*quad_buffer, .{pos.x, pos.y, z, size.x, size.y, col.data});
+draw_rect :: (pos: Vec2, size: Vec2, z: f32, col: Col) {
+	vertices_add(*quad_buffer, .{pos.x, pos.y, z, size.x, size.y, col.data});
+}
+
+draw_triangle :: (p1: Vec2, p2: Vec2, p3: Vec2, z: f32, col: Col) {
+	vertices_add(*flex_buffer, .{p1.x, p1.y, z, col.data});
+	vertices_add(*flex_buffer, .{p2.x, p2.y, z, col.data});
+	vertices_add(*flex_buffer, .{p3.x, p3.y, z, col.data});
+}
+
+draw_triangle :: (p1: Vec2, p2: Vec2, p3: Vec2, z: f32, col1: Col, col2: Col, col3: Col) {
+	vertices_add(*flex_buffer, .{p1.x, p1.y, z, col1.data});
+	vertices_add(*flex_buffer, .{p2.x, p2.y, z, col2.data});
+	vertices_add(*flex_buffer, .{p3.x, p3.y, z, col3.data});
 }
 
 draw_panel :: ($$text: string, pos: Vec2, size: Vec2, layer: f32) {
@@ -32,7 +44,7 @@ draw_character :: ($$c: u8, pos: Vec2, layer: f32, scale: f32, col: Col) {
 
 	s := scale * 8;
 	
-	element_add(*font_buffer, .{pos.x, pos.y, layer, xx s, col.data, uv});
+	vertices_add(*font_buffer, .{pos.x, pos.y, layer, xx s, col.data, uv});
 }
 
 draw_text :: (text: string, pos: Vec2, layer: f32, scale: f32, color: Col, $wrap: f32 = 0) {
@@ -62,7 +74,7 @@ draw_icon :: (icon: Icon, pos: Vec2, layer: f32, $scale: f32, col: Col) {
 
 	s :: 8.0 * scale;
 
-	element_add(*font_buffer, .{pos.x, pos.y, layer, xx s, col.data, uv});
+	vertices_add(*font_buffer, .{pos.x, pos.y, layer, xx s, col.data, uv});
 }
 
 get_icon_mapping :: (icon: Icon) -> uvx: f32 {
