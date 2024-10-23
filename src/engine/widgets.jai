@@ -139,7 +139,8 @@ draw_scrollbar :: (pos: Vec2, size: Vec2, z: f32, scroll_pos: *Vec2, scroll_size
 		state, fire := widget_interaction(uuid, .{scroll_pos_x, scroll_pos_y}, .{size.x - off, WIDGET_SCROLLBAR_SIZE}, z, p);
 
 		if mouse_dz && is_key_down(KEY_SHIFT) && can_interact_with_widget(uuid, pos, size, z, p){
-			amt := mouse_dz * 16 * 3;
+			true_speed := ifx is_key_down(KEY_CTRL) then speed_fast else speed_slow;
+			amt := mouse_dz * 16 * true_speed;
 			scroll_pos.*.x -= amt;
 		}
 

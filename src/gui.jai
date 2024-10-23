@@ -381,8 +381,8 @@ draw_settings :: () {
 			
 			internal_scroll("code viewer scroll slow speed", p, *settings.code_cursor_speed_slow, 100);
 			internal_scroll("code viewer scroll fast speed", p, *settings.code_cursor_speed_fast, 125);
-			internal_scroll("memory viewer scroll slow speed", p, *settings.memory_cursor_speed_slow, 150);
-			internal_scroll("memory viewer scroll fast speed", p, *settings.memory_cursor_speed_fast, 175);
+			internal_scroll("memory viewer scroll slow speed", p, *settings.memory_cursor_speed_slow, 155);
+			internal_scroll("memory viewer scroll fast speed", p, *settings.memory_cursor_speed_fast, 180);
 		case 1;  // theming
 	}
 	
