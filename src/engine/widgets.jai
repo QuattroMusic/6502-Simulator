@@ -269,6 +269,64 @@ combo_box :: (pos: Vec2, size: Vec2, z: f32, items: []string, selected: *int, op
 	}
 }
 
+color_picker :: (pos: Vec2, z: f32, col: *Vec3, it: int = 0, loc := #caller_location) {
+	width  :: 207.0;
+	height :: 216.0;
+
+	child_begin("picker", pos, .{width, height}, z);
+	p := fetch_parent();
+	
+	s := width - 40;
+	
+	uuid_quad := hash_widget(loc, it);
+	state_quad, _ := widget_interaction(uuid_quad, .{8, 8}, .{s, s}, z, p);
+	
+	if state_quad == .PRESSED {
+		col.*.y = clamp((mouse_x - p.pos.x - 8) / s, 0, 1);
+		col.*.z = clamp(1 - (mouse_y - p.pos.y - 8) / s, 0, 1);
+	}
+	
+	uuid_bar := hash_widget(loc, it + 1);
+	state_bar, _ := widget_interaction(uuid_bar, .{s + 12, 8}, .{20, s}, z, p);
+	
+	if state_bar == .PRESSED {
+		col.*.x = clamp((mouse_y - p.pos.y - 8) / s, 0, 1);
+	}
+	
+	text_pos := p.pos + .{18, 162};
+	rgb := HSV_to_RGB(col.*);
+	draw_text(tprint("R: %", rgb.r), text_pos + .{  0, 20}, p.z + z, 1, COLOR_TEXT_NORMAL);
+	draw_text(tprint("G: %", rgb.g), text_pos + .{ 62, 20}, p.z + z, 1, COLOR_TEXT_NORMAL);
+	draw_text(tprint("B: %", rgb.b), text_pos + .{124, 20}, p.z + z, 1, COLOR_TEXT_NORMAL);
+	draw_text(tprint("H: %", cast(s32)(col.x * 360)), text_pos + .{  0, 36}, p.z + z, 1, COLOR_TEXT_NORMAL);
+	draw_text(tprint("S: %", cast(s32)(col.y * 100)), text_pos + .{ 62, 36}, p.z + z, 1, COLOR_TEXT_NORMAL);
+	draw_text(tprint("V: %", cast(s32)(col.z * 100)), text_pos + .{124, 36}, p.z + z, 1, COLOR_TEXT_NORMAL);
+	
+	draw_color_picker_rect(p.pos + .{8, 8}, .{s, s}, p.z, col.x);
+	
+	draw_rect(p.pos + .{s + 12,             8}, .{20, s / 6}, p.z, .{255, 0, 0, 255}, .{255, 0, 0, 255}, .{255, 255, 0, 255}, .{255, 255, 0, 255});
+	draw_rect(p.pos + .{s + 12, s     / 6 + 8}, .{20, s / 6}, p.z, .{255, 255, 0, 255}, .{255, 255, 0, 255}, .{0, 255, 0, 255}, .{0, 255, 0, 255});
+	draw_rect(p.pos + .{s + 12, s * 2 / 6 + 8}, .{20, s / 6}, p.z, .{0, 255, 0, 255}, .{0, 255, 0, 255}, .{0, 255, 255, 255}, .{0, 255, 255, 255});
+	draw_rect(p.pos + .{s + 12, s * 3 / 6 + 8}, .{20, s / 6}, p.z, .{0, 255, 255, 255}, .{0, 255, 255, 255}, .{0, 0, 255, 255}, .{0, 0, 255, 255});
+	draw_rect(p.pos + .{s + 12, s * 4 / 6 + 8}, .{20, s / 6}, p.z, .{0, 0, 255, 255}, .{0, 0, 255, 255}, .{255, 0, 255, 255}, .{255, 0, 255, 255});
+	draw_rect(p.pos + .{s + 12, s * 5 / 6 + 8}, .{20, s / 6}, p.z, .{255, 0, 255, 255}, .{255, 0, 255, 255}, .{255, 0, 0, 255}, .{255, 0, 0, 255});
+	
+	draw_rect_lines(p.pos + .{8, 8}, .{s, s}, p.z + 1, COLOR_LINE);
+	draw_rect_lines(p.pos + .{s + 12, 8}, .{20, s}, p.z + 1, COLOR_LINE);
+	
+	cursor := p.pos + Vec2.{(s - 2) * col.y, (s - 2) * (1 - col.z)} + .{9, 9};
+	draw_rect(cursor - .{4, 4}, .{8, 8}, p.z + 2, rgb);
+	draw_rect_lines(cursor - .{4, 4}, .{8, 8}, p.z + 3, COLOR_LINE);
+	
+	rgb2 := HSV_to_RGB(.{col.x, 1, 1});
+	p1 := p.pos + .{s + 12, 8 + col.x * (s - 1)};
+	draw_rect_lines(p1 - .{2, 2}, .{24, 6}, p.z + 2, COLOR_LINE);
+	draw_rect(p1 - .{2, 2}, .{24, 6}, p.z + 2, rgb2);
+	
+	
+	child_end();
+}
+
 window :: (uuid: ID, p: *Panel) {
 	// handle window movement
 	if p.flags & .HEADER {

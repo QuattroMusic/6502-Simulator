@@ -78,7 +78,7 @@ main :: () {
 		// if is_key_pressed(KEY_ESC) then break;
 
 		// if is_mouse_pressed(2) then report_memory_leaks();
-
+		
 		draw_one_frame();
 	}
 	deinit_window();

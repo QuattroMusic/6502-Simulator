@@ -13,6 +13,7 @@ Settings :: struct {
 	memory_cursor_speed_fast: int = 7;
 	
 	// theming
+	color_text: Vec3;
 }
 
 General_UI :: struct {

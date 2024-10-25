@@ -11,12 +11,12 @@ deinit_rendering :: () {
 		if buff.VS              then IUnknown_Release(buff.VS);
 		if buff.GS              then IUnknown_Release(buff.GS);
 		if buff.PS              then IUnknown_Release(buff.PS);
-		if buff.vertices_buffer then IUnknown_Release(buff.vertices_buffer);
+		if buff.elements_buffer then IUnknown_Release(buff.elements_buffer);
 	}
 
 	release_buffer(quad_buffer);
 	release_buffer(font_buffer);
-	release_buffer(flex_buffer);
+	release_buffer(spec_buffer);
 
 	if camera_buffer then IUnknown_Release(camera_buffer);
 
@@ -130,21 +130,45 @@ init_shaders :: () {
 		.{"TEX",      0, .R32_FLOAT,       0, 20, .VERTEX_DATA, 0},
 	];
 	ID3D11Device_CreateInputLayout(dev, ied2.data, ied2.count, VS2.data, xx VS2.count, *font_buffer.layout);
-	
+
 	//
-	VS3, error3, result3 :: #run D3DCompile(flex_shader, "flex", .[], null, "VShader", "vs_5_0", 0, 0);
-	PS3                  :: #run D3DCompile(flex_shader, "flex", .[], null, "PShader", "ps_5_0", 0, 0);
+	VS3, error3, result3 :: #run D3DCompile(spec_shader, "spec", .[], null, "VShader", "vs_5_0", 0, 0);
+	GS3                  :: #run D3DCompile(spec_shader, "spec", .[], null, "GShader", "gs_5_0", 0, 0);
+	PS3                  :: #run D3DCompile(spec_shader, "spec", .[], null, "PShader", "ps_5_0", 0, 0);
 
 	// just one error check, since all the three components are in the same file
 	#if result3 { log_error("[%]: %\n", result3, error3); while true {} }
 
-	ID3D11Device_CreateVertexShader(  dev, VS3.data, xx VS3.count, null, *flex_buffer.VS);
-	ID3D11Device_CreatePixelShader(   dev, PS3.data, xx PS3.count, null, *flex_buffer.PS);
+	ID3D11Device_CreateVertexShader(  dev, VS3.data, xx VS3.count, null, *spec_buffer.VS);
+	ID3D11Device_CreateGeometryShader(dev, GS3.data, xx GS3.count, null, *spec_buffer.GS);
+	ID3D11Device_CreatePixelShader(   dev, PS3.data, xx PS3.count, null, *spec_buffer.PS);
 	ied3 :: D3D11_INPUT_ELEMENT_DESC.[
 		.{"POSITION", 0, .R32G32B32_FLOAT, 0,  0, .VERTEX_DATA, 0},
-		.{"COLOR",    0, .R32_UINT,        0, 12, .VERTEX_DATA, 0}
+		.{"SIZE",     0, .R32G32_FLOAT,    0, 12, .VERTEX_DATA, 0},
+		.{"COLOR",    0, .R32_FLOAT,       0, 20, .VERTEX_DATA, 0}
 	];
-	ID3D11Device_CreateInputLayout(dev, ied3.data, ied3.count, VS3.data, xx VS3.count, *flex_buffer.layout);
+	ID3D11Device_CreateInputLayout(dev, ied3.data, ied3.count, VS3.data, xx VS3.count, *spec_buffer.layout);
+
+	//
+	VS4, error4, result4 :: #run D3DCompile(flex_shader, "flex", .[], null, "VShader", "vs_5_0", 0, 0);
+	GS4                  :: #run D3DCompile(flex_shader, "flex", .[], null, "GShader", "gs_5_0", 0, 0);
+	PS4                  :: #run D3DCompile(flex_shader, "flex", .[], null, "PShader", "ps_5_0", 0, 0);
+
+	// just one error check, since all the three components are in the same file
+	#if result4 { log_error("[%]: %\n", result4, error4); while true {} }
+
+	ID3D11Device_CreateVertexShader(  dev, VS4.data, xx VS4.count, null, *flex_buffer.VS);
+	ID3D11Device_CreateGeometryShader(dev, GS4.data, xx GS4.count, null, *flex_buffer.GS);
+	ID3D11Device_CreatePixelShader(   dev, PS4.data, xx PS4.count, null, *flex_buffer.PS);
+	ied4 :: D3D11_INPUT_ELEMENT_DESC.[
+		.{"POSITION", 0, .R32G32B32_FLOAT, 0,  0, .VERTEX_DATA, 0},
+		.{"SIZE",     0, .R32G32_FLOAT,    0, 12, .VERTEX_DATA, 0},
+		.{"TL_COL",   0, .R32_UINT,        0, 20, .VERTEX_DATA, 0},
+		.{"TR_COL",   0, .R32_UINT,        0, 24, .VERTEX_DATA, 0},
+		.{"BL_COL",   0, .R32_UINT,        0, 28, .VERTEX_DATA, 0},
+		.{"BR_COL",   0, .R32_UINT,        0, 32, .VERTEX_DATA, 0}
+	];
+	ID3D11Device_CreateInputLayout(dev, ied4.data, ied4.count, VS4.data, xx VS4.count, *flex_buffer.layout);
 }
 
 init_font :: () {
@@ -193,13 +217,15 @@ init_graphics :: () {
 	buff_desc.BindFlags = .CONSTANT_BUFFER;
 	ID3D11Device_CreateBuffer(dev, *buff_desc, null, *camera_buffer);
 
-	quad_buffer.vertices_view.data = quad_elements.data;
-	font_buffer.vertices_view.data = font_elements.data;
-	flex_buffer.vertices_view.data = flex_vertices.data;
+	quad_buffer.elements_view.data = quad_elements.data;
+	font_buffer.elements_view.data = font_elements.data;
+	spec_buffer.elements_view.data = spec_elements.data;
+	flex_buffer.elements_view.data = flex_elements.data;
 
-	create_elements_buffer_dx11(*quad_buffer, quad_elements.count);
-	create_elements_buffer_dx11(*font_buffer, font_elements.count);
-	create_elements_buffer_dx11(*flex_buffer, flex_vertices.count);
+	create_vertices_buffer_dx11(*quad_buffer, quad_elements.count);
+	create_vertices_buffer_dx11(*font_buffer, font_elements.count);
+	create_vertices_buffer_dx11(*spec_buffer, spec_elements.count);
+	create_vertices_buffer_dx11(*flex_buffer, flex_elements.count);
 
 	rasterizer_desc: D3D11_RASTERIZER_DESC;
 	rasterizer_desc.FillMode = .SOLID;
@@ -209,16 +235,17 @@ init_graphics :: () {
 	ID3D11DeviceContext_RSSetState(devcon, rasterizer);
 
 	rtbd: D3D11_RENDER_TARGET_BLEND_DESC;
-	rtbd.BlendEnable            =  xx false;
-	rtbd.RenderTargetWriteMask  =  xx D3D11_COLOR_WRITE_ENABLE.ALL;
+	rtbd.BlendEnable            = xx false;
+	rtbd.RenderTargetWriteMask  = xx D3D11_COLOR_WRITE_ENABLE.ALL;
 
 	blend_desc: D3D11_BLEND_DESC;
 	blend_desc.AlphaToCoverageEnable = xx true;
+	blend_desc.IndependentBlendEnable = xx false;
 	blend_desc.RenderTarget[0] = rtbd;
 
 	ID3D11Device_CreateBlendState(dev, *blend_desc, *transparency);
 
-	ID3D11DeviceContext_OMSetBlendState(devcon, transparency, null, 0xFFFFFFFF);
+	ID3D11DeviceContext_OMSetBlendState(devcon, transparency, null, 0x000000FF);
 
 	update_camera();
 }
@@ -251,11 +278,11 @@ begin_drawing :: () {
 }
 
 flush_buffer :: (data: *Buffer_Data) {
-	if data.vertices_view.count == 0 then return;
+	if data.elements_view.count == 0 then return;
 
-	                ID3D11DeviceContext_VSSetShader(devcon, data.VS, null, 0);
-	if data.GS then ID3D11DeviceContext_GSSetShader(devcon, data.GS, null, 0);
-	                ID3D11DeviceContext_PSSetShader(devcon, data.PS, null, 0);
+	ID3D11DeviceContext_VSSetShader(devcon, data.VS, null, 0);
+	ID3D11DeviceContext_GSSetShader(devcon, data.GS, null, 0);
+	ID3D11DeviceContext_PSSetShader(devcon, data.PS, null, 0);
 
 	ID3D11DeviceContext_IASetInputLayout(devcon, data.layout);
 
@@ -264,49 +291,45 @@ flush_buffer :: (data: *Buffer_Data) {
 	stride: u32 = size;
 	offset: u32 = 0;
 
-	ID3D11DeviceContext_IASetVertexBuffers(devcon, 0, 1, *data.vertices_buffer, *stride, *offset);
+	ID3D11DeviceContext_IASetVertexBuffers(devcon, 0, 1, *data.elements_buffer, *stride, *offset);
 
 	ms: D3D11_MAPPED_SUBRESOURCE;
-	ID3D11DeviceContext_Map(devcon, data.vertices_buffer, 0, .WRITE_DISCARD, 0, *ms);
-	memcpy(ms.pData, data.vertices_view.data, size * data.vertices_view.count);
-	ID3D11DeviceContext_Unmap(devcon, data.vertices_buffer, 0);
+	ID3D11DeviceContext_Map(devcon, data.elements_buffer, 0, .WRITE_DISCARD, 0, *ms);
+	memcpy(ms.pData, data.elements_view.data, size * data.elements_view.count);
+	ID3D11DeviceContext_Unmap(devcon, data.elements_buffer, 0);
 
-	ID3D11DeviceContext_Draw(devcon, xx data.vertices_view.count, 0);
-	
-	if data.GS then ID3D11DeviceContext_GSSetShader(devcon, null, null, 0);
-	
-	data.vertices_view.count = 0;
+	ID3D11DeviceContext_Draw(devcon, xx data.elements_view.count, 0);
+
+	data.elements_view.count = 0;
 }
 
 finalize_drawing :: () {
 	ID3D11DeviceContext_IASetPrimitiveTopology(devcon, .POINTLIST);
 	flush_buffer(*quad_buffer);
 	flush_buffer(*font_buffer);
-	
-	ID3D11DeviceContext_IASetPrimitiveTopology(devcon, .TRIANGLELIST);
+	flush_buffer(*spec_buffer);
 	flush_buffer(*flex_buffer);
-	
+
 	IDXGISwapChain_Present(swapchain, 0, 0);
 }
 
-vertices_add :: (using buff: *Buffer_Data, val: buff.vertex_type) {
-	#if DEBUG then assert(vertices_view.count < BUFFER_MAX_SIZE);
+element_add :: (using buff: *Buffer_Data, val: buff.vertex_type) {
+	#if DEBUG then assert(elements_view.count < BUFFER_MAX_SIZE);
 
 	#no_abc {
-		vertices_view[vertices_view.count] = val;
-		vertices_view.count += 1;
+		elements_view[elements_view.count] = val;
+		elements_view.count += 1;
 	}
 }
 
-create_elements_buffer_dx11 :: (using buff: *Buffer_Data, amt: s64) {
+create_vertices_buffer_dx11 :: (using buff: *Buffer_Data, amt: s64) {
 	buff_desc: D3D11_BUFFER_DESC;
 	buff_desc.Usage          = .DYNAMIC;
 	buff_desc.ByteWidth      = xx (size_of(buff.vertex_type) * amt);
 	buff_desc.BindFlags      = .VERTEX_BUFFER;
 	buff_desc.CPUAccessFlags = .WRITE;
-	ID3D11Device_CreateBuffer(dev, *buff_desc, null, *vertices_buffer);
+	ID3D11Device_CreateBuffer(dev, *buff_desc, null, *elements_buffer);
 }
-
 
 update_camera :: () {
 	camera = orthographic_projection_matrix(0, xx vp.width, xx vp.height, 0, 1, 1000, depth_range_01 = true);
@@ -333,13 +356,13 @@ resize_viewport :: () {
 
 #scope_module
 Buffer_Data :: struct (vertex_type: Type) {
-	vertices_view: [] vertex_type;
+	elements_view: [] vertex_type;
 
 	VS: *ID3D11VertexShader;
-	PS: *ID3D11PixelShader;
 	GS: *ID3D11GeometryShader;
+	PS: *ID3D11PixelShader;
 
-	vertices_buffer: *ID3D11Buffer;
+	elements_buffer: *ID3D11Buffer;
 
 	layout: *ID3D11InputLayout;
 }
@@ -348,11 +371,19 @@ BUFFER_MAX_SIZE :: 0xFFF;
 
 quad_elements: [BUFFER_MAX_SIZE] Quad_Vertex;
 font_elements: [BUFFER_MAX_SIZE] Font_Vertex;
-flex_vertices: [BUFFER_MAX_SIZE] Flex_Vertex;
+spec_elements: [BUFFER_MAX_SIZE] Spec_Vertex;
+flex_elements: [BUFFER_MAX_SIZE] Flex_Vertex;
 
 quad_buffer: Buffer_Data(Quad_Vertex);
 font_buffer: Buffer_Data(Font_Vertex);
+spec_buffer: Buffer_Data(Spec_Vertex);
 flex_buffer: Buffer_Data(Flex_Vertex);
+
+Quad_Vertex :: struct {
+	x, y, z: f32;
+	w, h: f32;
+	col: u32;
+}
 
 Font_Vertex :: struct {
 	x, y, z: f32;
@@ -361,15 +392,16 @@ Font_Vertex :: struct {
 	uvx: f32;
 }
 
-Quad_Vertex :: struct {
+Spec_Vertex :: struct {
 	x, y, z: f32;
 	w, h: f32;
-	col: u32;
+	value: f32;
 }
 
 Flex_Vertex :: struct {
 	x, y, z: f32;
-	col: u32;
+	w, h: f32;
+	c1, c2, c3, c4: u32;
 }
 
 camera: Matrix4;
@@ -430,14 +462,14 @@ cbuffer cp_per_object {
 }
 
 struct Vertex_Out {
-	float4 pos: SV_POSITION;
+	float4 pos:  SV_POSITION;
 	float2 size: SIZE;
-	uint col: COLOR;
+	uint col:    COLOR;
 };
 
 struct Geom_Output {
     float4 pos: SV_POSITION;
-	uint col: COLOR;
+	uint col:   COLOR;
 };
 
 Vertex_Out VShader(float4 pos: POSITION, float2 size: SIZE, uint col: COLOR) {
@@ -492,15 +524,15 @@ cbuffer cp_per_object {
 }
 
 struct Vertex_Out {
-	float4 pos: SV_POSITION;
+	float4 pos:  SV_POSITION;
 	float2 size: SIZE;
-	uint col: COLOR;
-	float tex: TEX;
+	uint col:    COLOR;
+	float tex:   TEX;
 };
 
 struct Geom_Output {
     float4 pos: SV_POSITION;
-	uint col: COLOR;
+	uint col:   COLOR;
 	float2 tex: TEX;
 };
 
@@ -555,31 +587,137 @@ float4 PShader(Geom_Output input) : SV_TARGET {
 }
 DONE
 
+spec_shader :: #string DONE
+cbuffer cp_per_object {
+	float4x4 camera_data;
+}
+
+struct Vertex_Out {
+	float4 pos:  SV_POSITION;
+	float2 size: SIZE;
+	float  col:  COLOR;
+};
+
+struct Geom_Output {
+    float4 pos: SV_POSITION;
+	float  col: COLOR;
+	float2 uv:  UVS;
+};
+
+Vertex_Out VShader(float4 pos: POSITION, float2 size: SIZE, float color: COLOR) {
+	Vertex_Out output;
+
+	output.pos = mul(pos + float4(0, 0, 1, 0), camera_data);
+
+	output.size.x = size.x * camera_data[0][0];
+	output.size.y = size.y * camera_data[1][1];
+
+	output.col = color;
+
+    return output;
+}
+
+[maxvertexcount(4)]
+void GShader(point Vertex_Out input[1], inout TriangleStream<Geom_Output> triStream) {
+	Vertex_Out inp = input[0];
+
+	Geom_Output output;
+	output.col = inp.col;
+
+	output.pos = inp.pos;
+	output.uv = float2(0, 1);
+	triStream.Append(output);
+
+	output.pos = inp.pos + float4(0, inp.size.y, 0, 0);
+	output.uv = float2(0, 0);
+	triStream.Append(output);
+
+	output.pos = inp.pos + float4(inp.size.x, 0, 0, 0);
+	output.uv = float2(1, 1);
+	triStream.Append(output);
+
+	output.pos = inp.pos + float4(inp.size.x, inp.size.y, 0, 0);
+	output.uv = float2(1, 0);
+	triStream.Append(output);
+}
+
+float4 PShader(Geom_Output input) : SV_TARGET {
+	float4 K = float4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+	float3 p = abs(frac(input.col + K.xyz) * 6.0 - K.www);
+	float3 res = input.uv.y * lerp(K.xxx, clamp(p - K.xxx, 0.0, 1.0), input.uv.x);
+
+    return float4(res, 1.0);
+}
+DONE
+
 flex_shader :: #string DONE
 cbuffer cp_per_object {
 	float4x4 camera_data;
 }
 
 struct Vertex_Out {
-	float4 pos: SV_POSITION;
-	uint col: COLOR;
+	float4 pos:  SV_POSITION;
+	float2 size: SIZE;
+	uint   c1:   TL_COL;
+	uint   c2:   TR_COL;
+	uint   c3:   BL_COL;
+	uint   c4:   BR_COL;
 };
 
-Vertex_Out VShader(float4 pos: POSITION, uint col: COLOR) {
+struct Geom_Output {
+    float4 pos: SV_POSITION;
+	float4 col: COLOR;
+};
+
+float4 get_color(uint color) {
+	float4 col;
+	col.x = ( color        & 0xFF) / 255.0f;
+	col.y = ((color >> 8 ) & 0xFF) / 255.0f;
+	col.z = ((color >> 16) & 0xFF) / 255.0f;
+	col.w = ((color >> 24)       ) / 255.0f;
+	return col;
+}
+
+Vertex_Out VShader(float4 pos: POSITION, float2 size: SIZE, uint c1: TL_COL, uint c2: TR_COL, uint c3: BL_COL, uint c4: BR_COL) {
 	Vertex_Out output;
 
 	output.pos = mul(pos + float4(0, 0, 1, 0), camera_data);
-	output.col = col;
+
+	output.size.x = size.x * camera_data[0][0];
+	output.size.y = size.y * camera_data[1][1];
+
+	output.c1 = c1;
+	output.c2 = c2;
+	output.c3 = c3;
+	output.c4 = c4;
 
     return output;
 }
 
-float4 PShader(Vertex_Out input) : SV_TARGET {
-	float4 col;
-	col.x = ( input.col        & 0xFF) / 255.0f;
-	col.y = ((input.col >> 8 ) & 0xFF) / 255.0f;
-	col.z = ((input.col >> 16) & 0xFF) / 255.0f;
-	col.w = ((input.col >> 24)       ) / 255.0f;
-    return col;
+[maxvertexcount(4)]
+void GShader(point Vertex_Out input[1], inout TriangleStream<Geom_Output> triStream) {
+	Vertex_Out inp = input[0];
+
+	Geom_Output output;
+
+	output.pos = inp.pos;
+	output.col = get_color(inp.c1);
+	triStream.Append(output);
+
+	output.pos = inp.pos + float4(0, inp.size.y, 0, 0);
+	output.col = get_color(inp.c3);
+	triStream.Append(output);
+
+	output.pos = inp.pos + float4(inp.size.x, 0, 0, 0);
+	output.col = get_color(inp.c2);
+	triStream.Append(output);
+
+	output.pos = inp.pos + float4(inp.size.x, inp.size.y, 0, 0);
+	output.col = get_color(inp.c4);
+	triStream.Append(output);
+}
+
+float4 PShader(Geom_Output input) : SV_TARGET {
+	return input.col;
 }
 DONE
