@@ -3,6 +3,14 @@ At_Startup :: enum {
 	OPEN_LAST_FILE;
 }
 
+Theming :: struct {
+	// we're using the color picker in HSV for a better precision
+	// at the end of the chain we're still converting the HSV to RGB for GPU reasons
+	// hence, we're storing data as HSV and RGB
+	text_int: Vec3;
+	text: Col;
+}
+
 Settings :: struct {
 	// platform
 	at_startup: At_Startup = .OPEN_EMPTY_FILE;
@@ -12,8 +20,7 @@ Settings :: struct {
 	memory_cursor_speed_slow: int = 0;
 	memory_cursor_speed_fast: int = 7;
 	
-	// theming
-	color_text: Vec3;
+	themes: Theming;
 }
 
 General_UI :: struct {

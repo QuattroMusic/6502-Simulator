@@ -386,5 +386,5 @@ draw_settings :: () {
 		case 1;  // theming
 	}
 	
-	color_picker(.{100, 250}, 1, *settings.color_text);
+	color_picker(.{100, 250}, 1, *settings.themes.text_int, *settings.themes.text);
 }
