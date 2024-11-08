@@ -53,6 +53,7 @@ draw_text :: (text: string, pos: Vec2, layer: f32, scale: f32, color: Col, $wrap
 		if it == #char "\n" {
 			x_pos = 0;
 			y_pos += s;
+			continue;
 		} else if it != #char " " && it != #char "\t" && it != #char "\r" {
 			draw_character(cast,trunc(u8)it, pos + .{x_pos, y_pos}, layer, scale, color);
 		}
@@ -135,7 +136,7 @@ COLOR_BACKGROUND      :: Col.{  32,  30,  28, 255 };
 COLOR_DEEP_BACKGROUND :: Col.{  10,  10,   5, 255 };
 
 COLOR_LINE            :: Col.{ 254, 170,  55, 255 };
-COLOR_DISABLED        :: Col.{  73,  85,  97, 255 };
+COLOR_DISABLED        :: Col.{  79,  85,  90, 255 };
 
 WHITE  :: Col.{240, 240, 220, 255};
 GREEN  :: Col.{ 59, 187,  20, 255};

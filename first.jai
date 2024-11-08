@@ -56,6 +56,9 @@ setup_windows :: () {
 	ui.modal_panel = create_new_panel(draw_modal, "", .{800, 600}, on_close = modal_on_close, modal = true);
 
 	ui.settings_panel = create_new_panel(draw_settings, "settings", .{SETTINGS_WIDTH, SETTINGS_HEIGHT});
+	
+	ui.internal_selected = *settings.themes.general_text;
+	ui.internal_edit = RGB_to_HSV(settings.themes.general_text);
 }
 
 main :: () {
@@ -66,6 +69,8 @@ main :: () {
 
 	cpu_init();
 	init_window(MIN_SCREEN_WIDTH, MIN_SCREEN_HEIGHT);
+
+	init_settings();
 
 	init_code_viewer("examples\\paint.s");
 
@@ -111,8 +116,14 @@ MODAL_HEIGHT :: 600;
 SETTINGS_WIDTH  :: 800;
 SETTINGS_HEIGHT :: 600;
 
-APP_MAJOR_VERSION :: 1;
+APP_MAJOR_VERSION :: 2;
 APP_MINOR_VERSION :: 0;
+
+THEME_FILE_NAME :: "theme";
+SETTINGS_FILE_NAME :: "settings";
+
+CURSOR_SCROLLBAR_MIN_VALUE :: 1;
+CURSOR_SCROLLBAR_MAX_VALUE :: 20;
 
 Vec2 :: Vector2;
 Vec3 :: Vector3;
@@ -146,9 +157,9 @@ operator + :: (a: Col, b: Col) -> Col {
 #import "Basic";
 #import "Math";
 #import "File";
+#import "File_Utilities";
 #import "Thread";
 #import "Process";
-#import "File_Utilities";
 #import "Hash";
 #import "Hash_Table";
 #import "Sort";
@@ -176,5 +187,6 @@ operator + :: (a: Col, b: Col) -> Col {
 #load "src/intrinsics.jai";
 #load "src/gui.jai";
 #load "src/utils.jai";
+#load "src/files.jai";
 
 #load "tests.jai";

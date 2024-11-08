@@ -92,7 +92,7 @@ draw_code_viewer :: () {
 	scroll_size := viewer.size + max_value;
 	min_size := Vec2.{30 * 16.0, 1 * 16.0};
 
-	draw_scrollbar(viewer.pos, viewer.size, z = 3, *viewer.scrollbar_pos, scroll_size, min_size, max_value, settings.code_cursor_speed_slow + 1, settings.code_cursor_speed_fast + 1);
+	draw_scrollbar(viewer.pos, viewer.size, z = 3, *viewer.scrollbar_pos, scroll_size, min_size, max_value, settings.platform.code_cursor_speed_slow + 1, settings.platform.code_cursor_speed_fast + 1);
 
 	x_visible := min_size.x + viewer.size.x < scroll_size.x;
 	draw_colored_text(x_visible);
@@ -145,7 +145,7 @@ draw_program_memory :: () {
 	min_size       := Vec2.{0, 0};
 	max_value      := Vec2.{0, (2048 - rows_on_screen) * 16};
 
-	draw_scrollbar(pos, size, z = 1, *scroll_pos, .{0, 2048 * 16}, min_size, max_value, settings.memory_cursor_speed_slow + 1, settings.memory_cursor_speed_fast + 1);
+	draw_scrollbar(pos, size, z = 1, *scroll_pos, .{0, 2048 * 16}, min_size, max_value, settings.platform.memory_cursor_speed_slow + 1, settings.platform.memory_cursor_speed_fast + 1);
 
 	ui.memory_scrollbar_pos = scroll_pos.y;
 
@@ -283,7 +283,7 @@ draw_program_frequency :: () {
 	draw_step_hslider(offset + .{20, 55}, .{160, 20}, 1, freqs.count, *idx, disabled = engine.metrics.unlock);
 	engine.metrics.update_rate = freqs[idx];
 
-	draw_text(str, offset + .{90, 16}, 1, 2, ifx engine.metrics.unlock then GRAY else COLOR_TEXT_NORMAL);
+	draw_text(str, offset + .{90, 16}, 1, 2, ifx engine.metrics.unlock then COLOR_DISABLED else COLOR_TEXT_NORMAL);
 }
 
 draw_display :: () {
@@ -359,32 +359,162 @@ draw_modal :: () {
 draw_settings :: () {
 	p := fetch_parent();
 	
-	tab_bar(.{10, 10}, SETTINGS_WIDTH - 20, 1, .["platform", "theming"], *ui.settings_focused_tab);
+	tab: int = xx ui.settings_focused_tab;
+	tab_bar(.{10, 10}, SETTINGS_WIDTH - 20, 1, .["platform", "theming"], *tab);
+	ui.settings_focused_tab = xx tab;
+	
+	// ui.settings_focused_tab = .THEMING;
 	
 	if ui.settings_focused_tab == {
-		case 0;  // platform
+		case .PLATFORM;
 			draw_text("at startup, open: ", p.pos + .{20, 50}, p.z + 1, 2, COLOR_TEXT_NORMAL);
 			w :: #run measure_text("at startup, open", 2).x;
 			
-			value := cast(int)settings.at_startup;
-			combo_box(.{40 + w, 50 - 2}, .{190, 20}, 1, .["empty file", "last file"], *value, *ui.settings_combo_box_open);
-			settings.at_startup = xx value;
+			value := cast(int)settings.platform.at_startup;
+			edit := combo_box(.{40 + w, 50 - 2}, .{190, 20}, 1, .["empty file", "last file"], *value, *ui.settings_combo_box_open);
+			settings.platform.at_startup = xx value;
 			
-			internal_scroll :: ($text: string, p: Panel, var: *int, y: f32) {
+			if edit then save_options_file();
+			
+			internal_scroll :: ($text: string, p: Panel, var: *u8, y: f32) {
 				draw_text(text, p.pos + .{20, y}, p.z + 1, 2, COLOR_TEXT_NORMAL);
 				w :: #run measure_text(text, 2).x;
-				draw_step_hslider(.{40 + w, y}, .{150, 20}, 1, 20, var, it = xx y);
+				
+				slider_val := cast(int)var.*;
+				edit := draw_step_hslider(.{40 + w, y}, .{150, 20}, CURSOR_SCROLLBAR_MIN_VALUE, CURSOR_SCROLLBAR_MAX_VALUE, *slider_val, it = xx y);
+				var.* = cast,trunc(u8)slider_val;
+				
 				draw_text(tprint("%", var.* + 1), p.pos + .{200 + w, y}, p.z + 1, 2, COLOR_TEXT_NORMAL);
+
+				if edit then ui.settings_platform_scrollbar_edited = true;
 			}
 			
 			h_separator("scrollbars", p.pos + .{10, 80}, SETTINGS_WIDTH - 20, p.z + 1);
 			
-			internal_scroll("code viewer scroll slow speed", p, *settings.code_cursor_speed_slow, 100);
-			internal_scroll("code viewer scroll fast speed", p, *settings.code_cursor_speed_fast, 125);
-			internal_scroll("memory viewer scroll slow speed", p, *settings.memory_cursor_speed_slow, 155);
-			internal_scroll("memory viewer scroll fast speed", p, *settings.memory_cursor_speed_fast, 180);
-		case 1;  // theming
+			internal_scroll("code viewer scroll slow speed", p, *settings.platform.code_cursor_speed_slow, 100);
+			internal_scroll("code viewer scroll fast speed", p, *settings.platform.code_cursor_speed_fast, 125);
+			internal_scroll("memory viewer scroll slow speed", p, *settings.platform.memory_cursor_speed_slow, 155);
+			internal_scroll("memory viewer scroll fast speed", p, *settings.platform.memory_cursor_speed_fast, 180);
+			
+			if ui.settings_platform_scrollbar_edited && is_mouse_released(0) {
+				ui.settings_platform_scrollbar_edited = false;
+				save_options_file();
+			}
+		case .THEMING;
+			internal_selectable :: ($text: string, x: f32, y: f32, p: Panel, col: *Col) {
+				y -= ui.settings_theming_scroll_pos.y;
+				if y < 40 || y > 560 then return;
+				s :: #run measure_text(text, 2);
+				
+				box_pos := p.pos + .{x, y + 2};
+				box_size :: Vec2.{14, 14};
+				
+				state: Interaction_State = .NORMAL;
+				if is_mouse_inside_rect(p.pos + .{10, y}, s) || is_mouse_inside_rect(box_pos, box_size) {
+					state = .HOVER;
+					if is_mouse_down(0) then state = .PRESSED;
+				}
+				
+				_, border_col, text_col := fetch_colors(state);
+				
+				draw_text(text, p.pos + .{10, y}, p.z + 1, 2, text_col);
+				
+				draw_rect(box_pos, box_size, p.z + 1, col.*);
+				draw_rect_lines(box_pos, box_size, p.z + 2, border_col);
+				if is_mouse_inside_rect(box_pos, box_size) || is_mouse_inside_rect(p.pos + .{10, y}, .{s.x, 16}) {
+					if is_mouse_pressed(0) {
+						ui.internal_edit = RGB_to_HSV(col.*);
+						ui.internal_selected = col;
+					}
+					if is_mouse_pressed(1) {
+						// horrible hack (or is it?)
+						// get the offset using `settings.themes` as the base
+						// then apply the offset to `settings.themes_saved_state`
+						offset := cast(u64)col - cast(u64)(*settings.themes);
+						new_pos := cast(*Col)((cast(*u8)*settings.themes_saved_state) + offset);
+						memcpy(col, new_pos, size_of(Col));
+						
+						ui.internal_edit = RGB_to_HSV(col.*);
+						ui.internal_selected = col;
+						
+						save_theme_file();
+					}
+				}
+			}
+			
+			internal_separator :: ($text: string, y: f32, p: Panel) {
+				y -= ui.settings_theming_scroll_pos.y;
+				if y < 35 || y > 555 then return;
+				h_separator(text, p.pos + .{10, y}, SETTINGS_WIDTH - 280, p.z + 1);
+			}
+			
+			draw_rect(p.pos + .{SETTINGS_WIDTH - 240, 40}, .{1, SETTINGS_HEIGHT - 70}, p.z + 1, COLOR_LINE);
+			
+			{
+				draw_scrollbar(.{10, 40}, .{SETTINGS_WIDTH - 260, SETTINGS_HEIGHT - 84}, z = 1, *ui.settings_theming_scroll_pos, .{0, 16 * 40}, .{0, 0}, .{0, 16 * (40 - 32)}, 1, 1);
+				draw_rect_lines(p.pos + .{SETTINGS_WIDTH - 250 - WIDGET_SCROLLBAR_SIZE, 40}, .{WIDGET_SCROLLBAR_SIZE, SETTINGS_HEIGHT - 80}, p.z + 3, COLOR_LINE);
+
+				using settings.themes;
+				internal_separator("general",                  45,          p);
+				internal_selectable("text",              300,  40 + 16,     p, *general_text);
+				internal_selectable("flag off",          300,  40 + 16 * 2, p, *general_flag_off);
+				internal_selectable("flag on",           300,  40 + 16 * 3, p, *general_flag_on);
+				internal_selectable("debug stack empty", 300,  40 + 16 * 4, p, *general_debug_stack_empty);
+				internal_selectable("debug stack full",  300,  40 + 16 * 5, p, *general_debug_stack_full);
+
+				internal_separator("platform",                       160,           p);
+				internal_selectable("widget background normal", 410, 155 + 16,      p, *platform_widget_bg_normal);
+				internal_selectable("widget background hover",  410, 155 + 16 *  2, p, *platform_widget_bg_hover);
+				internal_selectable("widget background press",  410, 155 + 16 *  3, p, *platform_widget_bg_press);
+				internal_selectable("widget border normal",     410, 155 + 16 *  4, p, *platform_widget_border_normal);
+				internal_selectable("widget border hover",      410, 155 + 16 *  5, p, *platform_widget_border_hover);
+				internal_selectable("widget border press",      410, 155 + 16 *  6, p, *platform_widget_border_press);
+				internal_selectable("text normal",              410, 155 + 16 *  7, p, *platform_text_normal);
+				internal_selectable("text hover",               410, 155 + 16 *  8, p, *platform_text_hover);
+				internal_selectable("text press",               410, 155 + 16 *  9, p, *platform_text_press);
+				internal_selectable("background",               410, 155 + 16 * 10, p, *platform_background);
+				internal_selectable("deep background",          410, 155 + 16 * 11, p, *platform_deep_background);
+				internal_selectable("line",                     410, 155 + 16 * 12, p, *platform_line);
+				internal_selectable("disabled",                 410, 155 + 16 * 13, p, *platform_disabled);
+				
+				internal_separator("code viewer",       400,              p);
+				internal_selectable("text",        210, 395 + 16,         p, *viewer_text);
+				internal_selectable("number",      210, 395 + 16 * 2,     p, *viewer_number);
+				internal_selectable("comment",     210, 395 + 16 * 3,     p, *viewer_comment);
+				internal_selectable("dotdir",      210, 395 + 16 * 4,     p, *viewer_dotdir);
+				internal_selectable("label",       210, 395 + 16 * 5,     p, *viewer_label);
+				internal_selectable("instruction", 210, 395 + 16 * 6,     p, *viewer_instruction);
+				internal_selectable("string",      210, 395 + 16 * 7,     p, *viewer_string);
+				
+				internal_separator("memory",              550,          p);
+				internal_selectable("normal empty",  230, 545 + 16,     p, *memory_normal_empty);
+				internal_selectable("normal used",   230, 545 + 16 * 2, p, *memory_normal_used);
+				internal_selectable("stack empty",   230, 545 + 16 * 3, p, *memory_stack_empty);
+				internal_selectable("stack used",    230, 545 + 16 * 4, p, *memory_stack_used);
+				internal_selectable("display empty", 230, 545 + 16 * 5, p, *memory_display_empty);
+				internal_selectable("display used",  230, 545 + 16 * 6, p, *memory_display_used);
+				internal_selectable("input",         230, 545 + 16 * 7, p, *memory_input);
+			}
+
+			{
+				pos := p.pos + .{SETTINGS_WIDTH - 233, 275};
+				h_separator("info", pos, 225, p.z + 1);
+				
+				draw_text("- left click the colored box", pos + .{0, 20}, p.z + 1, 1, COLOR_TEXT_NORMAL);
+				draw_text("  or the text to select",      pos + .{0, 30}, p.z + 1, 1, COLOR_TEXT_NORMAL);
+				draw_text("  the color",                  pos + .{0, 40}, p.z + 1, 1, COLOR_TEXT_NORMAL);
+				draw_text("- right click to revert to",   pos + .{0, 60}, p.z + 1, 1, COLOR_TEXT_NORMAL);
+				draw_text("  default value",              pos + .{0, 70}, p.z + 1, 1, COLOR_TEXT_NORMAL);
+				draw_text("- enjoy!",                     pos + .{0, 90}, p.z + 1, 1, COLOR_TEXT_NORMAL);
+			}
+			
+			if(color_picker(.{SETTINGS_WIDTH - 225, 45}, 1, *ui.internal_edit, ui.internal_selected)) {
+				ui.settings_theming_color_edited = true;  // Todo - memcmp?
+			}
+			
+			if(ui.settings_theming_color_edited && is_mouse_released(0)) {
+				ui.settings_theming_color_edited = false;
+				save_theme_file();
+			}
 	}
-	
-	color_picker(.{100, 250}, 1, *settings.themes.text_int, *settings.themes.text);
 }

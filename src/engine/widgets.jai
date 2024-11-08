@@ -1,9 +1,19 @@
-button :: ($$text: string, pos: Vec2, size: Vec2, z: f32, $t: f32 = 1, it: int = 0, loc := #caller_location) -> bool {
+button :: ($$text: string, pos: Vec2, size: Vec2, z: f32, $t: f32 = 1, disabled := false, it: int = 0, loc := #caller_location) -> bool {
 	uuid := hash_widget(loc, it);
 	p := fetch_parent();
 	state, fire := widget_interaction(uuid, pos, size, z, p);
 
-	bg_col, border_col, text_col := fetch_colors(state);
+	bg_col:     Col = ---;
+	border_col: Col = ---;
+	text_col:   Col = ---;
+	
+	if disabled {
+		bg_col = COLOR_WIDGET_BG_NORMAL;
+		border_col = COLOR_DISABLED;
+		text_col = COLOR_DISABLED;
+	} else {
+		bg_col, border_col, text_col = fetch_colors(state);
+	}
 
 	draw_rect(pos + p.pos, size, z + p.z, bg_col);
 	draw_rect_lines(pos + p.pos, size, z + 1 + p.z, border_col, t);
@@ -58,13 +68,15 @@ checkbox :: ($$text: string, pos: Vec2, size: Vec2, z: f32, value: *bool, it: in
 	if fire then value.* = !value.*;
 }
 
-draw_step_hslider :: (pos: Vec2, size: Vec2, z: f32, amt: s32, value: *int, disabled: bool = false, it: int = 0, loc := #caller_location) {
+draw_step_hslider :: (pos: Vec2, size: Vec2, z: f32, amt: s32, value: *int, disabled: bool = false, it: int = 0, loc := #caller_location) -> bool {
 	p := fetch_parent();
 	
-	draw_rect(p.pos + pos + .{0, size.y / 2 - 1}, .{size.x, 2}, p.z + z, ifx disabled then GRAY else COLOR_LINE);
+	draw_rect(p.pos + pos + .{0, size.y / 2 - 1}, .{size.x, 2}, p.z + z, ifx disabled then COLOR_DISABLED else COLOR_LINE);
 
 	col_main: Col = ---;
 	col_step: Col = ---;
+
+	edited: bool;
 
 	if !disabled {
 		col_main = COLOR_WIDGET_BG_HOVERED;
@@ -76,10 +88,11 @@ draw_step_hslider :: (pos: Vec2, size: Vec2, z: f32, amt: s32, value: *int, disa
 		if state == .PRESSED {
 			col_main = COLOR_WIDGET_BG_PRESSED;
 			value.* = xx clamp((cast(f32)mouse_x - pos.x - p.pos.x) / size.x * amt, 0, xx (amt - 1));
+			edited = true;
 		}
 	} else {
-		col_main = GRAY;
-		col_step = GRAY;
+		col_main = COLOR_DISABLED;
+		col_step = COLOR_DISABLED;
 	}
 
 	for 0..amt / 3 {
@@ -92,6 +105,8 @@ draw_step_hslider :: (pos: Vec2, size: Vec2, z: f32, amt: s32, value: *int, disa
 
 	pos_x := pos.x + cast(f32)value.* / (amt - 1) * size.x;
 	draw_rect(p.pos + .{pos_x - 4, pos.y}, .{8, size.y}, p.z + z + 2, col_main);
+	
+	return edited;
 }
 
 draw_scrollbar :: (pos: Vec2, size: Vec2, z: f32, scroll_pos: *Vec2, scroll_size: Vec2, min_size: Vec2, max_value: Vec2, speed_slow: int, speed_fast: int, it: int = 0, loc := #caller_location) {
@@ -117,7 +132,7 @@ draw_scrollbar :: (pos: Vec2, size: Vec2, z: f32, scroll_pos: *Vec2, scroll_size
 		bar_height := ceil(aspect_ratio * size.y);
 
 		if state == .PRESSED {
-			scroll_pos.*.y = (mouse_y - pos.y - bar_height / 2) / aspect_ratio;
+			scroll_pos.*.y = (mouse_y - pos.y - bar_height / 2 - p.pos.y) / aspect_ratio;
 		}
 
 		bar_col := ifx state == .NORMAL then COLOR_WIDGET_BORDER_NORMAL else COLOR_WIDGET_BG_PRESSED;
@@ -125,8 +140,8 @@ draw_scrollbar :: (pos: Vec2, size: Vec2, z: f32, scroll_pos: *Vec2, scroll_size
 		val := round_up(scroll_pos.y, 16);
 		scroll_pos.*.y = clamp(val, 0, max_value.y - min_size.y);
 
-		draw_rect(.{scroll_pos_x, scroll_pos_y}, .{WIDGET_SCROLLBAR_SIZE, size.y}, z, COLOR_WIDGET_BG_NORMAL);
-		draw_rect(.{scroll_pos_x, floor(scroll_pos_y + aspect_ratio * scroll_pos.*.y)}, .{WIDGET_SCROLLBAR_SIZE, bar_height}, z + 1, bar_col);
+		draw_rect(p.pos + .{scroll_pos_x, scroll_pos_y}, .{WIDGET_SCROLLBAR_SIZE, size.y}, p.z + z, COLOR_WIDGET_BG_NORMAL);
+		draw_rect(p.pos + .{scroll_pos_x, floor(scroll_pos_y + aspect_ratio * scroll_pos.*.y)}, .{WIDGET_SCROLLBAR_SIZE, bar_height}, p.z + z + 1, bar_col);
 	}
 
 	if x_visible {
@@ -148,7 +163,7 @@ draw_scrollbar :: (pos: Vec2, size: Vec2, z: f32, scroll_pos: *Vec2, scroll_size
 		bar_width := ceil(aspect_ratio * size.x);
 
 		if state == .PRESSED {
-			scroll_pos.*.x = (mouse_x - pos.x - bar_width / 2) / aspect_ratio;
+			scroll_pos.*.x = (mouse_x - pos.x - bar_width / 2 - p.pos.x) / aspect_ratio;
 		}
 
 		bar_col := ifx state == .NORMAL then COLOR_WIDGET_BORDER_NORMAL else COLOR_WIDGET_BG_PRESSED;
@@ -156,8 +171,8 @@ draw_scrollbar :: (pos: Vec2, size: Vec2, z: f32, scroll_pos: *Vec2, scroll_size
 		val := round_up(scroll_pos.x, 16);
 		scroll_pos.*.x = clamp(val, 0, max_value.x - min_size.x);
 
-		draw_rect(.{scroll_pos_x, scroll_pos_y}, .{size.x, WIDGET_SCROLLBAR_SIZE}, z, COLOR_WIDGET_BG_NORMAL);
-		draw_rect(.{floor(scroll_pos_x + aspect_ratio * scroll_pos.*.x), scroll_pos_y}, .{bar_width, WIDGET_SCROLLBAR_SIZE}, z + 1, bar_col);
+		draw_rect(p.pos + .{scroll_pos_x, scroll_pos_y}, .{size.x, WIDGET_SCROLLBAR_SIZE}, p.z + z, COLOR_WIDGET_BG_NORMAL);
+		draw_rect(p.pos + .{floor(scroll_pos_x + aspect_ratio * scroll_pos.*.x), scroll_pos_y}, .{bar_width, WIDGET_SCROLLBAR_SIZE}, p.z + z + 1, bar_col);
 	}
 }
 
@@ -195,7 +210,7 @@ tab_bar :: (pos: Vec2, width: f32, z: f32, $tabs: []string, focused_tab: *int, i
 			draw_rect(p.pos + pos + .{0, s - 1}, .{w, 1}, p.z + z, COLOR_LINE);
 			w_continue = w + d.x + 8;
 		} else {
-			text_col = GRAY;
+			text_col = COLOR_DISABLED;
 			draw_selected_rect(p.pos + .{4 + pos.x + x, pos.y}, .{d.x + 8, s}, p.z + z);
 			w += d.x + 16;
 		}
@@ -219,7 +234,7 @@ h_separator :: ($name: string, pos: Vec2, width: f32, z: f32) {
 	draw_rect(pos + .{p + 8 + s.x, 0}, .{width - p - 8 - s.x, 1}, z, COLOR_LINE);
 }
 
-combo_box :: (pos: Vec2, size: Vec2, z: f32, items: []string, selected: *int, opened: *bool, it_: int = 0, loc := #caller_location) {
+combo_box :: (pos: Vec2, size: Vec2, z: f32, items: []string, selected: *int, opened: *bool, it_: int = 0, loc := #caller_location) -> bool {
 	uuid := hash_widget(loc, it_);
 	p := fetch_parent();
 	state, fire := widget_interaction(uuid, pos, size, z, p);
@@ -239,6 +254,8 @@ combo_box :: (pos: Vec2, size: Vec2, z: f32, items: []string, selected: *int, op
 		selected.* = clamp(selected.* - mouse_dz, 0, items.count - 1);
 	}
 	
+	fire_internal: bool;
+	
 	if opened.* {
 		draw_icon(.ARROW_DOWN, p.pos + pos + .{size.x - 20 + 2, 2}, p.z + z + 1, 2, text_col);
 		draw_rect_lines(p.pos + pos + .{size.x - 20, 0}, .{20, 20}, p.z + z + 1, border_col);
@@ -250,7 +267,7 @@ combo_box :: (pos: Vec2, size: Vec2, z: f32, items: []string, selected: *int, op
 			y := p.pos.y + pos.y + 20.0 * (it_index + 1);
 			
 			item_uuid := hash_widget(loc, it_ + it_index + 1);
-			state_internal, fire_internal := widget_interaction(item_uuid, pos + .{0, 20.0 * (it_index + 1)}, .{size.x, 20.0}, z, p);
+			state_internal: , fire_internal = widget_interaction(item_uuid, pos + .{0, 20.0 * (it_index + 1)}, .{size.x, 20.0}, z, p);
 			
 			_, border_col, text_col := fetch_colors(state_internal);
 			
@@ -267,9 +284,11 @@ combo_box :: (pos: Vec2, size: Vec2, z: f32, items: []string, selected: *int, op
 		draw_icon(.ARROW_LEFT, p.pos + pos + .{size.x - 20 + 2, 2}, p.z + z + 1, 2, text_col);
 		draw_rect_lines(p.pos + pos + .{size.x - 20, 0}, .{20, 20}, p.z + z + 1, border_col);
 	}
+	
+	return fire_internal;
 }
 
-color_picker :: (pos: Vec2, z: f32, hsv: *Vec3, rgb: *Col, it: int = 0, loc := #caller_location) {
+color_picker :: (pos: Vec2, z: f32, hsv: *Vec3, rgb: *Col, it: int = 0, loc := #caller_location) -> bool {
 	width  :: 207.0;
 	height :: 216.0;
 
@@ -283,21 +302,27 @@ color_picker :: (pos: Vec2, z: f32, hsv: *Vec3, rgb: *Col, it: int = 0, loc := #
 	uuid_bar := hash_widget(loc, it + 1);
 	state_bar, _ := widget_interaction(uuid_bar, .{s + 12, 8}, .{20, s}, z, p);
 	
+	edited := false;
 	if state_quad == .PRESSED {
-		hsv.y = clamp((mouse_x - p.pos.x - 8) / s, 0, 1);
-		hsv.z = clamp(1 - (mouse_y - p.pos.y - 8) / s, 0, 1);
+		hsv.*.y = clamp((mouse_x - p.pos.x - 8) / s, 0, 1);
+		hsv.*.z = clamp(1 - (mouse_y - p.pos.y - 8) / s, 0, 1);
+		
+		edited = true;
 	} else if state_bar == .PRESSED {
-		hsv.x = clamp((mouse_y - p.pos.y - 8) / s, 0, 1);
+		hsv.*.x = clamp((mouse_y - p.pos.y - 8) / s, 0, 1);
+
+		edited = true;
 	}
-	
 	rgb.* = HSV_to_RGB(hsv);
+	
 	text_pos := p.pos + .{18, 162};
-	draw_text(tprint("R: %", rgb.r), text_pos + .{  0, 20}, p.z + z, 1, COLOR_TEXT_NORMAL);
-	draw_text(tprint("G: %", rgb.g), text_pos + .{ 62, 20}, p.z + z, 1, COLOR_TEXT_NORMAL);
-	draw_text(tprint("B: %", rgb.b), text_pos + .{124, 20}, p.z + z, 1, COLOR_TEXT_NORMAL);
-	draw_text(tprint("H: %", cast(s32)(hsv.x * 360)), text_pos + .{  0, 36}, p.z + z, 1, COLOR_TEXT_NORMAL);
-	draw_text(tprint("S: %", cast(s32)(hsv.y * 100)), text_pos + .{ 62, 36}, p.z + z, 1, COLOR_TEXT_NORMAL);
-	draw_text(tprint("V: %", cast(s32)(hsv.z * 100)), text_pos + .{124, 36}, p.z + z, 1, COLOR_TEXT_NORMAL);
+	fmt :: #bake_arguments formatInt(minimum_digits = 3, padding = #char " ");
+	draw_text(tprint("R: %", fmt(rgb.r)), text_pos + .{  0, 20}, p.z + z, 1, COLOR_TEXT_NORMAL);
+	draw_text(tprint("G: %", fmt(rgb.g)), text_pos + .{ 62, 20}, p.z + z, 1, COLOR_TEXT_NORMAL);
+	draw_text(tprint("B: %", fmt(rgb.b)), text_pos + .{124, 20}, p.z + z, 1, COLOR_TEXT_NORMAL);
+	draw_text(tprint("H: %", fmt(cast(s32)(hsv.x * 360))), text_pos + .{  0, 36}, p.z + z, 1, COLOR_TEXT_NORMAL);
+	draw_text(tprint("S: %", fmt(cast(s32)(hsv.y * 100))), text_pos + .{ 62, 36}, p.z + z, 1, COLOR_TEXT_NORMAL);
+	draw_text(tprint("V: %", fmt(cast(s32)(hsv.z * 100))), text_pos + .{124, 36}, p.z + z, 1, COLOR_TEXT_NORMAL);
 	
 	draw_color_picker_rect(p.pos + .{8, 8}, .{s, s}, p.z, hsv.x);
 	
@@ -321,6 +346,8 @@ color_picker :: (pos: Vec2, z: f32, hsv: *Vec3, rgb: *Col, it: int = 0, loc := #
 	draw_rect(p1 - .{2, 2}, .{24, 6}, p.z + 2, rgb2);
 	
 	child_end();
+	
+	return edited;
 }
 
 window :: (uuid: ID, p: *Panel) {
@@ -526,6 +553,14 @@ fetch_parent :: () -> Panel {
 	return p;
 }
 
+fetch_colors :: (state: Interaction_State) -> (main: Col, border: Col, text: Col) {
+	if #complete state == {
+		case .NORMAL;  return COLOR_WIDGET_BG_NORMAL,  COLOR_WIDGET_BORDER_NORMAL,  COLOR_TEXT_NORMAL;
+		case .HOVER;   return COLOR_WIDGET_BG_HOVERED, COLOR_WIDGET_BORDER_HOVERED, COLOR_TEXT_HOVERED;
+		case .PRESSED; return COLOR_WIDGET_BG_PRESSED, COLOR_WIDGET_BORDER_PRESSED, COLOR_TEXT_PRESSED;
+	}
+}
+
 #scope_file
 
 can_interact_with_widget :: (uuid: ID, pos: Vec2, size: Vec2, z: f32, p: Panel) -> bool {
@@ -542,14 +577,6 @@ can_interact_with_widget :: (uuid: ID, pos: Vec2, size: Vec2, z: f32, p: Panel) 
 	}
 
 	return true;
-}
-
-fetch_colors :: (state: Interaction_State) -> (main: Col, border: Col, text: Col) {
-	if #complete state == {
-		case .NORMAL;  return COLOR_WIDGET_BG_NORMAL,  COLOR_WIDGET_BORDER_NORMAL,  COLOR_TEXT_NORMAL;
-		case .HOVER;   return COLOR_WIDGET_BG_HOVERED, COLOR_WIDGET_BORDER_HOVERED, COLOR_TEXT_HOVERED;
-		case .PRESSED; return COLOR_WIDGET_BG_PRESSED, COLOR_WIDGET_BORDER_PRESSED, COLOR_TEXT_PRESSED;
-	}
 }
 
 widget_interaction :: (uuid: ID, pos: Vec2, size: Vec2, z: f32, p: Panel) -> (Interaction_State, fire: bool) {
@@ -586,12 +613,6 @@ hash_widget :: (loc: Source_Code_Location, it: int) -> ID {
 	return out;
 }
 
-Interaction_State :: enum {
-	NORMAL;
-	HOVER;
-	PRESSED;
-}
-
 Panel_Flags :: enum_flags {
 	NONE;
 	HEADER;
@@ -606,6 +627,12 @@ modal_visible: bool;
 fade_value: f32;
 
 #scope_export
+Interaction_State :: enum {
+	NORMAL;
+	HOVER;
+	PRESSED;
+}
+
 Panel :: struct {
 	pos: Vec2;
 	size: Vec2;

@@ -60,21 +60,59 @@ display_error_panel :: (error: Error_Type, title: string) {
 	toggle_panel(ui.modal_panel);
 }
 
+RGB_to_HSV :: (c: Col) -> Vec3 {
+	r := c.r / 255.0;
+	g := c.g / 255.0;
+	b := c.b / 255.0;
+	
+	h, s, v: f32;
+	
+	cmax := max(r, max(g, b));
+	cmin := min(r, min(g, b));
+	delta := cmax - cmin;
+	
+	if delta < 0.0001 {
+		return .{0, 0, cmax};
+	}
+	
+	if cmax != 0 {
+		s = delta / cmax;
+	} else {
+		return .{0, 0, cmax};
+	}
+	
+	if cmax == r {
+		h = fmod_cycling((g - b) / delta, 6) / 6.0;
+	} else if cmax == g {
+		h = ((b - r) / delta + 2) / 6.0;
+	} else if cmax == b {
+		h = ((r - g) / delta + 4) / 6.0;
+	} else {
+		h = 1.0;
+	}
+	
+	s = ifx cmax == 0 then 0 else delta / cmax;
+	v = cmax;
+	return .{h, s, v};
+}
+
 HSV_to_RGB :: (col: Vec3) -> Col {
-	c := col.z * col.y;
+	if col.y == 0 return .{cast(u8)(col.z * 255), cast(u8)(col.z * 255), cast(u8)(col.z * 255), 255};
 	
-	v := (col.x * 3.0 - cast(s32)(col.x * 3.0)) * 2.0;  // fmod_cycling improved version
-	x := c * (1 - abs(v - 1));
+	h := col.x * 6.0;
+	f := h - cast(s32)h;
 	
-	m := col.z - c;
+	p := col.z * (1.0 - col.y);
+	q := col.z * (1.0 - (col.y * f));
+	t := col.z * (1.0 - (col.y * (1.0 - f)));
 	
-	if cast(s32)(col.x * 6) == {
-		case 0; return .{cast(u8)((c + m) * 255), cast(u8)((x + m) * 255), cast(u8)(     m  * 255), 255};
-		case 1; return .{cast(u8)((x + m) * 255), cast(u8)((c + m) * 255), cast(u8)(     m  * 255), 255};
-		case 2; return .{cast(u8)(     m  * 255), cast(u8)((c + m) * 255), cast(u8)((x + m) * 255), 255};
-		case 3; return .{cast(u8)(     m  * 255), cast(u8)((x + m) * 255), cast(u8)((c + m) * 255), 255};
-		case 4; return .{cast(u8)((x + m) * 255), cast(u8)(     m  * 255), cast(u8)((c + m) * 255), 255};
-		case;   return .{cast(u8)((c + m) * 255), cast(u8)(     m  * 255), cast(u8)((x + m) * 255), 255};
+	if cast(s32)h == {
+		case 0; return .{cast(u8)(col.z * 255), cast(u8)(t     * 255), cast(u8)(p     * 255), 255};
+		case 1; return .{cast(u8)(q     * 255), cast(u8)(col.z * 255), cast(u8)(p     * 255), 255};
+		case 2; return .{cast(u8)(p     * 255), cast(u8)(col.z * 255), cast(u8)(t     * 255), 255};
+		case 3; return .{cast(u8)(p     * 255), cast(u8)(q     * 255), cast(u8)(col.z * 255), 255};
+		case 4; return .{cast(u8)(t     * 255), cast(u8)(p     * 255), cast(u8)(col.z * 255), 255};
+		case;   return .{cast(u8)(col.z * 255), cast(u8)(p     * 255), cast(u8)(q     * 255), 255};
 	}
 }
 

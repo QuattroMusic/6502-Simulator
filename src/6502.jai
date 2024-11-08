@@ -1,26 +1,68 @@
-At_Startup :: enum {
-	OPEN_EMPTY_FILE;
-	OPEN_LAST_FILE;
-}
-
 Theming :: struct {
 	// we're using the color picker in HSV for a better precision
 	// at the end of the chain we're still converting the HSV to RGB for GPU reasons
 	// hence, we're storing data as HSV and RGB
-	text_int: Vec3;
-	text: Col;
+	general_text:              Col = COLOR_TEXT_NORMAL;
+	general_flag_off:          Col = RED;
+	general_flag_on:           Col = GREEN;
+	general_debug_stack_empty: Col = GREEN;
+	general_debug_stack_full:  Col = RED;
+	
+	platform_widget_bg_normal:     Col = COLOR_WIDGET_BG_NORMAL;
+	platform_widget_bg_hover:      Col = COLOR_WIDGET_BG_HOVERED;
+	platform_widget_bg_press:      Col = COLOR_WIDGET_BG_PRESSED;
+	platform_widget_border_normal: Col = COLOR_WIDGET_BORDER_NORMAL;
+	platform_widget_border_hover:  Col = COLOR_WIDGET_BORDER_HOVERED;
+	platform_widget_border_press:  Col = COLOR_WIDGET_BORDER_PRESSED;
+	platform_text_normal:          Col = COLOR_TEXT_NORMAL;
+	platform_text_hover:           Col = COLOR_TEXT_HOVERED;
+	platform_text_press:           Col = COLOR_TEXT_PRESSED;
+	platform_background:           Col = COLOR_BACKGROUND;
+	platform_deep_background:      Col = COLOR_DEEP_BACKGROUND;
+	platform_line:                 Col = COLOR_LINE;
+	platform_disabled:             Col = COLOR_DISABLED;
+	
+	viewer_text:        Col = WHITE;
+	viewer_number:      Col = BLUE;
+	viewer_comment:     Col = GRAY;
+	viewer_dotdir:      Col = ORANGE;
+	viewer_label:       Col = AMBER;
+	viewer_instruction: Col = PURPLE;
+	viewer_string:      Col = GREEN;
+	
+	memory_normal_empty:  Col = WHITE;
+	memory_normal_used:   Col = GREEN;
+	memory_stack_empty:   Col = PURPLE;
+	memory_stack_used:    Col = BLUE;
+	memory_display_empty: Col = YELLOW;
+	memory_display_used:  Col = ORANGE;
+	memory_input:         Col = PINK;
+}
+
+At_Startup :: enum u8 {
+	OPEN_EMPTY_FILE;
+	OPEN_LAST_FILE;
+}
+
+Platform_Settings :: struct {
+	at_startup: At_Startup = .OPEN_EMPTY_FILE;
+	
+	code_cursor_speed_slow: u8 = 2;
+	code_cursor_speed_fast: u8 = 5;
+	memory_cursor_speed_slow: u8 = 0;
+	memory_cursor_speed_fast: u8 = 7;
 }
 
 Settings :: struct {
-	// platform
-	at_startup: At_Startup = .OPEN_EMPTY_FILE;
-	
-	code_cursor_speed_slow: int = 2;
-	code_cursor_speed_fast: int = 5;
-	memory_cursor_speed_slow: int = 0;
-	memory_cursor_speed_fast: int = 7;
+	platform: Platform_Settings;
 	
 	themes: Theming;
+	themes_saved_state: Theming;
+}
+
+Settings_Focused_Tab :: enum {
+	PLATFORM;
+	THEMING;
 }
 
 General_UI :: struct {
@@ -29,8 +71,15 @@ General_UI :: struct {
 	modal_error_message: string;
 	modal_error_type: Error_Type;
 
-	settings_focused_tab: int;
+	settings_focused_tab: Settings_Focused_Tab;
 	settings_combo_box_open: bool;
+
+	settings_theming_color_edited: bool;
+	settings_platform_scrollbar_edited: bool;
+	settings_theming_scroll_pos: Vec2;
+	
+	internal_edit: Vec3;
+	internal_selected: *Col;
 
 	display_panel:  ID;
 	modal_panel:    ID;
@@ -120,7 +169,7 @@ Emulator :: struct {
 }
 
 ui: General_UI;
-settings: Settings;
+settings: Settings = ---;
 viewer: Code_Viewer;
 
 Hz  :: (f: type_of(engine.metrics.update_rate)) -> type_of(engine.metrics.update_rate) { return f; }
