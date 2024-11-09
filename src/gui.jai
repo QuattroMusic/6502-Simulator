@@ -420,7 +420,7 @@ draw_settings :: () {
 				
 				state: Interaction_State = .NORMAL;
 				if is_mouse_inside_rect(p.pos + .{10, y_off}, s) || is_mouse_inside_rect(box_pos, box_size) {
-					if can_interact_with_widget(0, .{10, y_off}, s, 2, p) || can_interact_with_widget(0, box_pos, box_size, 2, p) {
+					if can_interact_with_widget(0, .{10, y_off}, s, 2, p) || can_interact_with_widget(0, box_pos - p.pos, box_size, 2, p) {
 						state = .HOVER;
 						if is_mouse_down(0) then state = .PRESSED;
 					}
