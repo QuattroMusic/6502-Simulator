@@ -95,71 +95,66 @@ create_depth_stencil :: () {
 }
 
 init_shaders :: () {
-	//
-	VS1, error1, result1 :: #run D3DCompile(quad_shader, "quad", .[], null, "VShader", "vs_5_0", 0, 0);
-	GS1                  :: #run D3DCompile(quad_shader, "quad", .[], null, "GShader", "gs_5_0", 0, 0);
-	PS1                  :: #run D3DCompile(quad_shader, "quad", .[], null, "PShader", "ps_5_0", 0, 0);
-
-	// just one error check, since all the three components are in the same file
-	#if result1 { log_error("[%]: %\n", result1, error1); while true {} }
-
-	ID3D11Device_CreateVertexShader(  dev, VS1.data, xx VS1.count, null, *quad_buffer.VS);
-	ID3D11Device_CreateGeometryShader(dev, GS1.data, xx GS1.count, null, *quad_buffer.GS);
-	ID3D11Device_CreatePixelShader(   dev, PS1.data, xx PS1.count, null, *quad_buffer.PS);
+	compile_shader :: ($name: string) -> (V: string, G: string, P: string) #compile_time {
+		path := tprint("src/engine/shaders/%.hlsl", name);
+		Vdata, error, result := D3DCompileFromFile(path, .[], null, "VShader", "vs_5_0", 0, 0);
+		Gdata                := D3DCompileFromFile(path, .[], null, "GShader", "gs_5_0", 0, 0);
+		Pdata                := D3DCompileFromFile(path, .[], null, "PShader", "ps_5_0", 0, 0);
+		
+		// just one error check, since all the three components are in the same file
+		error_string: string;
+		if error {
+			error_string.count = cast(s64)ID3D10Blob_GetBufferSize(error);
+			error_string.data = ID3D10Blob_GetBufferPointer(error);
+		}
+		#if DEBUG assert(!result, "\n%", error_string);
+		
+		Vbytecode: string;
+		Vbytecode.count = cast(s64)ID3D10Blob_GetBufferSize(Vdata);
+		Vbytecode.data  = ID3D10Blob_GetBufferPointer(Vdata);
+		
+		Gbytecode: string;
+		Gbytecode.count = cast(s64)ID3D10Blob_GetBufferSize(Gdata);
+		Gbytecode.data = ID3D10Blob_GetBufferPointer(Gdata);
+		
+		Pbytecode: string;
+		Pbytecode.count = cast(s64)ID3D10Blob_GetBufferSize(Pdata);
+		Pbytecode.data = ID3D10Blob_GetBufferPointer(Pdata);
+		
+		return Vbytecode, Gbytecode, Pbytecode;
+	}
+	create_input_layout :: ($name: string, $ied: []D3D11_INPUT_ELEMENT_DESC, buff: Buffer_Data) {
+		V, G, P :: #run compile_shader(name);
+		
+		ID3D11Device_CreateVertexShader(  dev, V.data, xx V.count, null, *buff.VS);
+		ID3D11Device_CreateGeometryShader(dev, G.data, xx G.count, null, *buff.GS);
+		ID3D11Device_CreatePixelShader(   dev, P.data, xx P.count, null, *buff.PS);
+		
+		ID3D11Device_CreateInputLayout(dev, ied.data, xx ied.count, V.data, xx V.count, *buff.layout);
+	}
+	
 	ied1 :: D3D11_INPUT_ELEMENT_DESC.[
 		.{"POSITION", 0, .R32G32B32_FLOAT, 0,  0, .VERTEX_DATA, 0},
 		.{"SIZE",     0, .R32G32_FLOAT,    0, 12, .VERTEX_DATA, 0},
 		.{"COLOR",    0, .R32_UINT,        0, 20, .VERTEX_DATA, 0}
 	];
-	ID3D11Device_CreateInputLayout(dev, ied1.data, ied1.count, VS1.data, xx VS1.count, *quad_buffer.layout);
+	create_input_layout("quad", ied1, quad_buffer);
 
-	//
-	VS2, error2, result2 :: #run D3DCompile(font_shader, "font", .[], null, "VShader", "vs_5_0", 0, 0);
-	GS2                  :: #run D3DCompile(font_shader, "font", .[], null, "GShader", "gs_5_0", 0, 0);
-	PS2                  :: #run D3DCompile(font_shader, "font", .[], null, "PShader", "ps_5_0", 0, 0);
-
-	#if result2 { log_error("[%]: %\n", result2, error2); while true {} }
-
-	ID3D11Device_CreateVertexShader(  dev, VS2.data, xx VS2.count, null, *font_buffer.VS);
-	ID3D11Device_CreateGeometryShader(dev, GS2.data, xx GS2.count, null, *font_buffer.GS);
-	ID3D11Device_CreatePixelShader(   dev, PS2.data, xx PS2.count, null, *font_buffer.PS);
 	ied2 :: D3D11_INPUT_ELEMENT_DESC.[
 		.{"POSITION", 0, .R32G32B32_FLOAT, 0,  0, .VERTEX_DATA, 0},
 		.{"SIZE",     0, .R32_UINT,        0, 12, .VERTEX_DATA, 0},
 		.{"COLOR",    0, .R32_UINT,        0, 16, .VERTEX_DATA, 0},
 		.{"TEX",      0, .R32_FLOAT,       0, 20, .VERTEX_DATA, 0},
 	];
-	ID3D11Device_CreateInputLayout(dev, ied2.data, ied2.count, VS2.data, xx VS2.count, *font_buffer.layout);
+	create_input_layout("font", ied2, font_buffer);
 
-	//
-	VS3, error3, result3 :: #run D3DCompile(spec_shader, "spec", .[], null, "VShader", "vs_5_0", 0, 0);
-	GS3                  :: #run D3DCompile(spec_shader, "spec", .[], null, "GShader", "gs_5_0", 0, 0);
-	PS3                  :: #run D3DCompile(spec_shader, "spec", .[], null, "PShader", "ps_5_0", 0, 0);
-
-	// just one error check, since all the three components are in the same file
-	#if result3 { log_error("[%]: %\n", result3, error3); while true {} }
-
-	ID3D11Device_CreateVertexShader(  dev, VS3.data, xx VS3.count, null, *spec_buffer.VS);
-	ID3D11Device_CreateGeometryShader(dev, GS3.data, xx GS3.count, null, *spec_buffer.GS);
-	ID3D11Device_CreatePixelShader(   dev, PS3.data, xx PS3.count, null, *spec_buffer.PS);
 	ied3 :: D3D11_INPUT_ELEMENT_DESC.[
 		.{"POSITION", 0, .R32G32B32_FLOAT, 0,  0, .VERTEX_DATA, 0},
 		.{"SIZE",     0, .R32G32_FLOAT,    0, 12, .VERTEX_DATA, 0},
 		.{"COLOR",    0, .R32_FLOAT,       0, 20, .VERTEX_DATA, 0}
 	];
-	ID3D11Device_CreateInputLayout(dev, ied3.data, ied3.count, VS3.data, xx VS3.count, *spec_buffer.layout);
+	create_input_layout("spec", ied3, spec_buffer);
 
-	//
-	VS4, error4, result4 :: #run D3DCompile(flex_shader, "flex", .[], null, "VShader", "vs_5_0", 0, 0);
-	GS4                  :: #run D3DCompile(flex_shader, "flex", .[], null, "GShader", "gs_5_0", 0, 0);
-	PS4                  :: #run D3DCompile(flex_shader, "flex", .[], null, "PShader", "ps_5_0", 0, 0);
-
-	// just one error check, since all the three components are in the same file
-	#if result4 { log_error("[%]: %\n", result4, error4); while true {} }
-
-	ID3D11Device_CreateVertexShader(  dev, VS4.data, xx VS4.count, null, *flex_buffer.VS);
-	ID3D11Device_CreateGeometryShader(dev, GS4.data, xx GS4.count, null, *flex_buffer.GS);
-	ID3D11Device_CreatePixelShader(   dev, PS4.data, xx PS4.count, null, *flex_buffer.PS);
 	ied4 :: D3D11_INPUT_ELEMENT_DESC.[
 		.{"POSITION", 0, .R32G32B32_FLOAT, 0,  0, .VERTEX_DATA, 0},
 		.{"SIZE",     0, .R32G32_FLOAT,    0, 12, .VERTEX_DATA, 0},
@@ -168,7 +163,7 @@ init_shaders :: () {
 		.{"BL_COL",   0, .R32_UINT,        0, 28, .VERTEX_DATA, 0},
 		.{"BR_COL",   0, .R32_UINT,        0, 32, .VERTEX_DATA, 0}
 	];
-	ID3D11Device_CreateInputLayout(dev, ied4.data, ied4.count, VS4.data, xx VS4.count, *flex_buffer.layout);
+	create_input_layout("flex", ied4, flex_buffer);
 }
 
 init_font :: () {
@@ -314,7 +309,9 @@ finalize_drawing :: () {
 }
 
 element_add :: (using buff: *Buffer_Data, val: buff.vertex_type) {
-	#if DEBUG then assert(elements_view.count < BUFFER_MAX_SIZE);
+	if(elements_view.count == BUFFER_MAX_SIZE) {
+		flush_buffer(buff);
+	}
 
 	#no_abc {
 		elements_view[elements_view.count] = val;
@@ -367,7 +364,7 @@ Buffer_Data :: struct (vertex_type: Type) {
 	layout: *ID3D11InputLayout;
 }
 
-BUFFER_MAX_SIZE :: 0xFFF;
+BUFFER_MAX_SIZE :: 0x800;
 
 quad_elements: [BUFFER_MAX_SIZE] Quad_Vertex;
 font_elements: [BUFFER_MAX_SIZE] Font_Vertex;
@@ -454,270 +451,3 @@ texture_data, texture_width, texture_height :: #run -> ([]u8, int, int) {
 	}
 	return mem, texture_width, texture_height;
 };
-
-#scope_file
-quad_shader :: #string DONE
-cbuffer cp_per_object {
-	float4x4 camera_data;
-}
-
-struct Vertex_Out {
-	float4 pos:  SV_POSITION;
-	float2 size: SIZE;
-	uint col:    COLOR;
-};
-
-struct Geom_Output {
-    float4 pos: SV_POSITION;
-	uint col:   COLOR;
-};
-
-Vertex_Out VShader(float4 pos: POSITION, float2 size: SIZE, uint col: COLOR) {
-	Vertex_Out output;
-
-	output.pos = mul(pos + float4(0, 0, 1, 0), camera_data);
-
-	output.size.x = size.x * camera_data[0][0];
-	output.size.y = size.y * camera_data[1][1];
-
-	output.col = col;
-
-    return output;
-}
-
-[maxvertexcount(4)]
-void GShader(point Vertex_Out input[1], inout TriangleStream<Geom_Output> triStream) {
-	Vertex_Out inp = input[0];
-
-	Geom_Output output;
-	output.col = inp.col;
-
-	output.pos = inp.pos;
-	triStream.Append(output);
-
-	output.pos = inp.pos + float4(0, inp.size.y, 0, 0);
-	triStream.Append(output);
-
-	output.pos = inp.pos + float4(inp.size.x, 0, 0, 0);
-	triStream.Append(output);
-
-	output.pos = inp.pos + float4(inp.size.x, inp.size.y, 0, 0);
-	triStream.Append(output);
-}
-
-float4 PShader(Geom_Output input) : SV_TARGET {
-	float4 col;
-	col.x = ( input.col        & 0xFF) / 255.0f;
-	col.y = ((input.col >> 8 ) & 0xFF) / 255.0f;
-	col.z = ((input.col >> 16) & 0xFF) / 255.0f;
-	col.w = ((input.col >> 24)       ) / 255.0f;
-    return col;
-}
-DONE
-
-font_shader :: #string DONE
-Texture2D ObjTexture;
-SamplerState ObjSamplerState;
-
-cbuffer cp_per_object {
-	float4x4 camera_data;
-}
-
-struct Vertex_Out {
-	float4 pos:  SV_POSITION;
-	float2 size: SIZE;
-	uint col:    COLOR;
-	float tex:   TEX;
-};
-
-struct Geom_Output {
-    float4 pos: SV_POSITION;
-	uint col:   COLOR;
-	float2 tex: TEX;
-};
-
-Vertex_Out VShader(float4 position: POSITION, uint size: SIZE, uint inCol: COLOR, float in_texcoord: TEX) {
-	Vertex_Out output;
-
-	output.pos = mul(position + float4(0, 0, 1, 0), camera_data);
-
-	output.size.x = size * camera_data[0][0];
-	output.size.y = size * camera_data[1][1];
-
-	output.col = inCol;
-
-	output.tex = in_texcoord;
-
-    return output;
-}
-
-[maxvertexcount(4)]
-void GShader(point Vertex_Out input[1], inout TriangleStream<Geom_Output> triStream) {
-	Vertex_Out inp = input[0];
-
-	Geom_Output output;
-	output.col = inp.col;
-
-	output.pos = inp.pos;
-	output.tex = float2(inp.tex, 0);
-	triStream.Append(output);
-
-	output.pos = inp.pos + float4(0, inp.size.y, 0, 0);
-	output.tex = float2(inp.tex, 1);
-	triStream.Append(output);
-
-	output.pos = inp.pos + float4(inp.size.x, 0, 0, 0);
-	output.tex = float2(8.0 / 1024 + inp.tex, 0);
-	triStream.Append(output);
-
-	output.pos = inp.pos + float4(inp.size.x, inp.size.y, 0, 0);
-	output.tex = float2(8.0 / 1024 + inp.tex, 1);
-	triStream.Append(output);
-}
-
-float4 PShader(Geom_Output input) : SV_TARGET {
-	float alpha = ObjTexture.Sample(ObjSamplerState, input.tex).w;
-
-	float4 col;
-	col.x = ( input.col        & 0xFF) / 255.0f;
-	col.y = ((input.col >> 8 ) & 0xFF) / 255.0f;
-	col.z = ((input.col >> 16) & 0xFF) / 255.0f;
-
-	return float4(col.x, col.y, col.z, alpha);
-}
-DONE
-
-spec_shader :: #string DONE
-cbuffer cp_per_object {
-	float4x4 camera_data;
-}
-
-struct Vertex_Out {
-	float4 pos:  SV_POSITION;
-	float2 size: SIZE;
-	float  col:  COLOR;
-};
-
-struct Geom_Output {
-    float4 pos: SV_POSITION;
-	float  col: COLOR;
-	float2 uv:  UVS;
-};
-
-Vertex_Out VShader(float4 pos: POSITION, float2 size: SIZE, float color: COLOR) {
-	Vertex_Out output;
-
-	output.pos = mul(pos + float4(0, 0, 1, 0), camera_data);
-
-	output.size.x = size.x * camera_data[0][0];
-	output.size.y = size.y * camera_data[1][1];
-
-	output.col = color;
-
-    return output;
-}
-
-[maxvertexcount(4)]
-void GShader(point Vertex_Out input[1], inout TriangleStream<Geom_Output> triStream) {
-	Vertex_Out inp = input[0];
-
-	Geom_Output output;
-	output.col = inp.col;
-
-	output.pos = inp.pos;
-	output.uv = float2(0, 1);
-	triStream.Append(output);
-
-	output.pos = inp.pos + float4(0, inp.size.y, 0, 0);
-	output.uv = float2(0, 0);
-	triStream.Append(output);
-
-	output.pos = inp.pos + float4(inp.size.x, 0, 0, 0);
-	output.uv = float2(1, 1);
-	triStream.Append(output);
-
-	output.pos = inp.pos + float4(inp.size.x, inp.size.y, 0, 0);
-	output.uv = float2(1, 0);
-	triStream.Append(output);
-}
-
-float4 PShader(Geom_Output input) : SV_TARGET {
-	float4 K = float4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
-	float3 p = abs(frac(input.col + K.xyz) * 6.0 - K.www);
-	float3 res = input.uv.y * lerp(K.xxx, clamp(p - K.xxx, 0.0, 1.0), input.uv.x);
-
-    return float4(res, 1.0);
-}
-DONE
-
-flex_shader :: #string DONE
-cbuffer cp_per_object {
-	float4x4 camera_data;
-}
-
-struct Vertex_Out {
-	float4 pos:  SV_POSITION;
-	float2 size: SIZE;
-	uint   c1:   TL_COL;
-	uint   c2:   TR_COL;
-	uint   c3:   BL_COL;
-	uint   c4:   BR_COL;
-};
-
-struct Geom_Output {
-    float4 pos: SV_POSITION;
-	float4 col: COLOR;
-};
-
-float4 get_color(uint color) {
-	float4 col;
-	col.x = ( color        & 0xFF) / 255.0f;
-	col.y = ((color >> 8 ) & 0xFF) / 255.0f;
-	col.z = ((color >> 16) & 0xFF) / 255.0f;
-	col.w = ((color >> 24)       ) / 255.0f;
-	return col;
-}
-
-Vertex_Out VShader(float4 pos: POSITION, float2 size: SIZE, uint c1: TL_COL, uint c2: TR_COL, uint c3: BL_COL, uint c4: BR_COL) {
-	Vertex_Out output;
-
-	output.pos = mul(pos + float4(0, 0, 1, 0), camera_data);
-
-	output.size.x = size.x * camera_data[0][0];
-	output.size.y = size.y * camera_data[1][1];
-
-	output.c1 = c1;
-	output.c2 = c2;
-	output.c3 = c3;
-	output.c4 = c4;
-
-    return output;
-}
-
-[maxvertexcount(4)]
-void GShader(point Vertex_Out input[1], inout TriangleStream<Geom_Output> triStream) {
-	Vertex_Out inp = input[0];
-
-	Geom_Output output;
-
-	output.pos = inp.pos;
-	output.col = get_color(inp.c1);
-	triStream.Append(output);
-
-	output.pos = inp.pos + float4(0, inp.size.y, 0, 0);
-	output.col = get_color(inp.c3);
-	triStream.Append(output);
-
-	output.pos = inp.pos + float4(inp.size.x, 0, 0, 0);
-	output.col = get_color(inp.c2);
-	triStream.Append(output);
-
-	output.pos = inp.pos + float4(inp.size.x, inp.size.y, 0, 0);
-	output.col = get_color(inp.c4);
-	triStream.Append(output);
-}
-
-float4 PShader(Geom_Output input) : SV_TARGET {
-	return input.col;
-}
-DONE
