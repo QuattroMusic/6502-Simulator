@@ -561,8 +561,6 @@ fetch_colors :: (state: Interaction_State) -> (main: Col, border: Col, text: Col
 	}
 }
 
-#scope_file
-
 can_interact_with_widget :: (uuid: ID, pos: Vec2, size: Vec2, z: f32, p: Panel) -> bool {
 	if !is_mouse_inside_rect(pos + p.pos, size) then return false;  // mouse inside widget
 
@@ -577,6 +575,21 @@ can_interact_with_widget :: (uuid: ID, pos: Vec2, size: Vec2, z: f32, p: Panel) 
 	}
 
 	return true;
+}
+
+#scope_file
+
+hash_widget :: (loc: Source_Code_Location, it: int) -> ID {
+	h1 := fnv1a_hash(loc.fully_pathed_filename.data, loc.fully_pathed_filename.count);
+	h2 := knuth_hash(cast,no_check(u64)loc.line_number);
+	h3 := knuth_hash(cast,no_check(u64)it);
+
+	out := cast,no_check(ID)(h1 ^ h2 ^ h3);
+
+	// ID 0 means no widget is focused, better to not happen this!
+	#if DEBUG then assert(out != 0);
+
+	return out;
 }
 
 widget_interaction :: (uuid: ID, pos: Vec2, size: Vec2, z: f32, p: Panel) -> (Interaction_State, fire: bool) {
@@ -598,19 +611,6 @@ widget_interaction :: (uuid: ID, pos: Vec2, size: Vec2, z: f32, p: Panel) -> (In
 	if is_mouse_down(0) then state = .PRESSED;
 
 	return state, fire;
-}
-
-hash_widget :: (loc: Source_Code_Location, it: int) -> ID {
-	h1 := fnv1a_hash(loc.fully_pathed_filename.data, loc.fully_pathed_filename.count);
-	h2 := knuth_hash(cast,no_check(u64)loc.line_number);
-	h3 := knuth_hash(cast,no_check(u64)it);
-
-	out := cast,no_check(ID)(h1 ^ h2 ^ h3);
-
-	// ID 0 means no widget is focused, better to not happen this!
-	#if DEBUG then assert(out != 0);
-
-	return out;
 }
 
 Panel_Flags :: enum_flags {

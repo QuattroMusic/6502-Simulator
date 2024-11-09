@@ -401,7 +401,7 @@ draw_settings :: () {
 				save_options_file();
 			}
 		case .THEMING;
-			internal_selectable :: ($text: string, x: f32, y: f32, p: Panel, col: *Col) {
+			internal_selectable :: ($text: string, x: f32, y: f32, p: Panel, col: *Col, loc := #caller_location) {
 				y -= ui.settings_theming_scroll_pos.y;
 				if y < 40 || y > 560 then return;
 				s :: #run measure_text(text, 2);
@@ -411,8 +411,10 @@ draw_settings :: () {
 				
 				state: Interaction_State = .NORMAL;
 				if is_mouse_inside_rect(p.pos + .{10, y}, s) || is_mouse_inside_rect(box_pos, box_size) {
-					state = .HOVER;
-					if is_mouse_down(0) then state = .PRESSED;
+					if can_interact_with_widget(0, .{10, y}, s, 2, p) || can_interact_with_widget(0, box_pos, box_size, 2, p) {
+						state = .HOVER;
+						if is_mouse_down(0) then state = .PRESSED;
+					}
 				}
 				
 				_, border_col, text_col := fetch_colors(state);
@@ -421,7 +423,7 @@ draw_settings :: () {
 				
 				draw_rect(box_pos, box_size, p.z + 1, col.*);
 				draw_rect_lines(box_pos, box_size, p.z + 2, border_col);
-				if is_mouse_inside_rect(box_pos, box_size) || is_mouse_inside_rect(p.pos + .{10, y}, .{s.x, 16}) {
+				if state != .NORMAL && (is_mouse_inside_rect(box_pos, box_size) || is_mouse_inside_rect(p.pos + .{10, y}, .{s.x, 16})) {
 					if is_mouse_pressed(0) {
 						ui.internal_edit = RGB_to_HSV(col.*);
 						ui.internal_selected = col;
