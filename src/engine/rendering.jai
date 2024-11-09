@@ -13,16 +13,16 @@ draw_rect :: (pos: Vec2, size: Vec2, z: f32, c1: Col, c2: Col, c3: Col, c4: Col)
 draw_panel :: ($$text: string, pos: Vec2, size: Vec2, layer: f32) {
 	p :: 4;
 
-	draw_rect(pos, .{p, 1}, layer, COLOR_LINE);
-	draw_rect(pos, .{1, size.y}, layer, COLOR_LINE);
-	draw_rect(pos + .{0, size.y - 1}, .{size.x, 1}, layer, COLOR_LINE);
-	draw_rect(pos + .{size.x - 1, 0}, .{1, size.y}, layer, COLOR_LINE);
+	draw_rect(pos, .{p, 1}, layer, settings.themes.platform_line);
+	draw_rect(pos, .{1, size.y}, layer, settings.themes.platform_line);
+	draw_rect(pos + .{0, size.y - 1}, .{size.x, 1}, layer, settings.themes.platform_line);
+	draw_rect(pos + .{size.x - 1, 0}, .{1, size.y}, layer, settings.themes.platform_line);
 
 	s :: 1;
 	m := measure_text(text, s);
-	draw_text(text, pos + .{p + 4, -m.y / 2}, layer, s, COLOR_LINE);
+	draw_text(text, pos + .{p + 4, -m.y / 2}, layer, s, settings.themes.platform_line);
 
-	draw_rect(pos + .{p + 8 + m.x, 0}, .{size.x - p - 8 - m.x, 1}, layer, COLOR_LINE);
+	draw_rect(pos + .{p + 8 + m.x, 0}, .{size.x - p - 8 - m.x, 1}, layer, settings.themes.platform_line);
 }
 
 draw_rect_lines :: (pos: Vec2, size: Vec2, layer: f32, col: Col, t: f32 = 1) {
@@ -120,36 +120,3 @@ Icon :: enum {
 	ARROW_LEFT;
 	ARROW_DOWN;
 }
-
-COLOR_WIDGET_BG_NORMAL      :: Col.{  73,  62,  51, 255 };
-COLOR_WIDGET_BG_HOVERED     :: Col.{ 188, 126,  59, 255 };
-COLOR_WIDGET_BG_PRESSED     :: Col.{ 246, 164,  76, 255 };
-COLOR_WIDGET_BORDER_NORMAL  :: Col.{ 196, 126,  43, 255 };
-COLOR_WIDGET_BORDER_HOVERED :: Col.{  49,  43,  40, 255 };
-COLOR_WIDGET_BORDER_PRESSED :: Col.{  80,  77,  73, 255 };
-
-COLOR_TEXT_NORMAL     :: Col.{ 246, 151,  48, 255 };
-COLOR_TEXT_HOVERED    :: Col.{ 216, 210, 206, 255 };
-COLOR_TEXT_PRESSED    :: Col.{ 104,  95,  93, 255 };
-
-COLOR_BACKGROUND      :: Col.{  32,  30,  28, 255 };
-COLOR_DEEP_BACKGROUND :: Col.{  10,  10,   5, 255 };
-
-COLOR_LINE            :: Col.{ 254, 170,  55, 255 };
-COLOR_DISABLED        :: Col.{  79,  85,  90, 255 };
-
-WHITE  :: Col.{240, 240, 220, 255};
-GREEN  :: Col.{ 59, 187,  20, 255};
-RED    :: Col.{202,  45,  31, 255};
-PURPLE :: Col.{130, 102, 193, 255};
-ORANGE :: Col.{221, 119,  17, 255};
-YELLOW :: Col.{238, 210,   5, 255};
-PINK   :: Col.{255, 110, 199, 255};
-GRAY   :: Col.{110, 110, 110, 255};
-BLUE   :: Col.{ 64, 104, 200, 255};
-AMBER  :: Col.{234, 191,  21, 255};
-BLACK  :: Col.{ 12,  12,  12, 255};
-
-DISPLAY_COLOR :: Col.[
-	BLACK, WHITE, GRAY, RED, ORANGE, YELLOW, GREEN, BLUE, PURPLE, PINK
-];

@@ -169,7 +169,7 @@ parse_settings_version_2 :: (file: *File) {
 parse_theming_version_2 :: (file: *File) {
 	size, success := file_length(file);  // don't move the cursor!
 	assert(success, "Unable to read theming file");
-	assert(size == 99, "Unable to read theming file, corrupted");
+	assert(size == 150, "Unable to read theming file, corrupted");
 
 	using settings.themes;
 
@@ -178,6 +178,7 @@ parse_theming_version_2 :: (file: *File) {
 	general_flag_on           = read_color_from_file(file);
 	general_debug_stack_empty = read_color_from_file(file);
 	general_debug_stack_full  = read_color_from_file(file);
+	general_stack_focus       = read_color_from_file(file);
 	
 	platform_widget_bg_normal     = read_color_from_file(file);
 	platform_widget_bg_hover      = read_color_from_file(file);
@@ -208,6 +209,23 @@ parse_theming_version_2 :: (file: *File) {
 	memory_display_empty = read_color_from_file(file);
 	memory_display_used  = read_color_from_file(file);
 	memory_input         = read_color_from_file(file);
+	
+	display_col0  = read_color_from_file(file);
+	display_col1  = read_color_from_file(file);
+	display_col2  = read_color_from_file(file);
+	display_col3  = read_color_from_file(file);
+	display_col4  = read_color_from_file(file);
+	display_col5  = read_color_from_file(file);
+	display_col6  = read_color_from_file(file);
+	display_col7  = read_color_from_file(file);
+	display_col8  = read_color_from_file(file);
+	display_col9  = read_color_from_file(file);
+	display_col10 = read_color_from_file(file);
+	display_col11 = read_color_from_file(file);
+	display_col12 = read_color_from_file(file);
+	display_col13 = read_color_from_file(file);
+	display_col14 = read_color_from_file(file);
+	display_col15 = read_color_from_file(file);
 	
 	memcpy(*settings.themes_saved_state, *settings.themes, size_of(Theming));
 }

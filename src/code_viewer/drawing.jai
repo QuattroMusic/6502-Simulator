@@ -2,7 +2,7 @@ draw_line_count_bar :: (x_visible: bool) {
 	w := get_width_of_line_count_bar();
 	off := viewer.pos;
 
-	draw_rect(off, .{w, viewer.size.y}, 1, COLOR_WIDGET_BG_NORMAL);
+	draw_rect(off, .{w, viewer.size.y}, 1, settings.themes.platform_widget_bg_normal);
 
 	start: int = xx viewer.scrollbar_pos.y / 16;
 	end: int = xx (viewer.scrollbar_pos.y + viewer.size.y - 8) / 16;
@@ -12,7 +12,7 @@ draw_line_count_bar :: (x_visible: bool) {
 
 		y := off.y + 10 + it * 16 - viewer.scrollbar_pos.y;
 		fmt := formatInt(it + 1, minimum_digits = viewer.row_digits, padding = #char " ");
-		draw_text(tprint("%", fmt), .{off.x + 8, y}, 2, 1, COLOR_TEXT_NORMAL);
+		draw_text(tprint("%", fmt), .{off.x + 8, y}, 2, 1, settings.themes.platform_text_normal);
 	}
 }
 
@@ -50,13 +50,13 @@ draw_colored_text :: (x_visible: bool) {
 
 parse_token :: (t: Color_Tokens) -> Col {
 	if #complete t == {
-		case .INSTRUCTION; return PURPLE;
-		case .COMMENT;     return GRAY;
-		case .NUMBER;      return BLUE;
-		case .DOTDIR;      return ORANGE;
-		case .LABEL;       return AMBER;
-		case .STRING;      return GREEN;
-		case .TEXT;        return WHITE;
+		case .INSTRUCTION; return settings.themes.viewer_instruction;
+		case .COMMENT;     return settings.themes.viewer_comment;
+		case .NUMBER;      return settings.themes.viewer_number;
+		case .DOTDIR;      return settings.themes.viewer_dotdir;
+		case .LABEL;       return settings.themes.viewer_label;
+		case .STRING;      return settings.themes.viewer_string;
+		case .TEXT;        return settings.themes.viewer_text;
 	}
 }
 

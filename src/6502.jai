@@ -2,41 +2,59 @@ Theming :: struct {
 	// we're using the color picker in HSV for a better precision
 	// at the end of the chain we're still converting the HSV to RGB for GPU reasons
 	// hence, we're storing data as HSV and RGB
-	general_text:              Col = COLOR_TEXT_NORMAL;
-	general_flag_off:          Col = RED;
-	general_flag_on:           Col = GREEN;
-	general_debug_stack_empty: Col = GREEN;
-	general_debug_stack_full:  Col = RED;
+	general_text:              Col = .{240, 240, 220, 255};
+	general_flag_off:          Col = .{202,  45,  31, 255};
+	general_flag_on:           Col = .{ 59, 187,  20, 255};
+	general_debug_stack_empty: Col = .{ 59, 187,  20, 255};
+	general_debug_stack_full:  Col = .{202,  45,  31, 255};
+	general_stack_focus:       Col = .{202,  45,  31, 255};
 	
-	platform_widget_bg_normal:     Col = COLOR_WIDGET_BG_NORMAL;
-	platform_widget_bg_hover:      Col = COLOR_WIDGET_BG_HOVERED;
-	platform_widget_bg_press:      Col = COLOR_WIDGET_BG_PRESSED;
-	platform_widget_border_normal: Col = COLOR_WIDGET_BORDER_NORMAL;
-	platform_widget_border_hover:  Col = COLOR_WIDGET_BORDER_HOVERED;
-	platform_widget_border_press:  Col = COLOR_WIDGET_BORDER_PRESSED;
-	platform_text_normal:          Col = COLOR_TEXT_NORMAL;
-	platform_text_hover:           Col = COLOR_TEXT_HOVERED;
-	platform_text_press:           Col = COLOR_TEXT_PRESSED;
-	platform_background:           Col = COLOR_BACKGROUND;
-	platform_deep_background:      Col = COLOR_DEEP_BACKGROUND;
-	platform_line:                 Col = COLOR_LINE;
-	platform_disabled:             Col = COLOR_DISABLED;
+	platform_widget_bg_normal:     Col = .{ 73,  62,  51, 255};
+	platform_widget_bg_hover:      Col = .{188, 126,  59, 255};
+	platform_widget_bg_press:      Col = .{246, 164,  76, 255};
+	platform_widget_border_normal: Col = .{196, 126,  43, 255};
+	platform_widget_border_hover:  Col = .{ 49,  43,  40, 255};
+	platform_widget_border_press:  Col = .{ 80,  77,  73, 255};
+	platform_text_normal:          Col = .{246, 151,  48, 255};
+	platform_text_hover:           Col = .{216, 210, 206, 255};
+	platform_text_press:           Col = .{104,  95,  93, 255};
+	platform_background:           Col = .{ 32,  30,  28, 255};
+	platform_deep_background:      Col = .{ 10,  10,   5, 255};
+	platform_line:                 Col = .{254, 170,  55, 255};
+	platform_disabled:             Col = .{ 79,  85,  90, 255};
 	
-	viewer_text:        Col = WHITE;
-	viewer_number:      Col = BLUE;
-	viewer_comment:     Col = GRAY;
-	viewer_dotdir:      Col = ORANGE;
-	viewer_label:       Col = AMBER;
-	viewer_instruction: Col = PURPLE;
-	viewer_string:      Col = GREEN;
+	viewer_text:        Col = .{240, 240, 220, 255};
+	viewer_number:      Col = .{ 64, 104, 200, 255};
+	viewer_comment:     Col = .{110, 110, 110, 255};
+	viewer_dotdir:      Col = .{221, 119,  17, 255};
+	viewer_label:       Col = .{234, 191,  21, 255};
+	viewer_instruction: Col = .{130, 102, 193, 255};
+	viewer_string:      Col = .{ 59, 187,  20, 255};
 	
-	memory_normal_empty:  Col = WHITE;
-	memory_normal_used:   Col = GREEN;
-	memory_stack_empty:   Col = PURPLE;
-	memory_stack_used:    Col = BLUE;
-	memory_display_empty: Col = YELLOW;
-	memory_display_used:  Col = ORANGE;
-	memory_input:         Col = PINK;
+	memory_normal_empty:  Col = .{240, 240, 220, 255};
+	memory_normal_used:   Col = .{ 59, 187,  20, 255};
+	memory_stack_empty:   Col = .{130, 102, 193, 255};
+	memory_stack_used:    Col = .{ 64, 104, 200, 255};
+	memory_display_empty: Col = .{238, 210,   5, 255};
+	memory_display_used:  Col = .{221, 119,  17, 255};
+	memory_input:         Col = .{255, 110, 199, 255};
+	
+	display_col0:  Col = .{ 12,  12,  12, 255};
+	display_col1:  Col = .{240, 240, 220, 255};
+	display_col2:  Col = .{110, 110, 110, 255};
+	display_col3:  Col = .{202,  45,  31, 255};
+	display_col4:  Col = .{221, 119,  17, 255};
+	display_col5:  Col = .{238, 210,   5, 255};
+	display_col6:  Col = .{ 59, 187,  20, 255};
+	display_col7:  Col = .{ 64, 104, 200, 255};
+	display_col8:  Col = .{130, 102, 193, 255};
+	display_col9:  Col = .{255, 110, 199, 255};
+	display_col10: Col = .{  0,   0,   0, 255};
+	display_col11: Col = .{  0,   0,   0, 255};
+	display_col12: Col = .{  0,   0,   0, 255};
+	display_col13: Col = .{  0,   0,   0, 255};
+	display_col14: Col = .{  0,   0,   0, 255};
+	display_col15: Col = .{  0,   0,   0, 255};
 }
 
 At_Startup :: enum u8 {

@@ -27,7 +27,7 @@ draw_one_frame :: () {
 	if !vp.reduced {  // Todo - I should find a way to entirely disable this until it's not reduced anymore
 		begin_widgets();
 		begin_drawing();
-		clear_background(COLOR_DEEP_BACKGROUND);
+		clear_background(settings.themes.platform_deep_background);
 
 		update_6502();
 

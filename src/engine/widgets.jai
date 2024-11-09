@@ -8,9 +8,9 @@ button :: ($$text: string, pos: Vec2, size: Vec2, z: f32, $t: f32 = 1, disabled 
 	text_col:   Col = ---;
 	
 	if disabled {
-		bg_col = COLOR_WIDGET_BG_NORMAL;
-		border_col = COLOR_DISABLED;
-		text_col = COLOR_DISABLED;
+		bg_col = settings.themes.platform_widget_bg_normal;
+		border_col = settings.themes.platform_disabled;
+		text_col = settings.themes.platform_disabled;
 	} else {
 		bg_col, border_col, text_col = fetch_colors(state);
 	}
@@ -51,18 +51,18 @@ checkbox :: ($$text: string, pos: Vec2, size: Vec2, z: f32, value: *bool, it: in
 	text_col: Col;
 	if state == {
 		case .NORMAL;
-			bg_col = COLOR_WIDGET_BG_HOVERED;
-			text_col = COLOR_TEXT_NORMAL;
+			bg_col = settings.themes.platform_widget_bg_hover;
+			text_col = settings.themes.platform_text_normal;
 		case .HOVER;
-			bg_col = COLOR_WIDGET_BG_HOVERED;
-			text_col = COLOR_TEXT_HOVERED;
+			bg_col = settings.themes.platform_widget_bg_hover;
+			text_col = settings.themes.platform_text_hover;
 		case .PRESSED;
-			bg_col = COLOR_WIDGET_BG_PRESSED;
-			text_col = COLOR_TEXT_HOVERED;
+			bg_col = settings.themes.platform_widget_bg_press;
+			text_col = settings.themes.platform_text_hover;
 	}
 
 	if value.* || state == .PRESSED then draw_rect(pos + p.pos + .{4, 4}, size - .{8, 8}, z + p.z, bg_col);
-	draw_rect_lines(pos + p.pos, size, z + p.z + 1, COLOR_LINE);
+	draw_rect_lines(pos + p.pos, size, z + p.z + 1, settings.themes.platform_line);
 	draw_text(text, pos + p.pos + .{size.x + 8, (size.y - s.y) / 2}, z + p.z, 1, text_col);
 
 	if fire then value.* = !value.*;
@@ -71,7 +71,7 @@ checkbox :: ($$text: string, pos: Vec2, size: Vec2, z: f32, value: *bool, it: in
 draw_step_hslider :: (pos: Vec2, size: Vec2, z: f32, amt: s32, value: *int, disabled: bool = false, it: int = 0, loc := #caller_location) -> bool {
 	p := fetch_parent();
 	
-	draw_rect(p.pos + pos + .{0, size.y / 2 - 1}, .{size.x, 2}, p.z + z, ifx disabled then COLOR_DISABLED else COLOR_LINE);
+	draw_rect(p.pos + pos + .{0, size.y / 2 - 1}, .{size.x, 2}, p.z + z, ifx disabled then settings.themes.platform_disabled else settings.themes.platform_line);
 
 	col_main: Col = ---;
 	col_step: Col = ---;
@@ -79,20 +79,20 @@ draw_step_hslider :: (pos: Vec2, size: Vec2, z: f32, amt: s32, value: *int, disa
 	edited: bool;
 
 	if !disabled {
-		col_main = COLOR_WIDGET_BG_HOVERED;
-		col_step = COLOR_WIDGET_BORDER_NORMAL;
+		col_main = settings.themes.platform_widget_bg_hover;
+		col_step = settings.themes.platform_widget_border_normal;
 
 		uuid := hash_widget(loc, it);
 		state, fire := widget_interaction(uuid, pos, size, z, p);
 		
 		if state == .PRESSED {
-			col_main = COLOR_WIDGET_BG_PRESSED;
+			col_main = settings.themes.platform_widget_bg_press;
 			value.* = xx clamp((cast(f32)mouse_x - pos.x - p.pos.x) / size.x * amt, 0, xx (amt - 1));
 			edited = true;
 		}
 	} else {
-		col_main = COLOR_DISABLED;
-		col_step = COLOR_DISABLED;
+		col_main = settings.themes.platform_disabled;
+		col_step = settings.themes.platform_disabled;
 	}
 
 	for 0..amt / 3 {
@@ -135,12 +135,12 @@ draw_scrollbar :: (pos: Vec2, size: Vec2, z: f32, scroll_pos: *Vec2, scroll_size
 			scroll_pos.*.y = (mouse_y - pos.y - bar_height / 2 - p.pos.y) / aspect_ratio;
 		}
 
-		bar_col := ifx state == .NORMAL then COLOR_WIDGET_BORDER_NORMAL else COLOR_WIDGET_BG_PRESSED;
+		bar_col := ifx state == .NORMAL then settings.themes.platform_widget_border_normal else settings.themes.platform_widget_bg_press;
 
 		val := round_up(scroll_pos.y, 16);
 		scroll_pos.*.y = clamp(val, 0, max_value.y - min_size.y);
 
-		draw_rect(p.pos + .{scroll_pos_x, scroll_pos_y}, .{WIDGET_SCROLLBAR_SIZE, size.y}, p.z + z, COLOR_WIDGET_BG_NORMAL);
+		draw_rect(p.pos + .{scroll_pos_x, scroll_pos_y}, .{WIDGET_SCROLLBAR_SIZE, size.y}, p.z + z, settings.themes.platform_widget_bg_normal);
 		draw_rect(p.pos + .{scroll_pos_x, floor(scroll_pos_y + aspect_ratio * scroll_pos.*.y)}, .{WIDGET_SCROLLBAR_SIZE, bar_height}, p.z + z + 1, bar_col);
 	}
 
@@ -166,21 +166,21 @@ draw_scrollbar :: (pos: Vec2, size: Vec2, z: f32, scroll_pos: *Vec2, scroll_size
 			scroll_pos.*.x = (mouse_x - pos.x - bar_width / 2 - p.pos.x) / aspect_ratio;
 		}
 
-		bar_col := ifx state == .NORMAL then COLOR_WIDGET_BORDER_NORMAL else COLOR_WIDGET_BG_PRESSED;
+		bar_col := ifx state == .NORMAL then settings.themes.platform_widget_border_normal else settings.themes.platform_widget_bg_press;
 
 		val := round_up(scroll_pos.x, 16);
 		scroll_pos.*.x = clamp(val, 0, max_value.x - min_size.x);
 
-		draw_rect(p.pos + .{scroll_pos_x, scroll_pos_y}, .{size.x, WIDGET_SCROLLBAR_SIZE}, p.z + z, COLOR_WIDGET_BG_NORMAL);
+		draw_rect(p.pos + .{scroll_pos_x, scroll_pos_y}, .{size.x, WIDGET_SCROLLBAR_SIZE}, p.z + z, settings.themes.platform_widget_bg_normal);
 		draw_rect(p.pos + .{floor(scroll_pos_x + aspect_ratio * scroll_pos.*.x), scroll_pos_y}, .{bar_width, WIDGET_SCROLLBAR_SIZE}, p.z + z + 1, bar_col);
 	}
 }
 
 tab_bar :: (pos: Vec2, width: f32, z: f32, $tabs: []string, focused_tab: *int, it_: int = 0, loc := #caller_location) {
 	draw_selected_rect :: (pos: Vec2, size: Vec2, z: f32) {
-		draw_rect(pos, .{1, size.y}, z, COLOR_LINE);
-		draw_rect(pos, .{size.x, 1}, z, COLOR_LINE);
-		draw_rect(pos + .{size.x, 0}, .{1, size.y}, z, COLOR_LINE);
+		draw_rect(pos, .{1, size.y}, z, settings.themes.platform_line);
+		draw_rect(pos, .{size.x, 1}, z, settings.themes.platform_line);
+		draw_rect(pos + .{size.x, 0}, .{1, size.y}, z, settings.themes.platform_line);
 	}
 
 	p := fetch_parent();
@@ -205,12 +205,12 @@ tab_bar :: (pos: Vec2, width: f32, z: f32, $tabs: []string, focused_tab: *int, i
 
 		text_col: Col = ---;
 		if it_index == focused_tab.* {
-			text_col = COLOR_TEXT_NORMAL;
+			text_col = settings.themes.platform_text_normal;
 			draw_selected_rect(p.pos + pos + .{4 + x, 0}, .{d.x + 8, s}, p.z + z);
-			draw_rect(p.pos + pos + .{0, s - 1}, .{w, 1}, p.z + z, COLOR_LINE);
+			draw_rect(p.pos + pos + .{0, s - 1}, .{w, 1}, p.z + z, settings.themes.platform_line);
 			w_continue = w + d.x + 8;
 		} else {
-			text_col = COLOR_DISABLED;
+			text_col = settings.themes.platform_disabled;
 			draw_selected_rect(p.pos + .{4 + pos.x + x, pos.y}, .{d.x + 8, s}, p.z + z);
 			w += d.x + 16;
 		}
@@ -220,18 +220,18 @@ tab_bar :: (pos: Vec2, width: f32, z: f32, $tabs: []string, focused_tab: *int, i
 		x += d.x + 16;
 	}
 
-	draw_rect(p.pos + pos + .{w_continue, s - 1}, .{width - w_continue, 1}, p.z + z, COLOR_LINE);
+	draw_rect(p.pos + pos + .{w_continue, s - 1}, .{width - w_continue, 1}, p.z + z, settings.themes.platform_line);
 }
 
 h_separator :: ($name: string, pos: Vec2, width: f32, z: f32) {
 	p :: 12;
 
-	draw_rect(pos, .{p, 1}, z, COLOR_LINE);
+	draw_rect(pos, .{p, 1}, z, settings.themes.platform_line);
 
-	draw_text(name, pos + .{p + 4, -5}, z, 1, COLOR_TEXT_NORMAL);
+	draw_text(name, pos + .{p + 4, -5}, z, 1, settings.themes.platform_text_normal);
 	s :: #run measure_text(name, 1);
 
-	draw_rect(pos + .{p + 8 + s.x, 0}, .{width - p - 8 - s.x, 1}, z, COLOR_LINE);
+	draw_rect(pos + .{p + 8 + s.x, 0}, .{width - p - 8 - s.x, 1}, z, settings.themes.platform_line);
 }
 
 combo_box :: (pos: Vec2, size: Vec2, z: f32, items: []string, selected: *int, opened: *bool, it_: int = 0, loc := #caller_location) -> bool {
@@ -260,7 +260,7 @@ combo_box :: (pos: Vec2, size: Vec2, z: f32, items: []string, selected: *int, op
 		draw_icon(.ARROW_DOWN, p.pos + pos + .{size.x - 20 + 2, 2}, p.z + z + 1, 2, text_col);
 		draw_rect_lines(p.pos + pos + .{size.x - 20, 0}, .{20, 20}, p.z + z + 1, border_col);
 		
-		draw_rect(p.pos + pos + .{0, 20.0}, .{size.x, h}, p.z + z + 1, COLOR_WIDGET_BG_NORMAL);
+		draw_rect(p.pos + pos + .{0, 20.0}, .{size.x, h}, p.z + z + 1, settings.themes.platform_widget_bg_normal);
 		
 		for items {
 			x := p.pos.x + pos.x;
@@ -317,12 +317,12 @@ color_picker :: (pos: Vec2, z: f32, hsv: *Vec3, rgb: *Col, it: int = 0, loc := #
 	
 	text_pos := p.pos + .{18, 162};
 	fmt :: #bake_arguments formatInt(minimum_digits = 3, padding = #char " ");
-	draw_text(tprint("R: %", fmt(rgb.r)), text_pos + .{  0, 20}, p.z + z, 1, COLOR_TEXT_NORMAL);
-	draw_text(tprint("G: %", fmt(rgb.g)), text_pos + .{ 62, 20}, p.z + z, 1, COLOR_TEXT_NORMAL);
-	draw_text(tprint("B: %", fmt(rgb.b)), text_pos + .{124, 20}, p.z + z, 1, COLOR_TEXT_NORMAL);
-	draw_text(tprint("H: %", fmt(cast(s32)(hsv.x * 360))), text_pos + .{  0, 36}, p.z + z, 1, COLOR_TEXT_NORMAL);
-	draw_text(tprint("S: %", fmt(cast(s32)(hsv.y * 100))), text_pos + .{ 62, 36}, p.z + z, 1, COLOR_TEXT_NORMAL);
-	draw_text(tprint("V: %", fmt(cast(s32)(hsv.z * 100))), text_pos + .{124, 36}, p.z + z, 1, COLOR_TEXT_NORMAL);
+	draw_text(tprint("R: %", fmt(rgb.r)), text_pos + .{  0, 20}, p.z + z, 1, settings.themes.platform_text_normal);
+	draw_text(tprint("G: %", fmt(rgb.g)), text_pos + .{ 62, 20}, p.z + z, 1, settings.themes.platform_text_normal);
+	draw_text(tprint("B: %", fmt(rgb.b)), text_pos + .{124, 20}, p.z + z, 1, settings.themes.platform_text_normal);
+	draw_text(tprint("H: %", fmt(cast(s32)(hsv.x * 360))), text_pos + .{  0, 36}, p.z + z, 1, settings.themes.platform_text_normal);
+	draw_text(tprint("S: %", fmt(cast(s32)(hsv.y * 100))), text_pos + .{ 62, 36}, p.z + z, 1, settings.themes.platform_text_normal);
+	draw_text(tprint("V: %", fmt(cast(s32)(hsv.z * 100))), text_pos + .{124, 36}, p.z + z, 1, settings.themes.platform_text_normal);
 	
 	draw_color_picker_rect(p.pos + .{8, 8}, .{s, s}, p.z, hsv.x);
 	
@@ -333,16 +333,16 @@ color_picker :: (pos: Vec2, z: f32, hsv: *Vec3, rgb: *Col, it: int = 0, loc := #
 	draw_rect(p.pos + .{s + 12, s * 4 / 6 + 8}, .{20, s / 6}, p.z, .{0, 0, 255, 255}, .{0, 0, 255, 255}, .{255, 0, 255, 255}, .{255, 0, 255, 255});
 	draw_rect(p.pos + .{s + 12, s * 5 / 6 + 8}, .{20, s / 6}, p.z, .{255, 0, 255, 255}, .{255, 0, 255, 255}, .{255, 0, 0, 255}, .{255, 0, 0, 255});
 	
-	draw_rect_lines(p.pos + .{8, 8}, .{s, s}, p.z + 1, COLOR_LINE);
-	draw_rect_lines(p.pos + .{s + 12, 8}, .{20, s}, p.z + 1, COLOR_LINE);
+	draw_rect_lines(p.pos + .{8, 8}, .{s, s}, p.z + 1, settings.themes.platform_line);
+	draw_rect_lines(p.pos + .{s + 12, 8}, .{20, s}, p.z + 1, settings.themes.platform_line);
 	
 	cursor := p.pos + Vec2.{(s - 2) * hsv.y, (s - 2) * (1 - hsv.z)} + .{9, 9};
 	draw_rect(cursor - .{4, 4}, .{8, 8}, p.z + 2, rgb);
-	draw_rect_lines(cursor - .{4, 4}, .{8, 8}, p.z + 3, COLOR_LINE);
+	draw_rect_lines(cursor - .{4, 4}, .{8, 8}, p.z + 3, settings.themes.platform_line);
 	
 	rgb2 := HSV_to_RGB(.{hsv.x, 1, 1});
 	p1 := p.pos + .{s + 12, 8 + hsv.x * (s - 1)};
-	draw_rect_lines(p1 - .{2, 2}, .{24, 6}, p.z + 2, COLOR_LINE);
+	draw_rect_lines(p1 - .{2, 2}, .{24, 6}, p.z + 2, settings.themes.platform_line);
 	draw_rect(p1 - .{2, 2}, .{24, 6}, p.z + 2, rgb2);
 	
 	child_end();
@@ -381,19 +381,19 @@ window :: (uuid: ID, p: *Panel) {
 	parent.uuid = uuid;
 	array_add(*parent_panels, parent);
 
-	draw_rect(p.pos, p.size, p.z, COLOR_WIDGET_BG_NORMAL);
-	draw_rect_lines(p.pos, p.size, p.z + 1, COLOR_WIDGET_BORDER_NORMAL);
-	if p.name then draw_text(p.name, p.pos + .{9, 8}, p.z + 1, 1, COLOR_TEXT_NORMAL);
+	draw_rect(p.pos, p.size, p.z, settings.themes.platform_widget_bg_normal);
+	draw_rect_lines(p.pos, p.size, p.z + 1, settings.themes.platform_widget_border_normal);
+	if p.name then draw_text(p.name, p.pos + .{9, 8}, p.z + 1, 1, settings.themes.platform_text_normal);
 
 	fire: bool;
 	if p.flags & .HEADER {
 		fire = button(.CLOSE, .{p.size.x - WIDGET_HEADER_HEIGHT, -WIDGET_HEADER_HEIGHT}, .{WIDGET_HEADER_HEIGHT, WIDGET_HEADER_HEIGHT}, z = 1, it = uuid);
-		draw_rect(p.pos + .{0, WIDGET_HEADER_HEIGHT - 1}, .{p.size.x, 1}, p.z + 1, COLOR_WIDGET_BORDER_NORMAL);
+		draw_rect(p.pos + .{0, WIDGET_HEADER_HEIGHT - 1}, .{p.size.x, 1}, p.z + 1, settings.themes.platform_widget_border_normal);
 	}
 
 	if p.flags & .MODAL then fire |= is_key_pressed(KEY_ESC);
-	if fire    then {
-		p.*.visible = false;
+	if fire  {
+		p.visible = false;
 		if p.on_close then p.on_close();
 	}
 
@@ -407,16 +407,16 @@ child_begin :: ($$text: string, pos: Vec2, size: Vec2, z: f32) {
 
 	p := fetch_parent();
 
-	draw_rect(pos + p.pos, .{padding, 1}, z + p.z, COLOR_LINE);
-	draw_rect(pos + p.pos, .{1, size.y}, z + p.z, COLOR_LINE);
-	draw_rect(pos + p.pos + .{0, size.y - 1}, .{size.x, 1}, z + p.z, COLOR_LINE);
-	draw_rect(pos + p.pos + .{size.x - 1, 0}, .{1, size.y}, z + p.z, COLOR_LINE);
+	draw_rect(pos + p.pos, .{padding, 1}, z + p.z, settings.themes.platform_line);
+	draw_rect(pos + p.pos, .{1, size.y}, z + p.z, settings.themes.platform_line);
+	draw_rect(pos + p.pos + .{0, size.y - 1}, .{size.x, 1}, z + p.z, settings.themes.platform_line);
+	draw_rect(pos + p.pos + .{size.x - 1, 0}, .{1, size.y}, z + p.z, settings.themes.platform_line);
 
 	s :: 1;
 	m := measure_text(text, s);
-	draw_text(text, pos + p.pos + .{padding + 4, -m.y / 2}, z + p.z, s, COLOR_LINE);
+	draw_text(text, pos + p.pos + .{padding + 4, -m.y / 2}, z + p.z, s, settings.themes.platform_line);
 
-	draw_rect(pos + p.pos + .{padding + 8 + m.x, 0}, .{size.x - padding - 8 - m.x, 1}, z + p.z, COLOR_LINE);
+	draw_rect(pos + p.pos + .{padding + 8 + m.x, 0}, .{size.x - padding - 8 - m.x, 1}, z + p.z, settings.themes.platform_line);
 
 	parent: Panel = ---;
 	parent.pos = pos + p.pos;
@@ -515,7 +515,13 @@ toggle_panel :: (uuid: ID, pos: Vec2 = .{}, $centered := false) {
 
 	#if DEBUG then assert(p != null);
 
-	p.*.visible = !p.*.visible;
+	if p.*.visible {
+		p.*.visible = false;
+		p.*.pressed = false;
+	} else {
+		p.*.visible = true;
+	}
+	
 	#if centered {
 		x := (vp.width - p.size.x) / 2;
 		y := (vp.height - p.size.y) / 2;
@@ -555,9 +561,9 @@ fetch_parent :: () -> Panel {
 
 fetch_colors :: (state: Interaction_State) -> (main: Col, border: Col, text: Col) {
 	if #complete state == {
-		case .NORMAL;  return COLOR_WIDGET_BG_NORMAL,  COLOR_WIDGET_BORDER_NORMAL,  COLOR_TEXT_NORMAL;
-		case .HOVER;   return COLOR_WIDGET_BG_HOVERED, COLOR_WIDGET_BORDER_HOVERED, COLOR_TEXT_HOVERED;
-		case .PRESSED; return COLOR_WIDGET_BG_PRESSED, COLOR_WIDGET_BORDER_PRESSED, COLOR_TEXT_PRESSED;
+		case .NORMAL;  return settings.themes.platform_widget_bg_normal,  settings.themes.platform_widget_border_normal,  settings.themes.platform_text_normal;
+		case .HOVER;   return settings.themes.platform_widget_bg_hover, settings.themes.platform_widget_border_hover, settings.themes.platform_text_hover;
+		case .PRESSED; return settings.themes.platform_widget_bg_press, settings.themes.platform_widget_border_press, settings.themes.platform_text_press;
 	}
 }
 
