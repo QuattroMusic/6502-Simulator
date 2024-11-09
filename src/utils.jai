@@ -107,12 +107,12 @@ HSV_to_RGB :: (col: Vec3) -> Col {
 	t := col.z * (1.0 - (col.y * (1.0 - f)));
 	
 	if cast(s32)h == {
-		case 0; return .{cast(u8)(col.z * 255), cast(u8)(t     * 255), cast(u8)(p     * 255), 255};
 		case 1; return .{cast(u8)(q     * 255), cast(u8)(col.z * 255), cast(u8)(p     * 255), 255};
 		case 2; return .{cast(u8)(p     * 255), cast(u8)(col.z * 255), cast(u8)(t     * 255), 255};
 		case 3; return .{cast(u8)(p     * 255), cast(u8)(q     * 255), cast(u8)(col.z * 255), 255};
 		case 4; return .{cast(u8)(t     * 255), cast(u8)(p     * 255), cast(u8)(col.z * 255), 255};
-		case;   return .{cast(u8)(col.z * 255), cast(u8)(p     * 255), cast(u8)(q     * 255), 255};
+		case 5; return .{cast(u8)(col.z * 255), cast(u8)(p     * 255), cast(u8)(q     * 255), 255};
+		case;   return .{cast(u8)(col.z * 255), cast(u8)(t     * 255), cast(u8)(p     * 255), 255};
 	}
 }
 
