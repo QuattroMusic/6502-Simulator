@@ -64,7 +64,12 @@ get_file_header :: (f: *File) -> (maj: u8, min: u16) {
 write_options_content :: (file: *File) {
 	setup_file_header(file);
 	
-	file_write(file, *settings.platform.at_startup,               size_of(type_of(settings.platform.at_startup)));
+	file_write(file, *settings.platform.at_startup, size_of(type_of(settings.platform.at_startup)));
+	if(settings.platform.at_startup == .OPEN_LAST_FILE) {
+		file_write(file, *viewer.file_path.count, size_of(type_of(viewer.file_path.count)));
+		file_write(file, viewer.file_path.data, viewer.file_path.count);
+	}
+	
 	file_write(file, *settings.platform.code_cursor_speed_slow,   size_of(type_of(settings.platform.code_cursor_speed_slow)));
 	file_write(file, *settings.platform.code_cursor_speed_fast,   size_of(type_of(settings.platform.code_cursor_speed_fast)));
 	file_write(file, *settings.platform.memory_cursor_speed_slow, size_of(type_of(settings.platform.memory_cursor_speed_slow)));
@@ -152,13 +157,31 @@ parse_theme_file :: () {
 parse_settings_version_2 :: (file: *File) {
 	size, success := file_length(file);  // don't move the cursor!
 	assert(success, "Unable to read settings file");
-	assert(size == 8, "Unable to read settings file, corrupted");
 	
 	using settings.platform;
 	
 	{
 		m, M := enum_range(At_Startup);
 		at_startup = xx read_u8_in_range(file, xx m, xx M);
+		if at_startup == .OPEN_LAST_FILE {
+			file_size: type_of(viewer.file_path.count);
+			file_read(file, *file_size, size_of(type_of(viewer.file_path.count)));
+			
+			total_size := size_of(type_of(viewer.file_path.count)) + file_size + size_of(Platform_Settings) + 3;
+			assert(size == total_size, "Unable to read settings file, corrupted");
+			
+			str: string;
+			str.data = talloc(file_size);
+			str.count = file_size;
+			
+			file_read(file, str.data, str.count);
+			
+			if file_exists(str) {
+				init_code_viewer(str);
+			}
+		} else {
+			assert(size == 8, "Unable to read settings file, corrupted");
+		}
 	}
 	code_cursor_speed_slow   = read_u8_in_range(file, CURSOR_SCROLLBAR_MIN_VALUE - 1, CURSOR_SCROLLBAR_MAX_VALUE - 1);
 	code_cursor_speed_fast   = read_u8_in_range(file, CURSOR_SCROLLBAR_MIN_VALUE - 1, CURSOR_SCROLLBAR_MAX_VALUE - 1);

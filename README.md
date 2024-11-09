@@ -142,7 +142,6 @@ init:
 
 ### Version 2.0
 - [x] render and gui revamp
-- [ ] calculator / conversion panel
 - [ ] options panel + save configurations to file
 - [ ] browser panel
 

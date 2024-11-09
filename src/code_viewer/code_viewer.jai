@@ -89,4 +89,8 @@ handle_dropped_file :: (file: string) {
 
 	deinit_code_viewer();
 	init_code_viewer(file);
+	
+	if settings.platform.at_startup == .OPEN_LAST_FILE {
+		save_options_file();
+	}
 }

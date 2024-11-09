@@ -72,7 +72,7 @@ main :: () {
 
 	init_settings();
 
-	init_code_viewer("examples\\paint.s");
+	// init_code_viewer("examples\\paint.s");
 
 	setup_windows();
 

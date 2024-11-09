@@ -250,11 +250,12 @@ combo_box :: (pos: Vec2, size: Vec2, z: f32, items: []string, selected: *int, op
 	
 	if is_mouse_pressed(0) && !is_mouse_inside_rect(p.pos + pos, .{size.x, h + 20.0}) then opened.* = false;
 	
+	fire_internal: bool;
+	
 	if state == .HOVER && mouse_dz {
 		selected.* = clamp(selected.* - mouse_dz, 0, items.count - 1);
+		fire_internal = true;
 	}
-	
-	fire_internal: bool;
 	
 	if opened.* {
 		draw_icon(.ARROW_DOWN, p.pos + pos + .{size.x - 20 + 2, 2}, p.z + z + 1, 2, text_col);
