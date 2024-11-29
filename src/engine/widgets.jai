@@ -1,7 +1,52 @@
-button :: ($$text: string, pos: Vec2, size: Vec2, z: f32, $t: f32 = 1, disabled := false, it: int = 0, loc := #caller_location) -> bool {
-	uuid := hash_widget(loc, it);
+draw_widget_rect :: inline (pos: Vec2, size: Vec2, z: f32, col: Col) {
 	p := fetch_parent();
-	state, fire := widget_interaction(uuid, pos, size, z, p);
+	draw_rect(p.pos + pos, size, p.z + z, col);
+}
+
+draw_widget_rect :: inline (pos: Vec2, size: Vec2, z: f32, c1: Col, c2: Col, c3: Col, c4: Col) {
+	p := fetch_parent();
+	draw_rect(p.pos + pos, size, p.z + z, c1, c2, c3, c4);
+}
+
+draw_widget_rect_lines :: inline (pos: Vec2, size: Vec2, z: f32, col: Col, t: f32 = 1) {
+	p := fetch_parent();
+	draw_rect_lines(p.pos + pos, size, p.z + z, col, t);
+}
+
+draw_widget_text :: inline (text: string, pos: Vec2, z: f32, scale: f32, color: Col, $wrap: f32 = 0) {
+	p := fetch_parent();
+	draw_text(text, p.pos + pos, p.z + z, scale, color, wrap);
+}
+
+draw_widget_icon :: inline (icon: Icon, pos: Vec2, z: f32, $scale: f32, col: Col) {
+	p := fetch_parent();
+	draw_icon(icon, p.pos + pos, p.z + z, scale, col);
+}
+
+get_relative_x :: inline () -> f32 {
+	p := fetch_parent();
+	return mouse_x - p.pos.x;
+}
+
+get_relative_y :: inline () -> f32 {
+	p := fetch_parent();
+	return mouse_y - p.pos.y;
+}
+
+get_relative_pos :: inline () -> Vec2 {
+	p := fetch_parent();
+	x := mouse_x - p.pos.x;
+	y := mouse_y - p.pos.y;
+	return .{x, y};
+}
+
+is_mouse_inside_widget_rect :: inline (pos: Vec2, size: Vec2) -> bool {
+	p := fetch_parent();
+	return is_mouse_inside_rect(p.pos + pos, size);
+}
+
+button :: ($$text: string, pos: Vec2, size: Vec2, z: f32, $t: f32 = 1, disabled := false, it: int = 0, loc := #caller_location) -> bool {
+	state, fire := create_selectable_region(.BUTTON, loc, it, pos, size, z);
 
 	bg_col:     Col = ---;
 	border_col: Col = ---;
@@ -15,27 +60,25 @@ button :: ($$text: string, pos: Vec2, size: Vec2, z: f32, $t: f32 = 1, disabled 
 		bg_col, border_col, text_col = fetch_colors(state);
 	}
 
-	draw_rect(pos + p.pos, size, z + p.z, bg_col);
-	draw_rect_lines(pos + p.pos, size, z + 1 + p.z, border_col, t);
+	draw_widget_rect(pos, size, z, bg_col);
+	draw_widget_rect_lines(pos, size, z + 1, border_col, t);
 
 	s := measure_text(text, t);
-	draw_text(text, pos + size / 2 - s / 2 + p.pos, z + 1 + p.z, t, text_col);
+	draw_widget_text(text, pos + size / 2 - s / 2, z + 1, t, text_col);
 
 	return fire;
 }
 
 button :: (icon: Icon, pos: Vec2, size: Vec2, z: f32, $t: f32 = 1, it: int = 0, loc := #caller_location) -> bool {
-	uuid := hash_widget(loc, it);
-	p := fetch_parent();
-	state, fire := widget_interaction(uuid, pos, size, z, p);
+	state, fire := create_selectable_region(.BUTTON, loc, it, pos, size, z);
 
 	bg_col, border_col, text_col := fetch_colors(state);
 
-	draw_rect(pos + p.pos, size, z + p.z, bg_col);
-	draw_rect_lines(pos + p.pos, size, z + 1 + p.z, border_col, t);
+	draw_widget_rect(pos, size, z, bg_col);
+	draw_widget_rect_lines(pos, size, z + 1, border_col, t);
 
 	s :: Vec2.{8.0 * t, 8.0 * t};
-	draw_icon(icon, pos + size / 2 - s / 2 + p.pos, z + 1 + p.z, t, text_col);
+	draw_widget_icon(icon, pos + size / 2 - s / 2, z + 1, t, text_col);
 
 	return fire;
 }
@@ -43,9 +86,7 @@ button :: (icon: Icon, pos: Vec2, size: Vec2, z: f32, $t: f32 = 1, it: int = 0, 
 checkbox :: ($$text: string, pos: Vec2, size: Vec2, z: f32, value: *bool, it: int = 0, loc := #caller_location) {
 	s := measure_text(text, 1);
 
-	uuid := hash_widget(loc, it);
-	p := fetch_parent();
-	state, fire := widget_interaction(uuid, pos, size + .{s.x + 12, 0}, z, p);
+	state, fire := create_selectable_region(.CHECKBOX, loc, it, pos, size + .{s.x + 12, 0}, z);
 
 	bg_col: Col;
 	text_col: Col;
@@ -61,17 +102,15 @@ checkbox :: ($$text: string, pos: Vec2, size: Vec2, z: f32, value: *bool, it: in
 			text_col = settings.themes.platform_text_hover;
 	}
 
-	if value.* || state == .PRESSED then draw_rect(pos + p.pos + .{4, 4}, size - .{8, 8}, z + p.z, bg_col);
-	draw_rect_lines(pos + p.pos, size, z + p.z + 1, settings.themes.platform_line);
-	draw_text(text, pos + p.pos + .{size.x + 8, (size.y - s.y) / 2}, z + p.z, 1, text_col);
+	if value.* || state == .PRESSED then draw_widget_rect(pos + .{4, 4}, size - .{8, 8}, z, bg_col);
+	draw_widget_rect_lines(pos, size, z + 1, settings.themes.platform_line);
+	draw_widget_text(text, pos + .{size.x + 8, (size.y - s.y) / 2}, z, 1, text_col);
 
 	if fire then value.* = !value.*;
 }
 
 draw_step_hslider :: (pos: Vec2, size: Vec2, z: f32, amt: s32, value: *int, disabled: bool = false, it: int = 0, loc := #caller_location) -> bool {
-	p := fetch_parent();
-	
-	draw_rect(p.pos + pos + .{0, size.y / 2 - 1}, .{size.x, 2}, p.z + z, ifx disabled then settings.themes.platform_disabled else settings.themes.platform_line);
+	draw_widget_rect(pos + .{0, size.y / 2 - 1}, .{size.x, 2}, z, ifx disabled then settings.themes.platform_disabled else settings.themes.platform_line);
 
 	col_main: Col = ---;
 	col_step: Col = ---;
@@ -82,12 +121,11 @@ draw_step_hslider :: (pos: Vec2, size: Vec2, z: f32, amt: s32, value: *int, disa
 		col_main = settings.themes.platform_widget_bg_hover;
 		col_step = settings.themes.platform_widget_border_normal;
 
-		uuid := hash_widget(loc, it);
-		state, fire := widget_interaction(uuid, pos, size, z, p);
+		state := create_selectable_region(.SLIDER, loc, it, pos, size, z);
 		
 		if state == .PRESSED {
 			col_main = settings.themes.platform_widget_bg_press;
-			value.* = xx clamp((cast(f32)mouse_x - pos.x - p.pos.x) / size.x * amt, 0, xx (amt - 1));
+			value.* = xx clamp((cast(f32)get_relative_x() - pos.x) / size.x * amt, 0, xx (amt - 1));
 			edited = true;
 		}
 	} else {
@@ -100,11 +138,11 @@ draw_step_hslider :: (pos: Vec2, size: Vec2, z: f32, amt: s32, value: *int, disa
 		s := size.y / 2;
 		if it % 3 == 0 then s = size.y / 3 * 2;
 
-		draw_rect(p.pos + pos + .{x - 1, size.y / 2 - s / 2}, .{2, s}, p.z + z + 1, col_step);
+		draw_widget_rect(pos + .{x - 1, size.y / 2 - s / 2}, .{2, s}, z + 1, col_step);
 	}
 
 	pos_x := pos.x + cast(f32)value.* / (amt - 1) * size.x;
-	draw_rect(p.pos + .{pos_x - 4, pos.y}, .{8, size.y}, p.z + z + 2, col_main);
+	draw_widget_rect(.{pos_x - 4, pos.y}, .{8, size.y}, z + 2, col_main);
 	
 	return edited;
 }
@@ -118,11 +156,9 @@ draw_scrollbar :: (pos: Vec2, size: Vec2, z: f32, scroll_pos: *Vec2, scroll_size
 		scroll_pos_y := pos.y;
 		off := ifx x_visible then cast(f32)WIDGET_SCROLLBAR_SIZE;
 
-		uuid := hash_widget(loc, it);
-		p := fetch_parent();
-		state, fire := widget_interaction(uuid, .{scroll_pos_x, scroll_pos_y}, .{WIDGET_SCROLLBAR_SIZE, size.y - off}, z, p);
+		state, _ , uuid := create_selectable_region(.SCROLLBAR, loc, it, .{scroll_pos_x, scroll_pos_y}, .{WIDGET_SCROLLBAR_SIZE, size.y - off}, z);
 
-		if mouse_dz && !is_key_down(KEY_SHIFT) && can_interact_with_widget(uuid, pos, size, z, p){
+		if mouse_dz && !is_key_down(KEY_SHIFT) && can_interact_with_widget(uuid, pos, size, z) {
 			true_speed := ifx is_key_down(KEY_CTRL) then speed_fast else speed_slow;
 			amt := mouse_dz * 16 * true_speed;
 			scroll_pos.*.y -= amt;
@@ -132,7 +168,7 @@ draw_scrollbar :: (pos: Vec2, size: Vec2, z: f32, scroll_pos: *Vec2, scroll_size
 		bar_height := ceil(aspect_ratio * size.y);
 
 		if state == .PRESSED {
-			scroll_pos.*.y = (mouse_y - pos.y - bar_height / 2 - p.pos.y) / aspect_ratio;
+			scroll_pos.*.y = (get_relative_y() - pos.y - bar_height / 2) / aspect_ratio;
 		}
 
 		bar_col := ifx state == .NORMAL then settings.themes.platform_widget_border_normal else settings.themes.platform_widget_bg_press;
@@ -140,8 +176,8 @@ draw_scrollbar :: (pos: Vec2, size: Vec2, z: f32, scroll_pos: *Vec2, scroll_size
 		val := round_up(scroll_pos.y, 16);
 		scroll_pos.*.y = clamp(val, 0, max_value.y - min_size.y);
 
-		draw_rect(p.pos + .{scroll_pos_x, scroll_pos_y}, .{WIDGET_SCROLLBAR_SIZE, size.y}, p.z + z, settings.themes.platform_widget_bg_normal);
-		draw_rect(p.pos + .{scroll_pos_x, floor(scroll_pos_y + aspect_ratio * scroll_pos.*.y)}, .{WIDGET_SCROLLBAR_SIZE, bar_height}, p.z + z + 1, bar_col);
+		draw_widget_rect(.{scroll_pos_x, scroll_pos_y}, .{WIDGET_SCROLLBAR_SIZE, size.y}, z, settings.themes.platform_widget_bg_normal);
+		draw_widget_rect(.{scroll_pos_x, floor(scroll_pos_y + aspect_ratio * scroll_pos.*.y)}, .{WIDGET_SCROLLBAR_SIZE, bar_height}, z + 1, bar_col);
 	}
 
 	if x_visible {
@@ -149,11 +185,9 @@ draw_scrollbar :: (pos: Vec2, size: Vec2, z: f32, scroll_pos: *Vec2, scroll_size
 		scroll_pos_y := pos.y + size.y - WIDGET_SCROLLBAR_SIZE;
 		off := ifx y_visible then cast(f32)WIDGET_SCROLLBAR_SIZE;
 
-		uuid := hash_widget(loc, it + 1);
-		p := fetch_parent();
-		state, fire := widget_interaction(uuid, .{scroll_pos_x, scroll_pos_y}, .{size.x - off, WIDGET_SCROLLBAR_SIZE}, z, p);
+		state, _, uuid := create_selectable_region(.SCROLLBAR, loc, it + 1, .{scroll_pos_x, scroll_pos_y}, .{size.x - off, WIDGET_SCROLLBAR_SIZE}, z);
 
-		if mouse_dz && is_key_down(KEY_SHIFT) && can_interact_with_widget(uuid, pos, size, z, p){
+		if mouse_dz && is_key_down(KEY_SHIFT) && can_interact_with_widget(uuid, pos, size, z) {
 			true_speed := ifx is_key_down(KEY_CTRL) then speed_fast else speed_slow;
 			amt := mouse_dz * 16 * true_speed;
 			scroll_pos.*.x -= amt;
@@ -163,7 +197,7 @@ draw_scrollbar :: (pos: Vec2, size: Vec2, z: f32, scroll_pos: *Vec2, scroll_size
 		bar_width := ceil(aspect_ratio * size.x);
 
 		if state == .PRESSED {
-			scroll_pos.*.x = (mouse_x - pos.x - bar_width / 2 - p.pos.x) / aspect_ratio;
+			scroll_pos.*.x = (get_relative_x() - pos.x - bar_width / 2) / aspect_ratio;
 		}
 
 		bar_col := ifx state == .NORMAL then settings.themes.platform_widget_border_normal else settings.themes.platform_widget_bg_press;
@@ -171,27 +205,25 @@ draw_scrollbar :: (pos: Vec2, size: Vec2, z: f32, scroll_pos: *Vec2, scroll_size
 		val := round_up(scroll_pos.x, 16);
 		scroll_pos.*.x = clamp(val, 0, max_value.x - min_size.x);
 
-		draw_rect(p.pos + .{scroll_pos_x, scroll_pos_y}, .{size.x, WIDGET_SCROLLBAR_SIZE}, p.z + z, settings.themes.platform_widget_bg_normal);
-		draw_rect(p.pos + .{floor(scroll_pos_x + aspect_ratio * scroll_pos.*.x), scroll_pos_y}, .{bar_width, WIDGET_SCROLLBAR_SIZE}, p.z + z + 1, bar_col);
+		draw_widget_rect(.{scroll_pos_x, scroll_pos_y}, .{size.x, WIDGET_SCROLLBAR_SIZE}, z, settings.themes.platform_widget_bg_normal);
+		draw_widget_rect(.{floor(scroll_pos_x + aspect_ratio * scroll_pos.*.x), scroll_pos_y}, .{bar_width, WIDGET_SCROLLBAR_SIZE}, z + 1, bar_col);
 	}
 }
 
 tab_bar :: (pos: Vec2, width: f32, z: f32, $tabs: []string, focused_tab: *int, it_: int = 0, loc := #caller_location) {
 	draw_selected_rect :: (pos: Vec2, size: Vec2, z: f32) {
-		draw_rect(pos, .{1, size.y}, z, settings.themes.platform_line);
-		draw_rect(pos, .{size.x, 1}, z, settings.themes.platform_line);
-		draw_rect(pos + .{size.x, 0}, .{1, size.y}, z, settings.themes.platform_line);
+		draw_widget_rect(pos, .{1, size.y}, z, settings.themes.platform_line);
+		draw_widget_rect(pos, .{size.x, 1}, z, settings.themes.platform_line);
+		draw_widget_rect(pos + .{size.x, 0}, .{1, size.y}, z, settings.themes.platform_line);
 	}
-
-	p := fetch_parent();
 
 	s :: 24;
 
 	x: f32;
 	for tabs {
 		d := measure_text(it, 2);
-		uuid := hash_widget(loc, it_ + it_index);
-		_, fire := widget_interaction(uuid, pos + .{4 + x, 0}, .{d.x + 8, s}, z, p);
+		_, fire := create_selectable_region(.TAB, loc, it_ + it_index, pos + .{4 + x, 0}, .{d.x + 8, s}, z);
+		
 		if fire then focused_tab.* = it_index;
 
 		x += d.x + 16;
@@ -206,49 +238,47 @@ tab_bar :: (pos: Vec2, width: f32, z: f32, $tabs: []string, focused_tab: *int, i
 		text_col: Col = ---;
 		if it_index == focused_tab.* {
 			text_col = settings.themes.platform_text_normal;
-			draw_selected_rect(p.pos + pos + .{4 + x, 0}, .{d.x + 8, s}, p.z + z);
-			draw_rect(p.pos + pos + .{0, s - 1}, .{w, 1}, p.z + z, settings.themes.platform_line);
+			draw_selected_rect(pos + .{4 + x, 0}, .{d.x + 8, s}, z);
+			draw_widget_rect(pos + .{0, s - 1}, .{w, 1}, z, settings.themes.platform_line);
 			w_continue = w + d.x + 8;
 		} else {
 			text_col = settings.themes.platform_disabled;
-			draw_selected_rect(p.pos + .{4 + pos.x + x, pos.y}, .{d.x + 8, s}, p.z + z);
+			draw_selected_rect(.{4 + pos.x + x, pos.y}, .{d.x + 8, s}, z);
 			w += d.x + 16;
 		}
 
-		draw_text(it, p.pos + .{8 + pos.x + x, pos.y + 4}, p.z + z, 2, text_col);
+		draw_widget_text(it, .{8 + pos.x + x, pos.y + 4}, z, 2, text_col);
 
 		x += d.x + 16;
 	}
 
-	draw_rect(p.pos + pos + .{w_continue, s - 1}, .{width - w_continue, 1}, p.z + z, settings.themes.platform_line);
+	draw_widget_rect(pos + .{w_continue, s - 1}, .{width - w_continue, 1}, z, settings.themes.platform_line);
 }
 
 h_separator :: ($name: string, pos: Vec2, width: f32, z: f32) {
 	p :: 12;
 
-	draw_rect(pos, .{p, 1}, z, settings.themes.platform_line);
+	draw_widget_rect(pos, .{p, 1}, z, settings.themes.platform_line);
 
-	draw_text(name, pos + .{p + 4, -5}, z, 1, settings.themes.platform_text_normal);
+	draw_widget_text(name, pos + .{p + 4, -5}, z, 1, settings.themes.platform_text_normal);
 	s :: #run measure_text(name, 1);
 
-	draw_rect(pos + .{p + 8 + s.x, 0}, .{width - p - 8 - s.x, 1}, z, settings.themes.platform_line);
+	draw_widget_rect(pos + .{p + 8 + s.x, 0}, .{width - p - 8 - s.x, 1}, z, settings.themes.platform_line);
 }
 
 combo_box :: (pos: Vec2, size: Vec2, z: f32, items: []string, selected: *int, opened: *bool, it_: int = 0, loc := #caller_location) -> bool {
-	uuid := hash_widget(loc, it_);
-	p := fetch_parent();
-	state, fire := widget_interaction(uuid, pos, size, z, p);
+	state, fire := create_selectable_region(.COMBO, loc, it_, pos, size, z);
 
 	_, border_col, text_col := fetch_colors(state);
 
-	draw_rect_lines(p.pos + pos, size, p.z + z, border_col);
-	draw_text(items[selected.*], p.pos + pos + .{2, 1}, p.z + z, 2, text_col);
+	draw_widget_rect_lines(pos, size, z, border_col);
+	draw_widget_text( items[selected.*], pos + .{2, 1}, z, 2, text_col);
 
 	if fire then opened.* = !opened.*;
 	
 	h := items.count * 20.0;
 	
-	if is_mouse_pressed(0) && !is_mouse_inside_rect(p.pos + pos, .{size.x, h + 20.0}) then opened.* = false;
+	if is_mouse_pressed(0) && !is_mouse_inside_widget_rect(pos, .{size.x, h + 20.0}) then opened.* = false;
 	
 	fire_internal: bool;
 	
@@ -258,22 +288,21 @@ combo_box :: (pos: Vec2, size: Vec2, z: f32, items: []string, selected: *int, op
 	}
 	
 	if opened.* {
-		draw_icon(.ARROW_DOWN, p.pos + pos + .{size.x - 20 + 2, 2}, p.z + z + 1, 2, text_col);
-		draw_rect_lines(p.pos + pos + .{size.x - 20, 0}, .{20, 20}, p.z + z + 1, border_col);
+		draw_widget_icon(.ARROW_DOWN, pos + .{size.x - 18, 2}, z + 1, 2, text_col);
+		draw_widget_rect_lines(pos + .{size.x - 20, 0}, .{20, 20}, z + 1, border_col);
 		
-		draw_rect(p.pos + pos + .{0, 20.0}, .{size.x, h}, p.z + z + 1, settings.themes.platform_widget_bg_normal);
+		draw_widget_rect(pos + .{0, 20}, .{size.x, h}, z + 1, settings.themes.platform_widget_bg_normal);
 		
 		for items {
-			x := p.pos.x + pos.x;
-			y := p.pos.y + pos.y + 20.0 * (it_index + 1);
-			
-			item_uuid := hash_widget(loc, it_ + it_index + 1);
-			state_internal: , fire_internal = widget_interaction(item_uuid, pos + .{0, 20.0 * (it_index + 1)}, .{size.x, 20.0}, z, p);
+			state_internal:, fire_internal = create_selectable_region(.COMBO, loc, it_ + it_index + 1, pos + .{0, 20.0 * (it_index + 1)}, .{size.x, 20.0}, z);
 			
 			_, border_col, text_col := fetch_colors(state_internal);
+
+			rel_x := pos.x;
+			rel_y := pos.y + 20.0 * (it_index + 1);
 			
-			draw_rect_lines(.{x, y}, .{size.x, 20.0}, p.z + z + 2, border_col);
-			draw_text(it, .{x + 2, y + 1}, p.z + z + 2, 2, text_col);
+			draw_widget_rect_lines(.{rel_x, rel_y}, .{size.x, 20.0}, z + 2, border_col);
+			draw_widget_text(it, .{rel_x + 2, rel_y + 1}, z + 2, 2, text_col);
 			
 			if fire_internal {
 				selected.* = it_index;
@@ -282,8 +311,8 @@ combo_box :: (pos: Vec2, size: Vec2, z: f32, items: []string, selected: *int, op
 			}
 		}
 	} else {
-		draw_icon(.ARROW_LEFT, p.pos + pos + .{size.x - 20 + 2, 2}, p.z + z + 1, 2, text_col);
-		draw_rect_lines(p.pos + pos + .{size.x - 20, 0}, .{20, 20}, p.z + z + 1, border_col);
+		draw_widget_icon(.ARROW_LEFT, pos + .{size.x - 18, 2}, z + 1, 2, text_col);
+		draw_widget_rect_lines(pos + .{size.x - 20, 0}, .{20, 20}, z + 1, border_col);
 	}
 	
 	return fire_internal;
@@ -294,57 +323,61 @@ color_picker :: (pos: Vec2, z: f32, hsv: *Vec3, rgb: *Col, it: int = 0, loc := #
 	height :: 216.0;
 
 	child_begin("picker", pos, .{width, height}, z);
-	p := fetch_parent();
 	
 	s := width - 40;
-	
-	uuid_quad := hash_widget(loc, it);
-	state_quad, _ := widget_interaction(uuid_quad, .{8, 8}, .{s, s}, z, p);
-	uuid_bar := hash_widget(loc, it + 1);
-	state_bar, _ := widget_interaction(uuid_bar, .{s + 12, 8}, .{20, s}, z, p);
+
+	state_quad, _ := create_selectable_region(.COLOR_PICKER, loc, it, .{8, 8}, .{s, s}, z);
+	state_bar,  _ := create_selectable_region(.COLOR_PICKER, loc, it + 1, .{s + 12, 8}, .{20, s}, z);
 	
 	edited := false;
 	if state_quad == .PRESSED {
-		hsv.*.y = clamp((mouse_x - p.pos.x - 8) / s, 0, 1);
-		hsv.*.z = clamp(1 - (mouse_y - p.pos.y - 8) / s, 0, 1);
+		mouse := get_relative_pos();
+		
+		hsv.*.y = clamp((mouse.x - 8) / s, 0, 1);
+		hsv.*.z = clamp(1 - (mouse.y - 8) / s, 0, 1);
 		
 		edited = true;
 	} else if state_bar == .PRESSED {
-		hsv.*.x = clamp((mouse_y - p.pos.y - 8) / s, 0, 1);
+		y := get_relative_y();
+		
+		hsv.*.x = clamp((y - 8) / s, 0, 1);
 
 		edited = true;
 	}
 	rgb.* = HSV_to_RGB(hsv);
 	
-	text_pos := p.pos + .{18, 162};
+	text_pos :: Vec2.{18, 162};
 	fmt :: #bake_arguments formatInt(minimum_digits = 3, padding = #char " ");
-	draw_text(tprint("R: %", fmt(rgb.r)), text_pos + .{  0, 20}, p.z + z, 1, settings.themes.platform_text_normal);
-	draw_text(tprint("G: %", fmt(rgb.g)), text_pos + .{ 62, 20}, p.z + z, 1, settings.themes.platform_text_normal);
-	draw_text(tprint("B: %", fmt(rgb.b)), text_pos + .{124, 20}, p.z + z, 1, settings.themes.platform_text_normal);
-	draw_text(tprint("H: %", fmt(cast(s32)(hsv.x * 360))), text_pos + .{  0, 36}, p.z + z, 1, settings.themes.platform_text_normal);
-	draw_text(tprint("S: %", fmt(cast(s32)(hsv.y * 100))), text_pos + .{ 62, 36}, p.z + z, 1, settings.themes.platform_text_normal);
-	draw_text(tprint("V: %", fmt(cast(s32)(hsv.z * 100))), text_pos + .{124, 36}, p.z + z, 1, settings.themes.platform_text_normal);
+	draw_widget_text(tprint("R: %", fmt(rgb.r)), text_pos + .{  0, 20}, z, 1, settings.themes.platform_text_normal);
+	draw_widget_text(tprint("G: %", fmt(rgb.g)), text_pos + .{ 62, 20}, z, 1, settings.themes.platform_text_normal);
+	draw_widget_text(tprint("B: %", fmt(rgb.b)), text_pos + .{124, 20}, z, 1, settings.themes.platform_text_normal);
+	draw_widget_text(tprint("H: %", fmt(cast(s32)(hsv.x * 360))), text_pos + .{  0, 36}, z, 1, settings.themes.platform_text_normal);
+	draw_widget_text(tprint("S: %", fmt(cast(s32)(hsv.y * 100))), text_pos + .{ 62, 36}, z, 1, settings.themes.platform_text_normal);
+	draw_widget_text(tprint("V: %", fmt(cast(s32)(hsv.z * 100))), text_pos + .{124, 36}, z, 1, settings.themes.platform_text_normal);
 	
-	draw_color_picker_rect(p.pos + .{8, 8}, .{s, s}, p.z, hsv.x);
+	{
+		p := fetch_parent();
+		draw_color_picker_rect(p.pos + .{8, 8}, .{s, s}, p.z + z, hsv.x);
+	}
 	
-	draw_rect(p.pos + .{s + 12,             8}, .{20, s / 6}, p.z, .{255, 0, 0, 255}, .{255, 0, 0, 255}, .{255, 255, 0, 255}, .{255, 255, 0, 255});
-	draw_rect(p.pos + .{s + 12, s     / 6 + 8}, .{20, s / 6}, p.z, .{255, 255, 0, 255}, .{255, 255, 0, 255}, .{0, 255, 0, 255}, .{0, 255, 0, 255});
-	draw_rect(p.pos + .{s + 12, s * 2 / 6 + 8}, .{20, s / 6}, p.z, .{0, 255, 0, 255}, .{0, 255, 0, 255}, .{0, 255, 255, 255}, .{0, 255, 255, 255});
-	draw_rect(p.pos + .{s + 12, s * 3 / 6 + 8}, .{20, s / 6}, p.z, .{0, 255, 255, 255}, .{0, 255, 255, 255}, .{0, 0, 255, 255}, .{0, 0, 255, 255});
-	draw_rect(p.pos + .{s + 12, s * 4 / 6 + 8}, .{20, s / 6}, p.z, .{0, 0, 255, 255}, .{0, 0, 255, 255}, .{255, 0, 255, 255}, .{255, 0, 255, 255});
-	draw_rect(p.pos + .{s + 12, s * 5 / 6 + 8}, .{20, s / 6}, p.z, .{255, 0, 255, 255}, .{255, 0, 255, 255}, .{255, 0, 0, 255}, .{255, 0, 0, 255});
+	draw_widget_rect(.{s + 12,             8}, .{20, s / 6}, z, .{255,   0,   0, 255}, .{255,   0,   0, 255}, .{255, 255,   0, 255}, .{255, 255,   0, 255});
+	draw_widget_rect(.{s + 12, s     / 6 + 8}, .{20, s / 6}, z, .{255, 255,   0, 255}, .{255, 255,   0, 255}, .{  0, 255,   0, 255}, .{  0, 255,   0, 255});
+	draw_widget_rect(.{s + 12, s * 2 / 6 + 8}, .{20, s / 6}, z, .{  0, 255,   0, 255}, .{  0, 255,   0, 255}, .{  0, 255, 255, 255}, .{  0, 255, 255, 255});
+	draw_widget_rect(.{s + 12, s * 3 / 6 + 8}, .{20, s / 6}, z, .{  0, 255, 255, 255}, .{  0, 255, 255, 255}, .{  0,   0, 255, 255}, .{  0,   0, 255, 255});
+	draw_widget_rect(.{s + 12, s * 4 / 6 + 8}, .{20, s / 6}, z, .{  0,   0, 255, 255}, .{  0,   0, 255, 255}, .{255,   0, 255, 255}, .{255,   0, 255, 255});
+	draw_widget_rect(.{s + 12, s * 5 / 6 + 8}, .{20, s / 6}, z, .{255,   0, 255, 255}, .{255,   0, 255, 255}, .{255,   0,   0, 255}, .{255,   0,   0, 255});
 	
-	draw_rect_lines(p.pos + .{8, 8}, .{s, s}, p.z + 1, settings.themes.platform_line);
-	draw_rect_lines(p.pos + .{s + 12, 8}, .{20, s}, p.z + 1, settings.themes.platform_line);
+	draw_widget_rect_lines(.{8, 8}, .{s, s}, z + 1, settings.themes.platform_line);
+	draw_widget_rect_lines(.{s + 12, 8}, .{20, s}, z + 1, settings.themes.platform_line);
 	
-	cursor := p.pos + Vec2.{(s - 2) * hsv.y, (s - 2) * (1 - hsv.z)} + .{9, 9};
-	draw_rect(cursor - .{4, 4}, .{8, 8}, p.z + 2, rgb);
-	draw_rect_lines(cursor - .{4, 4}, .{8, 8}, p.z + 3, settings.themes.platform_line);
+	cursor := Vec2.{(s - 2) * hsv.y, (s - 2) * (1 - hsv.z)} + .{9, 9};
+	draw_widget_rect(cursor - .{4, 4}, .{8, 8}, z + 2, rgb);
+	draw_widget_rect_lines(cursor - .{4, 4}, .{8, 8}, z + 3, settings.themes.platform_line);
 	
 	rgb2 := HSV_to_RGB(.{hsv.x, 1, 1});
-	p1 := p.pos + .{s + 12, 8 + hsv.x * (s - 1)};
-	draw_rect_lines(p1 - .{2, 2}, .{24, 6}, p.z + 2, settings.themes.platform_line);
-	draw_rect(p1 - .{2, 2}, .{24, 6}, p.z + 2, rgb2);
+	p1 := Vec2.{s + 12, 8 + hsv.x * (s - 1)};
+	draw_widget_rect_lines(p1 - .{2, 2}, .{24, 6}, z + 2, settings.themes.platform_line);
+	draw_widget_rect(p1 - .{2, 2}, .{24, 6}, z + 2, rgb2);
 	
 	child_end();
 	
@@ -406,19 +439,18 @@ window :: (uuid: ID, p: *Panel) {
 child_begin :: ($$text: string, pos: Vec2, size: Vec2, z: f32) {
 	padding :: 4;
 
-	p := fetch_parent();
-
-	draw_rect(pos + p.pos, .{padding, 1}, z + p.z, settings.themes.platform_line);
-	draw_rect(pos + p.pos, .{1, size.y}, z + p.z, settings.themes.platform_line);
-	draw_rect(pos + p.pos + .{0, size.y - 1}, .{size.x, 1}, z + p.z, settings.themes.platform_line);
-	draw_rect(pos + p.pos + .{size.x - 1, 0}, .{1, size.y}, z + p.z, settings.themes.platform_line);
+	draw_widget_rect(pos, .{padding, 1}, z, settings.themes.platform_line);
+	draw_widget_rect(pos, .{1, size.y}, z, settings.themes.platform_line);
+	draw_widget_rect(pos + .{0, size.y - 1}, .{size.x, 1}, z, settings.themes.platform_line);
+	draw_widget_rect(pos + .{size.x - 1, 0}, .{1, size.y}, z, settings.themes.platform_line);
 
 	s :: 1;
 	m := measure_text(text, s);
-	draw_text(text, pos + p.pos + .{padding + 4, -m.y / 2}, z + p.z, s, settings.themes.platform_line);
+	draw_widget_text(text, pos + .{padding + 4, -m.y / 2}, z, s, settings.themes.platform_line);
 
-	draw_rect(pos + p.pos + .{padding + 8 + m.x, 0}, .{size.x - padding - 8 - m.x, 1}, z + p.z, settings.themes.platform_line);
+	draw_widget_rect(pos + .{padding + 8 + m.x, 0}, .{size.x - padding - 8 - m.x, 1}, z, settings.themes.platform_line);
 
+	p := fetch_parent();
 	parent: Panel = ---;
 	parent.pos = pos + p.pos;
 	parent.z = z + p.z;
@@ -551,12 +583,11 @@ set_panel_name :: (uuid: ID, name: string) {
 }
 
 fetch_parent :: () -> Panel {
-	p: Panel;
-
 	if parent_panels.count {
-		p = parent_panels[parent_panels.count - 1];
+		return parent_panels[parent_panels.count - 1];
 	}
-
+	
+	p: Panel;
 	return p;
 }
 
@@ -584,7 +615,10 @@ can_interact_with_widget :: (uuid: ID, pos: Vec2, size: Vec2, z: f32, p: Panel) 
 	return true;
 }
 
-#scope_file
+can_interact_with_widget :: inline (uuid: ID, pos: Vec2, size: Vec2, z: f32) -> bool {
+	p := fetch_parent();
+	return can_interact_with_widget(uuid, pos, size, z, p);
+}
 
 hash_widget :: (loc: Source_Code_Location, it: int) -> ID {
 	h1 := fnv1a_hash(loc.fully_pathed_filename.data, loc.fully_pathed_filename.count);
@@ -620,13 +654,80 @@ widget_interaction :: (uuid: ID, pos: Vec2, size: Vec2, z: f32, p: Panel) -> (In
 	return state, fire;
 }
 
+widget_interaction :: (uuid: ID) -> (Interaction_State, fire: bool) {
+	p := fetch_parent();
+	
+	widget := table_find_pointer(*widgets, uuid);
+	#if DEBUG then assert(widget != null);
+	
+	state: Interaction_State = .NORMAL;
+
+	fire := false;
+
+	if can_interact_with_widget(uuid, widget.pos, widget.size, widget.z, p) {
+		state = .HOVER;
+
+		if is_mouse_pressed(0) {
+			ifx !focused_uuid then focused_uuid = uuid;
+			fire = true;
+		}
+	}
+
+	if focused_uuid != uuid then return state, false;
+
+	if is_mouse_down(0) then state = .PRESSED;
+
+	return state, fire;
+}
+
+create_selectable_region :: (type: Widget_Type, loc: Source_Code_Location, it: int, pos: Vec2, size: Vec2, z: f32) -> (Interaction_State, bool, ID) {
+	uuid := hash_widget(loc, it);
+	
+	widget, newly_added := find_or_add(*widgets, uuid);
+	
+	if newly_added {
+		widget.*.uuid = uuid;
+		widget.*.type = type;
+		widget.*.size = size;
+		widget.*.z    = z;
+	}
+	widget.*.pos  = pos;
+	
+	state, fire := widget_interaction(uuid);
+	return state, fire, uuid;
+}
+
+#scope_file
 Panel_Flags :: enum_flags {
 	NONE;
 	HEADER;
 	MODAL;
 }
 
+Widget_Type :: enum {
+	BUTTON;
+	CHECKBOX;
+	SLIDER;
+	SCROLLBAR;
+	TAB;
+	SEPARATOR;
+	COMBO;
+	COLOR_PICKER;
+	TEXT;
+}
+
+Widget :: struct {
+	type: Widget_Type;
+	uuid: ID;
+	
+	pos: Vec2;
+	size: Vec2;
+	z: f32;
+}
+
 panels: Table(ID, Panel);
+widgets: Table(ID, Widget);
+
 parent_panels: [..]Panel;
 
 modal_visible: bool;

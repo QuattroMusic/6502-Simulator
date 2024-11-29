@@ -39,22 +39,22 @@ Theming :: struct {
 	memory_display_used:  Col = .{221, 119,  17, 255};
 	memory_input:         Col = .{255, 110, 199, 255};
 	
-	display_col0:  Col = .{ 12,  12,  12, 255};  // black
-	display_col1:  Col = .{ 70,  70,  70, 255};  // dark gray
-	display_col2:  Col = .{110, 110, 110, 255};  // light gray
-	display_col3:  Col = .{240, 240, 220, 255};  // white
-	display_col4:  Col = .{202,  45,  31, 255};  // red
-	display_col5:  Col = .{158,  97,  50, 255};  // brown
-	display_col6:  Col = .{221, 119,  17, 255};  // orange
-	display_col7:  Col = .{238, 210,   5, 255};  // yellow
-	display_col8:  Col = .{ 59, 187,  20, 255};  // light green
-	display_col9:  Col = .{ 71, 148,  81, 255};  // dark green
-	display_col10: Col = .{ 64, 104, 200, 255};  // dark blue
-	display_col11: Col = .{ 74, 145, 175, 255};  // cyan
-	display_col12: Col = .{ 51, 201, 187, 255};  // light blue
-	display_col13: Col = .{130, 102, 193, 255};  // purple
-	display_col14: Col = .{170,  71, 204, 255};  // dark purple
-	display_col15: Col = .{255, 110, 199, 255};  // pink
+	display_col0:  Col = .{ 12,  12,  12, 255};
+	display_col1:  Col = .{ 70,  70,  70, 255};
+	display_col2:  Col = .{110, 110, 110, 255};
+	display_col3:  Col = .{240, 240, 220, 255};
+	display_col4:  Col = .{202,  45,  31, 255};
+	display_col5:  Col = .{158,  97,  50, 255};
+	display_col6:  Col = .{221, 119,  17, 255};
+	display_col7:  Col = .{238, 210,   5, 255};
+	display_col8:  Col = .{ 59, 187,  20, 255};
+	display_col9:  Col = .{ 71, 148,  81, 255};
+	display_col10: Col = .{ 64, 104, 200, 255};
+	display_col11: Col = .{ 74, 145, 175, 255};
+	display_col12: Col = .{ 51, 201, 187, 255};
+	display_col13: Col = .{130, 102, 193, 255};
+	display_col14: Col = .{170,  71, 204, 255};
+	display_col15: Col = .{255, 110, 199, 255};
 }
 
 At_Startup :: enum u8 {

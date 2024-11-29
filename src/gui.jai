@@ -395,7 +395,7 @@ draw_settings :: () {
 				if edit then ui.settings_platform_scrollbar_edited = true;
 			}
 			
-			h_separator("scrollbars", p.pos + .{10, 80}, SETTINGS_WIDTH - 20, p.z + 1);
+			h_separator("scrollbars", .{10, 80}, SETTINGS_WIDTH - 20, 1);
 			
 			internal_scroll("code viewer scroll slow speed", p, *settings.platform.code_cursor_speed_slow, 100);
 			internal_scroll("code viewer scroll fast speed", p, *settings.platform.code_cursor_speed_fast, 125);
@@ -407,7 +407,7 @@ draw_settings :: () {
 				save_options_file();
 			}
 		case .THEMING;
-			internal_selectable :: ($text: string, x: f32, y: *f32, p: Panel, col: *Col, loc := #caller_location) {
+			internal_selectable :: ($text: string, x: f32, y: *f32, col: *Col, loc := #caller_location) {
 				defer y.* += 16;
 				
 				y_off := y.*;
@@ -415,33 +415,30 @@ draw_settings :: () {
 				if y_off < 40 || y_off > 550 then return;
 				s :: #run measure_text(text, 2);
 				
-				box_pos := p.pos + .{x, y_off + 2};
+				box_pos := Vec2.{x, y_off + 2};
 				box_size :: Vec2.{14, 14};
 				
-				state: Interaction_State = .NORMAL;
-				if is_mouse_inside_rect(p.pos + .{10, y_off}, s) || is_mouse_inside_rect(box_pos, box_size) {
-					if can_interact_with_widget(0, .{10, y_off}, s, 2, p) || can_interact_with_widget(0, box_pos - p.pos, box_size, 2, p) {
-						state = .HOVER;
-						if is_mouse_down(0) then state = .PRESSED;
-					}
-				}
-				
+				state, _, _ := create_selectable_region(.TEXT, loc, 0, .{10, y_off}, s, 2);
+				state       |= create_selectable_region(.BUTTON, loc, 1, box_pos, box_size, 2);
+
 				_, border_col, text_col := fetch_colors(state);
 				
-				draw_text(text, p.pos + .{10, y_off}, p.z + 1, 2, text_col);
+				draw_widget_text(text, .{10, y_off}, 1, 2, text_col);
 				
-				draw_rect(box_pos, box_size, p.z + 1, col.*);
-				draw_rect_lines(box_pos, box_size, p.z + 2, border_col);
-				if state != .NORMAL && (is_mouse_inside_rect(box_pos, box_size) || is_mouse_inside_rect(p.pos + .{10, y_off}, .{s.x, 16})) {
+				draw_widget_rect(box_pos, box_size, 1, col.*);
+				draw_widget_rect_lines(box_pos, box_size, 2, border_col);
+				
+				if state != .NORMAL && (is_mouse_inside_widget_rect(box_pos, box_size) || is_mouse_inside_widget_rect(.{10, y_off}, .{s.x, 16})) {
 					if is_mouse_pressed(0) {
 						ui.internal_edit = RGB_to_HSV(col.*);
 						ui.internal_selected = col;
 					}
 					if is_mouse_pressed(1) {
 						// horrible hack (or is it?)
-						// get the offset using `settings.themes` as the base
+						// get the offset using `settings.themes` as the base (it will always be positive)
 						// then apply the offset to `settings.themes_saved_state`
 						offset := cast(u64)col - cast(u64)(*settings.themes);
+						#if DEBUG then assert(!(offset >> 63), "Offset strangely become negative, how so?");
 						new_pos := cast(*Col)((cast(*u8)*settings.themes_saved_state) + offset);
 						memcpy(col, new_pos, size_of(Col));
 						
@@ -453,7 +450,7 @@ draw_settings :: () {
 				}
 			}
 			
-			internal_separator :: ($text: string, y: *f32, p: Panel) {
+			internal_separator :: ($text: string, y: *f32) {
 				y.* += 20;
 				defer y.* += 5;
 				
@@ -461,7 +458,7 @@ draw_settings :: () {
 				y_off -= ui.settings_theming_scroll_pos.y;
 				if y_off < 40 || y_off > 555 then return;
 				
-				h_separator(text, p.pos + .{10, y_off}, SETTINGS_WIDTH - 280, p.z + 1);
+				h_separator(text, .{10, y_off}, SETTINGS_WIDTH - 280, 1);
 			}
 			
 			draw_rect(p.pos + .{SETTINGS_WIDTH - 240, 40}, .{1, SETTINGS_HEIGHT - 70}, p.z + 1, settings.themes.platform_line);
@@ -473,69 +470,69 @@ draw_settings :: () {
 				using settings.themes;
 				y: f32 = 25;
 				
-				internal_separator("general",                  *y, p);
-				internal_selectable("text",              300,  *y, p, *general_text);
-				internal_selectable("flag off",          300,  *y, p, *general_flag_off);
-				internal_selectable("flag on",           300,  *y, p, *general_flag_on);
-				internal_selectable("debug stack empty", 300,  *y, p, *general_debug_stack_empty);
-				internal_selectable("debug stack full",  300,  *y, p, *general_debug_stack_full);
-				internal_selectable("stack focus",       300,  *y, p, *general_stack_focus);
+				internal_separator("general",                  *y);
+				internal_selectable("text",              300,  *y, *general_text);
+				internal_selectable("flag off",          300,  *y, *general_flag_off);
+				internal_selectable("flag on",           300,  *y, *general_flag_on);
+				internal_selectable("debug stack empty", 300,  *y, *general_debug_stack_empty);
+				internal_selectable("debug stack full",  300,  *y, *general_debug_stack_full);
+				internal_selectable("stack focus",       300,  *y, *general_stack_focus);
 
-				internal_separator("platform",                       *y, p);
-				internal_selectable("widget background normal", 410, *y, p, *platform_widget_bg_normal);
-				internal_selectable("widget background hover",  410, *y, p, *platform_widget_bg_hover);
-				internal_selectable("widget background press",  410, *y, p, *platform_widget_bg_press);
-				internal_selectable("widget border normal",     410, *y, p, *platform_widget_border_normal);
-				internal_selectable("widget border hover",      410, *y, p, *platform_widget_border_hover);
-				internal_selectable("widget border press",      410, *y, p, *platform_widget_border_press);
-				internal_selectable("text normal",              410, *y, p, *platform_text_normal);
-				internal_selectable("text hover",               410, *y, p, *platform_text_hover);
-				internal_selectable("text press",               410, *y, p, *platform_text_press);
-				internal_selectable("background",               410, *y, p, *platform_background);
-				internal_selectable("deep background",          410, *y, p, *platform_deep_background);
-				internal_selectable("line",                     410, *y, p, *platform_line);
-				internal_selectable("disabled",                 410, *y, p, *platform_disabled);
+				internal_separator("platform",                       *y);
+				internal_selectable("widget background normal", 410, *y, *platform_widget_bg_normal);
+				internal_selectable("widget background hover",  410, *y, *platform_widget_bg_hover);
+				internal_selectable("widget background press",  410, *y, *platform_widget_bg_press);
+				internal_selectable("widget border normal",     410, *y, *platform_widget_border_normal);
+				internal_selectable("widget border hover",      410, *y, *platform_widget_border_hover);
+				internal_selectable("widget border press",      410, *y, *platform_widget_border_press);
+				internal_selectable("text normal",              410, *y, *platform_text_normal);
+				internal_selectable("text hover",               410, *y, *platform_text_hover);
+				internal_selectable("text press",               410, *y, *platform_text_press);
+				internal_selectable("background",               410, *y, *platform_background);
+				internal_selectable("deep background",          410, *y, *platform_deep_background);
+				internal_selectable("line",                     410, *y, *platform_line);
+				internal_selectable("disabled",                 410, *y, *platform_disabled);
 				
-				internal_separator("code viewer",       *y, p);
-				internal_selectable("text",        210, *y, p, *viewer_text);
-				internal_selectable("number",      210, *y, p, *viewer_number);
-				internal_selectable("comment",     210, *y, p, *viewer_comment);
-				internal_selectable("dotdir",      210, *y, p, *viewer_dotdir);
-				internal_selectable("label",       210, *y, p, *viewer_label);
-				internal_selectable("instruction", 210, *y, p, *viewer_instruction);
-				internal_selectable("string",      210, *y, p, *viewer_string);
+				internal_separator("code viewer",       *y);
+				internal_selectable("text",        210, *y, *viewer_text);
+				internal_selectable("number",      210, *y, *viewer_number);
+				internal_selectable("comment",     210, *y, *viewer_comment);
+				internal_selectable("dotdir",      210, *y, *viewer_dotdir);
+				internal_selectable("label",       210, *y, *viewer_label);
+				internal_selectable("instruction", 210, *y, *viewer_instruction);
+				internal_selectable("string",      210, *y, *viewer_string);
 				
-				internal_separator("memory",              *y, p);
-				internal_selectable("normal empty",  230, *y, p, *memory_normal_empty);
-				internal_selectable("normal used",   230, *y, p, *memory_normal_used);
-				internal_selectable("stack empty",   230, *y, p, *memory_stack_empty);
-				internal_selectable("stack used",    230, *y, p, *memory_stack_used);
-				internal_selectable("display empty", 230, *y, p, *memory_display_empty);
-				internal_selectable("display used",  230, *y, p, *memory_display_used);
-				internal_selectable("input",         230, *y, p, *memory_input);
+				internal_separator("memory",              *y);
+				internal_selectable("normal empty",  230, *y, *memory_normal_empty);
+				internal_selectable("normal used",   230, *y, *memory_normal_used);
+				internal_selectable("stack empty",   230, *y, *memory_stack_empty);
+				internal_selectable("stack used",    230, *y, *memory_stack_used);
+				internal_selectable("display empty", 230, *y, *memory_display_empty);
+				internal_selectable("display used",  230, *y, *memory_display_used);
+				internal_selectable("input",         230, *y, *memory_input);
 				
-				internal_separator("display",      *y, p);
-				internal_selectable("col 1",  130, *y, p, *display_col0);
-				internal_selectable("col 2",  130, *y, p, *display_col1);
-				internal_selectable("col 3",  130, *y, p, *display_col2);
-				internal_selectable("col 4",  130, *y, p, *display_col3);
-				internal_selectable("col 5",  130, *y, p, *display_col4);
-				internal_selectable("col 6",  130, *y, p, *display_col5);
-				internal_selectable("col 7",  130, *y, p, *display_col6);
-				internal_selectable("col 8",  130, *y, p, *display_col7);
-				internal_selectable("col 9",  130, *y, p, *display_col8);
-				internal_selectable("col 10", 130, *y, p, *display_col9);
-				internal_selectable("col 11", 130, *y, p, *display_col10);
-				internal_selectable("col 12", 130, *y, p, *display_col11);
-				internal_selectable("col 13", 130, *y, p, *display_col12);
-				internal_selectable("col 14", 130, *y, p, *display_col13);
-				internal_selectable("col 15", 130, *y, p, *display_col14);
-				internal_selectable("col 16", 130, *y, p, *display_col15);
+				internal_separator("display",      *y);
+				internal_selectable("col 1",  130, *y, *display_col0);
+				internal_selectable("col 2",  130, *y, *display_col1);
+				internal_selectable("col 3",  130, *y, *display_col2);
+				internal_selectable("col 4",  130, *y, *display_col3);
+				internal_selectable("col 5",  130, *y, *display_col4);
+				internal_selectable("col 6",  130, *y, *display_col5);
+				internal_selectable("col 7",  130, *y, *display_col6);
+				internal_selectable("col 8",  130, *y, *display_col7);
+				internal_selectable("col 9",  130, *y, *display_col8);
+				internal_selectable("col 10", 130, *y, *display_col9);
+				internal_selectable("col 11", 130, *y, *display_col10);
+				internal_selectable("col 12", 130, *y, *display_col11);
+				internal_selectable("col 13", 130, *y, *display_col12);
+				internal_selectable("col 14", 130, *y, *display_col13);
+				internal_selectable("col 15", 130, *y, *display_col14);
+				internal_selectable("col 16", 130, *y, *display_col15);
 			}
 
 			{
 				pos := p.pos + .{SETTINGS_WIDTH - 233, 275};
-				h_separator("info", pos, 225, p.z + 1);
+				h_separator("info", .{SETTINGS_WIDTH - 233, 275}, 225, 1);
 				
 				draw_text("- left click the colored box", pos + .{0, 20}, p.z + 1, 1, settings.themes.platform_text_normal);
 				draw_text("  or the text to select",      pos + .{0, 30}, p.z + 1, 1, settings.themes.platform_text_normal);
