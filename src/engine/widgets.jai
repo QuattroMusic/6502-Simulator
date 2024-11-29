@@ -348,9 +348,9 @@ color_picker :: (pos: Vec2, z: f32, hsv: *Vec3, rgb: *Col, it: int = 0, loc := #
 	
 	text_pos :: Vec2.{18, 162};
 	fmt :: #bake_arguments formatInt(minimum_digits = 3, padding = #char " ");
-	draw_widget_text(tprint("R: %", fmt(rgb.r)), text_pos + .{  0, 20}, z, 1, settings.themes.platform_text_normal);
-	draw_widget_text(tprint("G: %", fmt(rgb.g)), text_pos + .{ 62, 20}, z, 1, settings.themes.platform_text_normal);
-	draw_widget_text(tprint("B: %", fmt(rgb.b)), text_pos + .{124, 20}, z, 1, settings.themes.platform_text_normal);
+	draw_widget_text(tprint("R: %", fmt(rgb.r)),                  text_pos + .{  0, 20}, z, 1, settings.themes.platform_text_normal);
+	draw_widget_text(tprint("G: %", fmt(rgb.g)),                  text_pos + .{ 62, 20}, z, 1, settings.themes.platform_text_normal);
+	draw_widget_text(tprint("B: %", fmt(rgb.b)),                  text_pos + .{124, 20}, z, 1, settings.themes.platform_text_normal);
 	draw_widget_text(tprint("H: %", fmt(cast(s32)(hsv.x * 360))), text_pos + .{  0, 36}, z, 1, settings.themes.platform_text_normal);
 	draw_widget_text(tprint("S: %", fmt(cast(s32)(hsv.y * 100))), text_pos + .{ 62, 36}, z, 1, settings.themes.platform_text_normal);
 	draw_widget_text(tprint("V: %", fmt(cast(s32)(hsv.z * 100))), text_pos + .{124, 36}, z, 1, settings.themes.platform_text_normal);
@@ -371,8 +371,8 @@ color_picker :: (pos: Vec2, z: f32, hsv: *Vec3, rgb: *Col, it: int = 0, loc := #
 	draw_widget_rect_lines(.{s + 12, 8}, .{20, s}, z + 1, settings.themes.platform_line);
 	
 	cursor := Vec2.{(s - 2) * hsv.y, (s - 2) * (1 - hsv.z)} + .{9, 9};
-	draw_widget_rect(cursor - .{4, 4}, .{8, 8}, z + 2, rgb);
-	draw_widget_rect_lines(cursor - .{4, 4}, .{8, 8}, z + 3, settings.themes.platform_line);
+	draw_widget_rect(cursor - .{3, 3}, .{6, 6}, z + 2, rgb);
+	draw_widget_rect_lines(cursor - .{4, 4}, .{8, 8}, z + 2, settings.themes.platform_line);
 	
 	rgb2 := HSV_to_RGB(.{hsv.x, 1, 1});
 	p1 := Vec2.{s + 12, 8 + hsv.x * (s - 1)};
@@ -587,7 +587,9 @@ fetch_parent :: () -> Panel {
 		return parent_panels[parent_panels.count - 1];
 	}
 	
-	p: Panel;
+	p: Panel = ---;
+	p.pos = .{0, 0};
+	p.z = 0;
 	return p;
 }
 
@@ -597,6 +599,50 @@ fetch_colors :: (state: Interaction_State) -> (main: Col, border: Col, text: Col
 		case .HOVER;   return settings.themes.platform_widget_bg_hover, settings.themes.platform_widget_border_hover, settings.themes.platform_text_hover;
 		case .PRESSED; return settings.themes.platform_widget_bg_press, settings.themes.platform_widget_border_press, settings.themes.platform_text_press;
 	}
+}
+
+create_selectable_region :: (type: Widget_Type, loc: Source_Code_Location, it: int, pos: Vec2, size: Vec2, z: f32) -> (Interaction_State, bool, ID) {
+	uuid := hash_widget(loc, it);
+	
+	widget, newly_added := find_or_add(*widgets, uuid);
+	
+	if newly_added {
+		widget.*.uuid = uuid;
+		widget.*.type = type;
+		widget.*.size = size;
+		widget.*.z    = z;
+	}
+	widget.*.pos  = pos;
+	
+	state, fire := widget_interaction(uuid);
+	return state, fire, uuid;
+}
+
+#scope_file
+widget_interaction :: (uuid: ID) -> (Interaction_State, fire: bool) {
+	p := fetch_parent();
+	
+	widget := table_find_pointer(*widgets, uuid);
+	#if DEBUG then assert(widget != null);
+	
+	state: Interaction_State = .NORMAL;
+
+	fire := false;
+
+	if can_interact_with_widget(uuid, widget.pos, widget.size, widget.z, p) {
+		state = .HOVER;
+
+		if is_mouse_pressed(0) {
+			ifx !focused_uuid then focused_uuid = uuid;
+			fire = true;
+		}
+	}
+
+	if focused_uuid != uuid then return state, false;
+
+	if is_mouse_down(0) then state = .PRESSED;
+
+	return state, fire;
 }
 
 can_interact_with_widget :: (uuid: ID, pos: Vec2, size: Vec2, z: f32, p: Panel) -> bool {
@@ -633,71 +679,6 @@ hash_widget :: (loc: Source_Code_Location, it: int) -> ID {
 	return out;
 }
 
-widget_interaction :: (uuid: ID, pos: Vec2, size: Vec2, z: f32, p: Panel) -> (Interaction_State, fire: bool) {
-	state: Interaction_State = .NORMAL;
-
-	fire := false;
-
-	if can_interact_with_widget(uuid, pos, size, z, p) {
-		state = .HOVER;
-
-		if is_mouse_pressed(0) {
-			ifx !focused_uuid then focused_uuid = uuid;
-			fire = true;
-		}
-	}
-
-	if focused_uuid != uuid then return state, false;
-
-	if is_mouse_down(0) then state = .PRESSED;
-
-	return state, fire;
-}
-
-widget_interaction :: (uuid: ID) -> (Interaction_State, fire: bool) {
-	p := fetch_parent();
-	
-	widget := table_find_pointer(*widgets, uuid);
-	#if DEBUG then assert(widget != null);
-	
-	state: Interaction_State = .NORMAL;
-
-	fire := false;
-
-	if can_interact_with_widget(uuid, widget.pos, widget.size, widget.z, p) {
-		state = .HOVER;
-
-		if is_mouse_pressed(0) {
-			ifx !focused_uuid then focused_uuid = uuid;
-			fire = true;
-		}
-	}
-
-	if focused_uuid != uuid then return state, false;
-
-	if is_mouse_down(0) then state = .PRESSED;
-
-	return state, fire;
-}
-
-create_selectable_region :: (type: Widget_Type, loc: Source_Code_Location, it: int, pos: Vec2, size: Vec2, z: f32) -> (Interaction_State, bool, ID) {
-	uuid := hash_widget(loc, it);
-	
-	widget, newly_added := find_or_add(*widgets, uuid);
-	
-	if newly_added {
-		widget.*.uuid = uuid;
-		widget.*.type = type;
-		widget.*.size = size;
-		widget.*.z    = z;
-	}
-	widget.*.pos  = pos;
-	
-	state, fire := widget_interaction(uuid);
-	return state, fire, uuid;
-}
-
-#scope_file
 Panel_Flags :: enum_flags {
 	NONE;
 	HEADER;
