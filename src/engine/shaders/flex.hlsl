@@ -25,10 +25,10 @@ float4 get_color(uint color) {
 	return col;
 }
 
-Vertex_Out VShader(float4 pos: POSITION, float2 size: SIZE, uint c1: TL_COL, uint c2: TR_COL, uint c3: BL_COL, uint c4: BR_COL) {
+Vertex_Out VShader(float3 pos: POSITION, float2 size: SIZE, uint c1: TL_COL, uint c2: TR_COL, uint c3: BL_COL, uint c4: BR_COL) {
 	Vertex_Out output;
 
-	output.pos = mul(pos + float4(0, 0, 1, 0), camera_data);
+	output.pos = mul(float4(pos, 0) + float4(0, 0, 1, 1), camera_data);
 
 	output.size.x = size.x * camera_data[0][0];
 	output.size.y = size.y * camera_data[1][1];

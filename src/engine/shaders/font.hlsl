@@ -18,10 +18,10 @@ struct Geom_Output {
 	float2 tex: TEX;
 };
 
-Vertex_Out VShader(float4 position: POSITION, uint size: SIZE, uint inCol: COLOR, float in_texcoord: TEX) {
+Vertex_Out VShader(float3 position: POSITION, uint size: SIZE, uint inCol: COLOR, float in_texcoord: TEX) {
 	Vertex_Out output;
 
-	output.pos = mul(position + float4(0, 0, 1, 0), camera_data);
+	output.pos = mul(float4(position, 0) + float4(0, 0, 1, 1), camera_data);
 
 	output.size.x = size * camera_data[0][0];
 	output.size.y = size * camera_data[1][1];
