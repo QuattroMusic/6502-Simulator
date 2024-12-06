@@ -369,15 +369,13 @@ draw_settings :: () {
 	tab_bar(.{10, 10}, SETTINGS_WIDTH - 20, 1, .["platform", "theming"], *tab);
 	ui.settings_focused_tab = xx tab;
 	
-	// ui.settings_focused_tab = .THEMING;
-	
 	if ui.settings_focused_tab == {
 		case .PLATFORM;
 			draw_text("at startup, open: ", p.pos + .{20, 50}, p.z + 1, 2, settings.themes.platform_text_normal);
 			w :: #run measure_text("at startup, open", 2).x;
 			
 			value := cast(int)settings.platform.at_startup;
-			edit := combo_box(.{40 + w, 50 - 2}, .{190, 20}, 1, .["empty file", "last file"], *value, *ui.settings_combo_box_open);
+			edit := combo_box(.{40 + w, 50 - 2}, .{190, 20}, 1, .["empty file", "last file"], *value);
 			settings.platform.at_startup = xx value;
 			
 			if edit then save_options_file();
@@ -430,7 +428,6 @@ draw_settings :: () {
 				
 				if state != .NORMAL && (is_mouse_inside_widget_rect(box_pos, box_size) || is_mouse_inside_widget_rect(.{10, y_off}, .{s.x, 16})) {
 					if is_mouse_pressed(0) {
-						ui.internal_edit = RGB_to_HSV(col.*);
 						ui.internal_selected = col;
 					}
 					if is_mouse_pressed(1) {
@@ -442,7 +439,6 @@ draw_settings :: () {
 						new_pos := cast(*Col)((cast(*u8)*settings.themes_saved_state) + offset);
 						memcpy(col, new_pos, size_of(Col));
 						
-						ui.internal_edit = RGB_to_HSV(col.*);
 						ui.internal_selected = col;
 						
 						save_theme_file();
@@ -534,16 +530,18 @@ draw_settings :: () {
 				pos := p.pos + .{SETTINGS_WIDTH - 233, 275};
 				h_separator("info", .{SETTINGS_WIDTH - 233, 275}, 225, 1);
 				
-				draw_text("- left click the colored box", pos + .{0, 20}, p.z + 1, 1, settings.themes.platform_text_normal);
-				draw_text("  or the text to select",      pos + .{0, 30}, p.z + 1, 1, settings.themes.platform_text_normal);
-				draw_text("  the color",                  pos + .{0, 40}, p.z + 1, 1, settings.themes.platform_text_normal);
-				draw_text("- right click to revert to",   pos + .{0, 60}, p.z + 1, 1, settings.themes.platform_text_normal);
-				draw_text("  default value",              pos + .{0, 70}, p.z + 1, 1, settings.themes.platform_text_normal);
-				draw_text("- enjoy!",                     pos + .{0, 90}, p.z + 1, 1, settings.themes.platform_text_normal);
+				draw_text("- left click the colored box", pos + .{0,  20}, p.z + 1, 1, settings.themes.platform_text_normal);
+				draw_text("  or the text to select",      pos + .{0,  30}, p.z + 1, 1, settings.themes.platform_text_normal);
+				draw_text("  the color",                  pos + .{0,  40}, p.z + 1, 1, settings.themes.platform_text_normal);
+				draw_text("- right click to revert to",   pos + .{0,  60}, p.z + 1, 1, settings.themes.platform_text_normal);
+				draw_text("  default value",              pos + .{0,  70}, p.z + 1, 1, settings.themes.platform_text_normal);
+				draw_text("- to revert everything,",      pos + .{0,  90}, p.z + 1, 1, settings.themes.platform_text_normal);
+				draw_text("  simply delete the file",     pos + .{0, 100}, p.z + 1, 1, settings.themes.platform_text_normal);
+				draw_text("- enjoy!",                     pos + .{0, 120}, p.z + 1, 1, settings.themes.platform_text_normal);
 			}
 			
-			if(color_picker(.{SETTINGS_WIDTH - 225, 45}, 1, *ui.internal_edit, ui.internal_selected)) {
-				ui.settings_theming_color_edited = true;  // Todo - memcmp?
+			if(color_picker(.{SETTINGS_WIDTH - 225, 45}, 1, ui.internal_selected)) {
+				ui.settings_theming_color_edited = true;
 			}
 			
 			if(ui.settings_theming_color_edited && is_mouse_released(0)) {

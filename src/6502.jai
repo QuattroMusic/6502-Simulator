@@ -90,13 +90,11 @@ General_UI :: struct {
 	modal_error_type: Error_Type;
 
 	settings_focused_tab: Settings_Focused_Tab;
-	settings_combo_box_open: bool;
 
 	settings_theming_color_edited: bool;
 	settings_platform_scrollbar_edited: bool;
 	settings_theming_scroll_pos: Vec2;
 	
-	internal_edit: Vec3;
 	internal_selected: *Col;
 
 	display_panel:  ID;

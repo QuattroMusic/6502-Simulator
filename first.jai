@@ -15,10 +15,7 @@ update_6502 :: () {
 	draw_current_instruction();
 	draw_input();
 
-	if is_key_pressed(KEY_ESC) {
-		toggle_panel(ui.settings_panel, centered = true);
-		ui.settings_combo_box_open = false;
-	}
+	if is_key_pressed(KEY_ESC) then toggle_panel(ui.settings_panel, centered = true);
 
 	widgets_draw_panels();
 }
@@ -58,7 +55,6 @@ setup_windows :: () {
 	ui.settings_panel = create_new_panel(draw_settings, "settings", .{SETTINGS_WIDTH, SETTINGS_HEIGHT});
 	
 	ui.internal_selected = *settings.themes.general_text;
-	ui.internal_edit = RGB_to_HSV(settings.themes.general_text);
 }
 
 main :: () {
@@ -152,6 +148,14 @@ operator + :: (a: Col, b: Col) -> Col {
 	out.b = a.b + b.b;
 	out.a = a.a + b.a;
 	return out;
+}
+
+operator == :: (a: Col, b: Col) -> bool {
+	return memcmp(*a, *b, size_of(Col)) == 0;
+}
+
+floor :: inline (v: Vec2) -> Vec2 {
+	return .{floor(v.x), floor(v.y)};
 }
 
 #import "Basic";

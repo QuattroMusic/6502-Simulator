@@ -64,7 +64,7 @@ button :: ($$text: string, pos: Vec2, size: Vec2, z: f32, $t: f32 = 1, disabled 
 	draw_widget_rect_lines(pos, size, z + 1, border_col, t);
 
 	s := measure_text(text, t);
-	draw_widget_text(text, pos + size / 2 - s / 2, z + 1, t, text_col);
+	draw_widget_text(text, floor(pos + size / 2 - s / 2), z + 1, t, text_col);
 
 	return fire;
 }
@@ -266,19 +266,22 @@ h_separator :: ($name: string, pos: Vec2, width: f32, z: f32) {
 	draw_widget_rect(pos + .{p + 8 + s.x, 0}, .{width - p - 8 - s.x, 1}, z, settings.themes.platform_line);
 }
 
-combo_box :: (pos: Vec2, size: Vec2, z: f32, items: []string, selected: *int, opened: *bool, it_: int = 0, loc := #caller_location) -> bool {
-	state, fire := create_selectable_region(.COMBO, loc, it_, pos, size, z);
+combo_box :: (pos: Vec2, size: Vec2, z: f32, items: []string, selected: *int, it_: int = 0, loc := #caller_location) -> bool {
+	state, fire, uuid := create_selectable_region(.COMBO, loc, it_, pos, size, z);
+
+	widget := *table_find_pointer(*widgets, uuid).combo_box;
 
 	_, border_col, text_col := fetch_colors(state);
 
 	draw_widget_rect_lines(pos, size, z, border_col);
 	draw_widget_text( items[selected.*], pos + .{2, 1}, z, 2, text_col);
 
-	if fire then opened.* = !opened.*;
+	if fire then widget.*.opened = !widget.*.opened;
 	
 	h := items.count * 20.0;
 	
-	if is_mouse_pressed(0) && !is_mouse_inside_widget_rect(pos, .{size.x, h + 20.0}) then opened.* = false;
+	if is_mouse_pressed(0) && !is_mouse_inside_widget_rect(pos, .{size.x, h + 20.0}) then widget.*.opened = false;
+	if is_key_pressed(KEY_ESC) then widget.*.opened = false;
 	
 	fire_internal: bool;
 	
@@ -287,7 +290,7 @@ combo_box :: (pos: Vec2, size: Vec2, z: f32, items: []string, selected: *int, op
 		fire_internal = true;
 	}
 	
-	if opened.* {
+	if widget.opened {
 		draw_widget_icon(.ARROW_DOWN, pos + .{size.x - 18, 2}, z + 1, 2, text_col);
 		draw_widget_rect_lines(pos + .{size.x - 20, 0}, .{20, 20}, z + 1, border_col);
 		
@@ -306,7 +309,7 @@ combo_box :: (pos: Vec2, size: Vec2, z: f32, items: []string, selected: *int, op
 			
 			if fire_internal {
 				selected.* = it_index;
-				opened.* = false;
+				widget.*.opened = false;
 				break;
 			}
 		}
@@ -318,7 +321,7 @@ combo_box :: (pos: Vec2, size: Vec2, z: f32, items: []string, selected: *int, op
 	return fire_internal;
 }
 
-color_picker :: (pos: Vec2, z: f32, hsv: *Vec3, rgb: *Col, it: int = 0, loc := #caller_location) -> bool {
+color_picker :: (pos: Vec2, z: f32, rgb: *Col, it: int = 0, loc := #caller_location) -> bool {
 	width  :: 207.0;
 	height :: 216.0;
 
@@ -326,38 +329,46 @@ color_picker :: (pos: Vec2, z: f32, hsv: *Vec3, rgb: *Col, it: int = 0, loc := #
 	
 	s := width - 40;
 
-	state_quad, _ := create_selectable_region(.COLOR_PICKER, loc, it, .{8, 8}, .{s, s}, z);
-	state_bar,  _ := create_selectable_region(.COLOR_PICKER, loc, it + 1, .{s + 12, 8}, .{20, s}, z);
+	state_quad, _, uuid := create_selectable_region(.COLOR_PICKER, loc, it,     .{8,      8}, .{s,  s}, z);
+	state_bar,  _, _    := create_selectable_region(.COLOR_PICKER, loc, it + 1, .{s + 12, 8}, .{20, s}, z);
 	
+	widget := *table_find_pointer(*widgets, uuid).color_picker;
+	
+	if widget.rgb != rgb.* {
+		widget.hsv = RGB_to_HSV(rgb.*);
+		widget.rgb = rgb.*;
+	}
+
 	edited := false;
 	if state_quad == .PRESSED {
 		mouse := get_relative_pos();
 		
-		hsv.*.y = clamp((mouse.x - 8) / s, 0, 1);
-		hsv.*.z = clamp(1 - (mouse.y - 8) / s, 0, 1);
+		widget.*.hsv.y = clamp((mouse.x - 8) / s, 0, 1);
+		widget.*.hsv.z = clamp(1 - (mouse.y - 8) / s, 0, 1);
 		
 		edited = true;
 	} else if state_bar == .PRESSED {
 		y := get_relative_y();
 		
-		hsv.*.x = clamp((y - 8) / s, 0, 1);
+		widget.*.hsv.x = clamp((y - 8) / s, 0, 1);
 
 		edited = true;
 	}
-	rgb.* = HSV_to_RGB(hsv);
+	
+	rgb.* = HSV_to_RGB(widget.hsv);
 	
 	text_pos :: Vec2.{18, 162};
 	fmt :: #bake_arguments formatInt(minimum_digits = 3, padding = #char " ");
-	draw_widget_text(tprint("R: %", fmt(rgb.r)),                  text_pos + .{  0, 20}, z, 1, settings.themes.platform_text_normal);
-	draw_widget_text(tprint("G: %", fmt(rgb.g)),                  text_pos + .{ 62, 20}, z, 1, settings.themes.platform_text_normal);
-	draw_widget_text(tprint("B: %", fmt(rgb.b)),                  text_pos + .{124, 20}, z, 1, settings.themes.platform_text_normal);
-	draw_widget_text(tprint("H: %", fmt(cast(s32)(hsv.x * 360))), text_pos + .{  0, 36}, z, 1, settings.themes.platform_text_normal);
-	draw_widget_text(tprint("S: %", fmt(cast(s32)(hsv.y * 100))), text_pos + .{ 62, 36}, z, 1, settings.themes.platform_text_normal);
-	draw_widget_text(tprint("V: %", fmt(cast(s32)(hsv.z * 100))), text_pos + .{124, 36}, z, 1, settings.themes.platform_text_normal);
+	draw_widget_text(tprint("R: %", fmt(rgb.r)),                         text_pos + .{  0, 20}, z, 1, settings.themes.platform_text_normal);
+	draw_widget_text(tprint("G: %", fmt(rgb.g)),                         text_pos + .{ 62, 20}, z, 1, settings.themes.platform_text_normal);
+	draw_widget_text(tprint("B: %", fmt(rgb.b)),                         text_pos + .{124, 20}, z, 1, settings.themes.platform_text_normal);
+	draw_widget_text(tprint("H: %", fmt(cast(s32)(widget.hsv.x * 360))), text_pos + .{  0, 36}, z, 1, settings.themes.platform_text_normal);
+	draw_widget_text(tprint("S: %", fmt(cast(s32)(widget.hsv.y * 100))), text_pos + .{ 62, 36}, z, 1, settings.themes.platform_text_normal);
+	draw_widget_text(tprint("V: %", fmt(cast(s32)(widget.hsv.z * 100))), text_pos + .{124, 36}, z, 1, settings.themes.platform_text_normal);
 	
 	{
 		p := fetch_parent();
-		draw_color_picker_rect(p.pos + .{8, 8}, .{s, s}, p.z + z, hsv.x);
+		draw_color_picker_rect(p.pos + .{8, 8}, .{s, s}, p.z + z, widget.hsv.x);
 	}
 	
 	draw_widget_rect(.{s + 12,             8}, .{20, s / 6}, z, .{255,   0,   0, 255}, .{255,   0,   0, 255}, .{255, 255,   0, 255}, .{255, 255,   0, 255});
@@ -370,17 +381,17 @@ color_picker :: (pos: Vec2, z: f32, hsv: *Vec3, rgb: *Col, it: int = 0, loc := #
 	draw_widget_rect_lines(.{8, 8}, .{s, s}, z + 1, settings.themes.platform_line);
 	draw_widget_rect_lines(.{s + 12, 8}, .{20, s}, z + 1, settings.themes.platform_line);
 	
-	cursor := Vec2.{(s - 2) * hsv.y, (s - 2) * (1 - hsv.z)} + .{9, 9};
-	draw_widget_rect(cursor - .{3, 3}, .{6, 6}, z + 2, rgb);
+	cursor := Vec2.{(s - 2) * widget.hsv.y, (s - 2) * (1 - widget.hsv.z)} + .{9, 9};
+	draw_widget_rect(cursor - .{3, 3}, .{6, 6}, z + 2, rgb.*);
 	draw_widget_rect_lines(cursor - .{4, 4}, .{8, 8}, z + 2, settings.themes.platform_line);
 	
-	rgb2 := HSV_to_RGB(.{hsv.x, 1, 1});
-	p1 := Vec2.{s + 12, 8 + hsv.x * (s - 1)};
+	rgb2 := HSV_to_RGB(.{widget.hsv.x, 1, 1});
+	p1 := Vec2.{s + 12, 8 + widget.hsv.x * (s - 1)};
 	draw_widget_rect_lines(p1 - .{2, 2}, .{24, 6}, z + 2, settings.themes.platform_line);
 	draw_widget_rect(p1 - .{2, 2}, .{24, 6}, z + 2, rgb2);
 	
 	child_end();
-	
+
 	return edited;
 }
 
@@ -426,7 +437,7 @@ window :: (uuid: ID, p: *Panel) {
 	}
 
 	if p.flags & .MODAL then fire |= is_key_pressed(KEY_ESC);
-	if fire  {
+	if fire {
 		p.visible = false;
 		if p.on_close then p.on_close();
 	}
@@ -697,6 +708,15 @@ Widget_Type :: enum {
 	TEXT;
 }
 
+Widget_Color_Picker :: struct {
+	rgb: Col;
+	hsv: Vec3;
+}
+
+Widget_Combo_Box :: struct {
+	opened: bool;
+}
+
 Widget :: struct {
 	type: Widget_Type;
 	uuid: ID;
@@ -704,6 +724,11 @@ Widget :: struct {
 	pos: Vec2;
 	size: Vec2;
 	z: f32;
+	
+	union {
+		color_picker: Widget_Color_Picker;
+		combo_box: Widget_Combo_Box;
+	}
 }
 
 panels: Table(ID, Panel);
