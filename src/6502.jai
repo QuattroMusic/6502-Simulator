@@ -244,6 +244,8 @@ unpack_P :: (data: u8) {
 cpu_stop :: () {
 	engine.running = false;
 	engine.thread_running = false;
+	
+	engine.current_instruction = 0xFF;  // intentionally out of range
 }
 
 cpu_reset :: () {
@@ -254,6 +256,8 @@ cpu_reset :: () {
 	engine.A = 0;
 	engine.X = 0;
 	engine.Y = 0;
+	
+	engine.current_instruction = 0xFF;  // intentionally out of range
 }
 
 cpu_init :: () {
@@ -265,6 +269,8 @@ cpu_init :: () {
 	engine.A = 0;
 	engine.X = 0;
 	engine.Y = 0;
+	
+	engine.current_instruction = 0xFF;  // intentionally out of range
 }
 
 virtual_cpu_reset :: () {
@@ -275,6 +281,8 @@ virtual_cpu_reset :: () {
 	engine.A = 0;
 	engine.X = 0;
 	engine.Y = 0;
+	
+	engine.current_instruction = 0xFF;  // intentionally out of range
 }
 
 virtual_cpu_init :: () {
@@ -286,6 +294,8 @@ virtual_cpu_init :: () {
 	engine.A = 0;
 	engine.X = 0;
 	engine.Y = 0;
+	
+	engine.current_instruction = 0xFF;  // intentionally out of range
 }
 
 next_instruction :: () {
@@ -459,7 +469,6 @@ compact_absolute_Y_address :: (func: (u16)) {
 }
 
 intrinsic_to_string :: (code: Opcode) -> string {
-	// This function is used to not increase the load size of the 6502 engine
 	info :: type_info(Opcode);
 	c := cast(u8)code;
 	s: string;
@@ -473,19 +482,19 @@ intrinsic_to_string :: (code: Opcode) -> string {
 		t.count -= 4;
 		s.count = 3;
 		if t == {
-			case "IMM"; return tprint("% #n",    s);
-			case "ZPG"; return tprint("% n",     s);
-			case "ZPX"; return tprint("% n, X",  s);
-			case "ZPY"; return tprint("% n, Y",  s);
-			case "ABS"; return tprint("% nn",    s);
-			case "ABX"; return tprint("% nn, X", s);
-			case "ABY"; return tprint("% nn, Y", s);
-			case "INX"; return tprint("% (n, X)",  s);
-			case "INY"; return tprint("% (n), Y",  s);
-			case "ACC"; return tprint("% A",     s);
+			case "IMM"; return tprint("% #n",     s);
+			case "ZPG"; return tprint("% n",      s);
+			case "ZPX"; return tprint("% n, X",   s);
+			case "ZPY"; return tprint("% n, Y",   s);
+			case "ABS"; return tprint("% nn",     s);
+			case "ABX"; return tprint("% nn, X",  s);
+			case "ABY"; return tprint("% nn, Y",  s);
+			case "INX"; return tprint("% (n, X)", s);
+			case "INY"; return tprint("% (n), Y", s);
+			case "ACC"; return tprint("% A",      s);
+			case; return "";
 		}
 	}
-	return "";
 }
 
 Opcode :: enum u8 {
