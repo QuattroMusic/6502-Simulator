@@ -175,7 +175,7 @@ parse_settings_version_2 :: (file: *File) {
 			file_size: type_of(viewer.file_path.count);
 			file_read(file, *file_size, size_of(type_of(viewer.file_path.count)));
 			
-			total_size := size_of(type_of(viewer.file_path.count)) + file_size + size_of(Platform_Settings) + 3;
+			total_size := size_of(type_of(viewer.file_path.count)) + file_size + 10;
 			assert(size == total_size, "Unable to read settings file, corrupted");
 			
 			str: string;

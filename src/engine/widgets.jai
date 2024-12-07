@@ -370,6 +370,7 @@ input_int :: (pos: Vec2, z: f32, $s: f32, value: *int, $min_value: int, $max_val
 	draw_widget_text(tprint("%", fmt(value.*)), pos + .{4, size.y / 2 - 9}, 1, s, text);
 	
 	if unfocused {
+		value.* = clamp(value.*, min_value, max_value);
 		defer widget.edited = false;
 		return widget.edited;
 	}
