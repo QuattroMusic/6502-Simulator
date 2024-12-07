@@ -322,7 +322,8 @@ combo_box :: (pos: Vec2, size: Vec2, z: f32, items: []string, selected: *int, it
 }
 
 input_int :: (pos: Vec2, z: f32, $s: f32, value: *int, $min_value: int, $max_value: int, it: int = 0, loc := #caller_location) -> bool {
-	size :: #run Vec2.{count_digits(max_value) * 8.0 * s + 8.0, s * 8.0 + 4};
+	digits :: #run count_digits(max_value);
+	size :: #run Vec2.{digits * 8.0 * s + 8.0, s * 8.0 + 4};
 	
 	state, press, uuid := create_selectable_region(.INPUT, loc, it, pos, size, z);
 	widget := *table_find_pointer(*widgets, uuid).input_int;
@@ -365,7 +366,7 @@ input_int :: (pos: Vec2, z: f32, $s: f32, value: *int, $min_value: int, $max_val
 	
 	draw_widget_rect_lines(pos, size, z, border);
 	
-	fmt :: #bake_arguments formatInt(minimum_digits = 3, padding = #char " ");
+	fmt :: #bake_arguments formatInt(minimum_digits = digits, padding = #char " ");
 	draw_widget_text(tprint("%", fmt(value.*)), pos + .{4, size.y / 2 - 9}, 1, s, text);
 	
 	if unfocused {

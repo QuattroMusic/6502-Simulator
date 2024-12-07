@@ -39,7 +39,7 @@ get_monitor_size :: () -> (w: s32, h: s32) {
 }
 
 lock_frame_rate :: () {
-    target_s: f32 = 1.0 / vp.target_frame_rate;
+    target_s: f32 = 1.0 / settings.platform.fps_lock;
     seconds_elapsed_for_frame: f32 = (cast(f32)(read_os_timer() - vp.last_counter)) / vp.perf_count_frequency;
     if seconds_elapsed_for_frame < target_s {
         if vp.sleep_is_granular {
@@ -261,7 +261,6 @@ Viewport :: struct {
 	
 	perf_count_frequency: s64;
 	last_counter: s64;
-	target_frame_rate: int = 60;
 	
 	window_style :: WS_POPUP;
 	

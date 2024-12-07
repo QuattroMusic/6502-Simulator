@@ -65,6 +65,8 @@ At_Startup :: enum u8 {
 Platform_Settings :: struct {
 	at_startup: At_Startup = .OPEN_EMPTY_FILE;
 	
+	fps_lock: u16 = 60;
+	
 	code_cursor_speed_slow: u8 = 3;
 	code_cursor_speed_fast: u8 = 6;
 	memory_cursor_speed_slow: u8 = 1;
@@ -94,6 +96,8 @@ General_UI :: struct {
 	settings_theming_color_edited: bool;
 	settings_platform_scrollbar_edited: bool;
 	settings_theming_scroll_pos: Vec2;
+	
+	settings_platform_view_fps_lock: u16;
 	
 	internal_selected: *Col;
 

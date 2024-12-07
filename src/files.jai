@@ -49,8 +49,8 @@ init_theming :: () {
 }
 
 setup_file_header :: (f: *File) {
-	maj_version: u8 = APP_MAJOR_VERSION;
-	min_version: u16 = APP_MINOR_VERSION;
+	maj_version := APP_MAJOR_VERSION;
+	min_version := APP_MINOR_VERSION;
 	file_write(f, *maj_version, 1);
 	file_write(f, *min_version, 2);
 }
@@ -74,6 +74,7 @@ write_options_content :: (file: *File) {
 		file_write(file, viewer.file_path.data, viewer.file_path.count);
 	}
 	
+	file_write(file, *settings.platform.fps_lock,                 size_of(type_of(settings.platform.fps_lock)));
 	file_write(file, *settings.platform.code_cursor_speed_slow,   size_of(type_of(settings.platform.code_cursor_speed_slow)));
 	file_write(file, *settings.platform.code_cursor_speed_fast,   size_of(type_of(settings.platform.code_cursor_speed_fast)));
 	file_write(file, *settings.platform.memory_cursor_speed_slow, size_of(type_of(settings.platform.memory_cursor_speed_slow)));
@@ -98,6 +99,7 @@ create_options_file :: () {
 	data: Platform_Settings;
 	
 	file_write(*file, *data.at_startup,               size_of(type_of(data.at_startup)));
+	file_write(*file, *data.fps_lock,                 size_of(type_of(data.fps_lock)));
 	file_write(*file, *data.code_cursor_speed_slow,   size_of(type_of(data.code_cursor_speed_slow)));
 	file_write(*file, *data.code_cursor_speed_fast,   size_of(type_of(data.code_cursor_speed_fast)));
 	file_write(*file, *data.memory_cursor_speed_slow, size_of(type_of(data.memory_cursor_speed_slow)));
@@ -107,6 +109,8 @@ create_options_file :: () {
 	
 	ini :: initializer_of(Platform_Settings);
 	ini(*settings.platform);
+	
+	ui.settings_platform_view_fps_lock = settings.platform.fps_lock;
 }
 
 create_theme_file :: () {
@@ -184,13 +188,16 @@ parse_settings_version_2 :: (file: *File) {
 				init_code_viewer(str);
 			}
 		} else {
-			assert(size == 8, "Unable to read settings file, corrupted");
+			assert(size == 10, "Unable to read settings file, corrupted");
 		}
 	}
-	code_cursor_speed_slow   = read_u8_in_range(file, CURSOR_SCROLLBAR_MIN_VALUE - 1, CURSOR_SCROLLBAR_MAX_VALUE - 1);
-	code_cursor_speed_fast   = read_u8_in_range(file, CURSOR_SCROLLBAR_MIN_VALUE - 1, CURSOR_SCROLLBAR_MAX_VALUE - 1);
-	memory_cursor_speed_slow = read_u8_in_range(file, CURSOR_SCROLLBAR_MIN_VALUE - 1, CURSOR_SCROLLBAR_MAX_VALUE - 1);
-	memory_cursor_speed_fast = read_u8_in_range(file, CURSOR_SCROLLBAR_MIN_VALUE - 1, CURSOR_SCROLLBAR_MAX_VALUE - 1);
+	fps_lock                 = read_u16_in_range(file, 1, 3000);
+	code_cursor_speed_slow   = read_u8_in_range(file, CURSOR_SCROLLBAR_MIN_VALUE, CURSOR_SCROLLBAR_MAX_VALUE);
+	code_cursor_speed_fast   = read_u8_in_range(file, CURSOR_SCROLLBAR_MIN_VALUE, CURSOR_SCROLLBAR_MAX_VALUE);
+	memory_cursor_speed_slow = read_u8_in_range(file, CURSOR_SCROLLBAR_MIN_VALUE, CURSOR_SCROLLBAR_MAX_VALUE);
+	memory_cursor_speed_fast = read_u8_in_range(file, CURSOR_SCROLLBAR_MIN_VALUE, CURSOR_SCROLLBAR_MAX_VALUE);
+	
+	ui.settings_platform_view_fps_lock = fps_lock;
 }
 
 parse_theming_version_2 :: (file: *File) {
@@ -276,6 +283,15 @@ read_u8_in_range :: inline (f: *File, min_v: u8, max_v: u8) -> u8 {
 	data: u8 = ---;
 	
 	file_read(f, *data, 1);
+	assert(min_v <= data && data <= max_v, "Unable to read settings file, corrupted");
+	
+	return data;
+}
+
+read_u16_in_range :: inline (f: *File, min_v: u16, max_v: u16) -> u16 {
+	data: u16 = ---;
+	
+	file_read(f, *data, 2);
 	assert(min_v <= data && data <= max_v, "Unable to read settings file, corrupted");
 	
 	return data;

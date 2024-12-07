@@ -27,9 +27,8 @@ draw_header :: () {
 }
 
 draw_buttons_controls :: () {
-	t :: 1;
 	if !engine.thread_running {
-		if button("Compile and run", .{10, 40}, .{170, 25}, 1, t) {
+		if button("Compile and run", .{10, 40}, .{170, 25}, 1) {
 			compile_program();
 			if engine.compilation_successful {
 				read_ROM(get_asset_path("out.bin"));  // Todo - robustness
@@ -37,14 +36,14 @@ draw_buttons_controls :: () {
 				cpu_start();
 			}
 		}
-		if button("Compile", .{190, 40}, .{100, 25}, 1, t) {
+		if button("Compile", .{190, 40}, .{100, 25}, 1) {
 			compile_program();
 			if engine.compilation_successful {
 				read_ROM(get_asset_path("out.bin"));  // Todo - robustness
 				cpu_reset();
 			}
 		}
-		if engine.compilation_successful && button("Run", .{300, 40}, .{60, 25}, 1, t) {
+		if engine.compilation_successful && button("Run", .{300, 40}, .{60, 25}, 1) {
 			cpu_reset();
 			cpu_start();
 		}
@@ -53,26 +52,26 @@ draw_buttons_controls :: () {
 		running := engine.running;
 		if !engine.debug {
 			if engine.running {
-				if button("Pause", .{100, 40}, .{80, 25}, 1, t) {
+				if button("Pause", .{100, 40}, .{80, 25}, 1) {
 					running = false;
 				}
 			} else {
-				if button("Resume", .{100, 40}, .{80, 25}, 1, t) {
+				if button("Resume", .{100, 40}, .{80, 25}, 1) {
 					running = true;
 				}
 			}
 		}
 		engine.running = running;
-		if button("Stop", .{10, 40}, .{80, 25}, 1, t) {
+		if button("Stop", .{10, 40}, .{80, 25}, 1) {
 			cpu_stop();
 		}
 	}
 
-	if button("Reset", .{370, 40}, .{80, 25}, 1, t) {
+	if button("Reset", .{370, 40}, .{80, 25}, 1) {
 		cpu_reset();
 	}
 
-	if button("Display", .{460, 40}, .{80, 25}, 1, t) {
+	if button("Display", .{460, 40}, .{80, 25}, 1) {
 		toggle_panel(ui.display_panel, centered = true);
 	}
 }
@@ -334,53 +333,59 @@ draw_modal :: () {
 	x := (vp.width  - MODAL_WIDTH)  / 2.0;
 	y := (vp.height - MODAL_HEIGHT) / 2.0;
 
-	parent := fetch_parent();
-	p := parent.pos;
-	z := 1 + parent.z;
-
 	if #complete ui.modal_error_type == {
 		case .FAILED_COMPILATION;
-			draw_text(ui.modal_error_message, p + .{10, 10}, z, 2, settings.themes.general_text, wrap = MODAL_WIDTH - 20);
+			draw_widget_text(ui.modal_error_message, .{10, 10}, 1, 2, settings.themes.general_text, wrap = MODAL_WIDTH - 20);
 		case .UNABLE_TO_OPEN_BINARY;
-			draw_text("Unable to open binary file <out.bin> for reading", p + .{10, 10}, z, 2, settings.themes.general_text);
+			draw_widget_text("Unable to open binary file <out.bin> for reading", .{10, 10}, 1, 2, settings.themes.general_text);
 		case .INCOMPATIBLE_ROM_SIZE;
-			draw_text("Incompatible ROM size", p + .{10, 10}, z, 2, settings.themes.general_text);
-			draw_text("ROM size must to be 32kB", p + .{10, 26}, z, 2, settings.themes.general_text);
+			draw_widget_text("Incompatible ROM size", .{10, 10}, 1, 2, settings.themes.general_text);
+			draw_widget_text("ROM size must to be 32kB", .{10, 26}, 1, 2, settings.themes.general_text);
 		case .ERROR_OPENING_FILE;
-			draw_text("An error has occured while opening the file", p + .{10, 10}, z, 2, settings.themes.general_text);
+			draw_widget_text("An error has occured while opening the file", .{10, 10}, 1, 2, settings.themes.general_text);
 		case .READING_FILE_TIMED_OUT;
-			draw_text("Reading file timed out", p + .{10, 10}, z, 2, settings.themes.general_text);
+			draw_widget_text("Reading file timed out", .{10, 10}, 1, 2, settings.themes.general_text);
 		case .NO_INPUT_FILE_GIVEN;
-			draw_text("No input file given", p + .{10, 10}, z, 2, settings.themes.general_text);
+			draw_widget_text("No input file given", .{10, 10}, 1, 2, settings.themes.general_text);
 		case .GIVEN_FILE_NOT_VALID;
-			draw_text("Unsupported given file", p + .{10, 10}, z, 2, settings.themes.general_text);
-			draw_text("File must to have the '.s' extension", p + .{10, 26}, z, 2, settings.themes.general_text);
+			draw_widget_text("Unsupported given file", .{10, 10}, 1, 2, settings.themes.general_text);
+			draw_widget_text("File must to have the '.s' extension", .{10, 26}, 1, 2, settings.themes.general_text);
 		case .UNABLE_TO_FIND_COMPILER;
-			draw_text("Unable to find 'vasm6502_oldstyle.exe', aborting", p + .{10, 10}, z, 2, settings.themes.general_text);
+			draw_widget_text("Unable to find 'vasm6502_oldstyle.exe', aborting", .{10, 10}, 1, 2, settings.themes.general_text);
 	}
 	
 	engine.compilation_successful = false;
 }
 
 draw_settings :: () {
-	p := fetch_parent();
-	
 	tab: int = xx ui.settings_focused_tab;
 	tab_bar(.{10, 10}, SETTINGS_WIDTH - 20, 1, .["platform", "theming"], *tab);
 	ui.settings_focused_tab = xx tab;
 	
 	if ui.settings_focused_tab == {
 		case .PLATFORM;
-			draw_text("at startup, open: ", p.pos + .{20, 50}, p.z + 1, 2, settings.themes.platform_text_normal);
+			draw_widget_text("at startup, open:", .{20, 50}, 1, 2, settings.themes.platform_text_normal);
 			w :: #run measure_text("at startup, open", 2).x;
 			
-			value := cast(int)settings.platform.at_startup;
-			edit := combo_box(.{40 + w, 50 - 2}, .{190, 20}, 1, .["empty file", "last file"], *value);
-			settings.platform.at_startup = xx value;
-			if edit then save_options_file();
+			{
+				value := cast(int)settings.platform.at_startup;
+				edit := combo_box(.{40 + w, 50 - 2}, .{190, 20}, 1, .["empty file", "last file"], *value);
+				settings.platform.at_startup = xx value;
+				if edit then save_options_file();
+			}
 			
-			internal_scroll :: ($text: string, p: Panel, var: *u8, y: f32) {
-				draw_text(text, p.pos + .{20, y}, p.z + 1, 2, settings.themes.platform_text_normal);
+			{
+				draw_widget_text("fps lock:", .{20, 70}, 1, 2, settings.themes.platform_text_normal);
+				value := cast(int)ui.settings_platform_view_fps_lock;
+				if input_int(.{165, 70}, 1, 2, *value, 1, 3000) {
+					settings.platform.fps_lock = ui.settings_platform_view_fps_lock;
+					save_options_file();
+				}
+				ui.settings_platform_view_fps_lock = xx value;
+			}
+			
+			internal_scroll :: ($text: string, var: *u8, y: f32) {
+				draw_widget_text(text, .{20, y}, 1, 2, settings.themes.platform_text_normal);
 				w :: #run measure_text(text, 2).x;
 				
 				slider_val := cast(int)var.*;
@@ -390,19 +395,19 @@ draw_settings :: () {
 				if edit then save_options_file();
 			}
 			
-			h_separator("scrollbars", .{10, 80}, SETTINGS_WIDTH - 20, 1);
+			h_separator("scrollbars", .{10, 110}, SETTINGS_WIDTH - 20, 1);
 
-			internal_scroll("code viewer scroll slow speed", p, *settings.platform.code_cursor_speed_slow, 100);
-			internal_scroll("code viewer scroll fast speed", p, *settings.platform.code_cursor_speed_fast, 125);
-			internal_scroll("memory viewer scroll slow speed", p, *settings.platform.memory_cursor_speed_slow, 155);
-			internal_scroll("memory viewer scroll fast speed", p, *settings.platform.memory_cursor_speed_fast, 180);
+			internal_scroll("code viewer scroll slow speed", *settings.platform.code_cursor_speed_slow, 130);
+			internal_scroll("code viewer scroll fast speed", *settings.platform.code_cursor_speed_fast, 155);
+			internal_scroll("memory viewer scroll slow speed", *settings.platform.memory_cursor_speed_slow, 185);
+			internal_scroll("memory viewer scroll fast speed", *settings.platform.memory_cursor_speed_fast, 210);
 		case .THEMING;
 			internal_selectable :: ($text: string, x: f32, y: *f32, col: *Col, loc := #caller_location) {
 				defer y.* += 16;
 				
 				y_off := y.*;
 				y_off -= ui.settings_theming_scroll_pos.y;
-				if y_off < 40 || y_off > 550 then return;
+				if y_off < 40 || y_off > SETTINGS_HEIGHT - 50 then return;
 				s :: #run measure_text(text, 2);
 				
 				box_pos := Vec2.{x, y_off + 2};
@@ -444,16 +449,16 @@ draw_settings :: () {
 				
 				y_off := y.*;
 				y_off -= ui.settings_theming_scroll_pos.y;
-				if y_off < 40 || y_off > 555 then return;
+				if y_off < 40 || y_off > SETTINGS_HEIGHT - 45 then return;
 				
 				h_separator(text, .{10, y_off}, SETTINGS_WIDTH - 280, 1);
 			}
 			
-			draw_rect(p.pos + .{SETTINGS_WIDTH - 240, 40}, .{1, SETTINGS_HEIGHT - 70}, p.z + 1, settings.themes.platform_line);
+			draw_widget_rect(.{SETTINGS_WIDTH - 240, 40}, .{1, SETTINGS_HEIGHT - 70}, 1, settings.themes.platform_line);
 			
 			{
-				draw_scrollbar(.{10, 40}, .{SETTINGS_WIDTH - 260, SETTINGS_HEIGHT - 83}, z = 1, *ui.settings_theming_scroll_pos, .{0, 16 * 55}, .{0, 0}, .{0, 16 * (55 - 32)}, 1, 1);
-				draw_rect_lines(p.pos + .{SETTINGS_WIDTH - 250 - WIDGET_SCROLLBAR_SIZE, 40}, .{WIDGET_SCROLLBAR_SIZE, SETTINGS_HEIGHT - 80}, p.z + 3, settings.themes.platform_line);
+				draw_scrollbar(.{10, 40}, .{SETTINGS_WIDTH - 260, SETTINGS_HEIGHT - 81}, z = 1, *ui.settings_theming_scroll_pos, .{0, 16 * 56}, .{0, 0}, .{0, 16 * (65 - 32)}, 1, 1);
+				draw_widget_rect_lines(.{SETTINGS_WIDTH - 250 - WIDGET_SCROLLBAR_SIZE, 40}, .{WIDGET_SCROLLBAR_SIZE, SETTINGS_HEIGHT - 80}, 3, settings.themes.platform_line);
 
 				using settings.themes;
 				y: f32 = 25;
@@ -519,17 +524,17 @@ draw_settings :: () {
 			}
 
 			{
-				pos := p.pos + .{SETTINGS_WIDTH - 233, 275};
+				pos := Vec2.{SETTINGS_WIDTH - 233, 275};
 				h_separator("info", .{SETTINGS_WIDTH - 233, 275}, 225, 1);
 				
-				draw_text("- left click the colored box", pos + .{0,  20}, p.z + 1, 1, settings.themes.platform_text_normal);
-				draw_text("  or the text to select",      pos + .{0,  30}, p.z + 1, 1, settings.themes.platform_text_normal);
-				draw_text("  the color",                  pos + .{0,  40}, p.z + 1, 1, settings.themes.platform_text_normal);
-				draw_text("- right click to revert to",   pos + .{0,  60}, p.z + 1, 1, settings.themes.platform_text_normal);
-				draw_text("  default value",              pos + .{0,  70}, p.z + 1, 1, settings.themes.platform_text_normal);
-				draw_text("- to revert everything,",      pos + .{0,  90}, p.z + 1, 1, settings.themes.platform_text_normal);
-				draw_text("  simply delete the file",     pos + .{0, 100}, p.z + 1, 1, settings.themes.platform_text_normal);
-				draw_text("- enjoy!",                     pos + .{0, 120}, p.z + 1, 1, settings.themes.platform_text_normal);
+				draw_widget_text("- left click the colored box", pos + .{0,  20}, 1, 1, settings.themes.platform_text_normal);
+				draw_widget_text("  or the text to select",      pos + .{0,  30}, 1, 1, settings.themes.platform_text_normal);
+				draw_widget_text("  the color",                  pos + .{0,  40}, 1, 1, settings.themes.platform_text_normal);
+				draw_widget_text("- right click to revert to",   pos + .{0,  60}, 1, 1, settings.themes.platform_text_normal);
+				draw_widget_text("  default value",              pos + .{0,  70}, 1, 1, settings.themes.platform_text_normal);
+				draw_widget_text("- to revert everything,",      pos + .{0,  90}, 1, 1, settings.themes.platform_text_normal);
+				draw_widget_text("  simply delete the file",     pos + .{0, 100}, 1, 1, settings.themes.platform_text_normal);
+				draw_widget_text("- enjoy!",                     pos + .{0, 120}, 1, 1, settings.themes.platform_text_normal);
 			}
 			
 			if(color_picker(.{SETTINGS_WIDTH - 225, 45}, 1, ui.internal_selected)) {

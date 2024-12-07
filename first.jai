@@ -42,7 +42,7 @@ setup_windows :: () {
 
 	modal_on_close :: () {  // Todo - Temporary!
 		// there's a silly bug about this that I cannot explaint
-		// the Basic()(MEMORY_DEBUG = true) sometimes shows an allocation and sometimes it doesn't
+		// the Basic()(MEMORY_DEBUGGER = true) sometimes shows an allocation and sometimes it doesn't
 		// even if I free the memory, the bytes aren't decreasing (?)
 		// with my good sense, I'm stil free-ing the memory, you know
 		// I absolutely need to throw away the vasm compiler and build one
@@ -109,8 +109,8 @@ DISPLAY_HEIGHT :: 80;
 MODAL_WIDTH  :: 800;
 MODAL_HEIGHT :: 600;
 
-SETTINGS_WIDTH  :: 800;
-SETTINGS_HEIGHT :: 600;
+SETTINGS_WIDTH  :: 700;
+SETTINGS_HEIGHT :: 450;
 
 APP_MAJOR_VERSION :: 2;
 APP_MINOR_VERSION :: 0;
