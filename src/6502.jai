@@ -341,7 +341,10 @@ lock_frame_rate_6502 :: () {
 }
 
 compile_program :: () {
-	file, success := file_open("vasm6502_oldstyle.exe");
+	compiler_path := tprint(get_asset_path("vasm6502_oldstyle.exe"));
+	out_path := tprint(get_asset_path("out.bin"));
+	
+	file, success := file_open(compiler_path);  // Todo - robustness
 	defer file_close(*file);
 	if !success {
 		display_error_panel(.UNABLE_TO_FIND_COMPILER, "no compiler found");
@@ -354,7 +357,8 @@ compile_program :: () {
 	}
 
 	path := get_absolute_path(viewer.file_path,, temp);
-	fmt := tprint("vasm6502_oldstyle.exe -Fbin -o \"out.bin\" -dotdir \"%\"", path);
+	
+	fmt := tprint("% -Fbin -o \"%\" -dotdir \"%\"", compiler_path, out_path, path);
 
 	out := break_command_into_strings(fmt);
 	res, output_string, error_string := run_command(..out, capture_and_return_output = true,, allocator = temp);

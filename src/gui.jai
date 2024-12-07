@@ -32,7 +32,7 @@ draw_buttons_controls :: () {
 		if button("Compile and run", .{10, 40}, .{170, 25}, 1, t) {
 			compile_program();
 			if engine.compilation_successful {
-				read_ROM("out.bin");
+				read_ROM(get_asset_path("out.bin"));  // Todo - robustness
 				cpu_reset();
 				cpu_start();
 			}
@@ -40,7 +40,7 @@ draw_buttons_controls :: () {
 		if button("Compile", .{190, 40}, .{100, 25}, 1, t) {
 			compile_program();
 			if engine.compilation_successful {
-				read_ROM("out.bin");
+				read_ROM(get_asset_path("out.bin"));  // Todo - robustness
 				cpu_reset();
 			}
 		}

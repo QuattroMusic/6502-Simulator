@@ -4,7 +4,7 @@ init_settings :: () {
 }
 
 save_theme_file :: () {
-	file, success := file_open(THEME_FILE_NAME, for_writing = true, keep_existing_content = false);
+	file, success := file_open(get_asset_path(THEME_FILE_NAME), for_writing = true, keep_existing_content = false);
 	assert(success);  // Todo - handle better error messages
 	
 	write_theme_content(*file);
@@ -13,7 +13,7 @@ save_theme_file :: () {
 }
 
 save_options_file :: () {
-	file, success := file_open(SETTINGS_FILE_NAME, for_writing = true, keep_existing_content = false);
+	file, success := file_open(get_asset_path(SETTINGS_FILE_NAME), for_writing = true, keep_existing_content = false);
 	assert(success);  // Todo - handle better error messages
 	
 	write_options_content(*file);
@@ -21,9 +21,13 @@ save_options_file :: () {
 	file_close(*file);
 }
 
+get_asset_path :: (file: string) -> string {
+	return tprint("%/%", DATA_FOLDER_NAME, file);
+}
+
 #scope_file
 init_options :: () {
-	success := file_exists(SETTINGS_FILE_NAME);
+	success := file_exists(get_asset_path(SETTINGS_FILE_NAME));
 	
 	if !success {
 		create_options_file();
@@ -34,7 +38,7 @@ init_options :: () {
 }
 
 init_theming :: () {
-	success := file_exists(THEME_FILE_NAME);
+	success := file_exists(get_asset_path(THEME_FILE_NAME));
 	
 	if !success {
 		create_theme_file();
@@ -86,7 +90,7 @@ write_theme_content :: (file: *File) {
 }
 
 create_options_file :: () {
-	file, success := file_open(SETTINGS_FILE_NAME, for_writing = true, keep_existing_content = false);
+	file, success := file_open(get_asset_path(SETTINGS_FILE_NAME), for_writing = true, keep_existing_content = false);
 	assert(success);  // Todo - handle better error messages
 	
 	setup_file_header(*file);
@@ -106,7 +110,7 @@ create_options_file :: () {
 }
 
 create_theme_file :: () {
-	file, success := file_open(THEME_FILE_NAME, for_writing = true, keep_existing_content = false);
+	file, success := file_open(get_asset_path(THEME_FILE_NAME), for_writing = true, keep_existing_content = false);
 	assert(success);  // Todo - handle better error messages
 	
 	setup_file_header(*file);
@@ -125,7 +129,7 @@ create_theme_file :: () {
 }
 
 parse_options_file :: () {
-	file, success := file_open(SETTINGS_FILE_NAME, for_writing = false);
+	file, success := file_open(get_asset_path(SETTINGS_FILE_NAME), for_writing = false);
 	assert(success);  // Todo - handle better error messages
 	
 	maj_version, min_version := get_file_header(*file);
@@ -140,7 +144,7 @@ parse_options_file :: () {
 }
 
 parse_theme_file :: () {
-	file, success := file_open(THEME_FILE_NAME, for_writing = false);
+	file, success := file_open(get_asset_path(THEME_FILE_NAME), for_writing = false);
 	assert(success);  // Todo - handle better error messages
 	
 	maj_version, min_version := get_file_header(*file);
