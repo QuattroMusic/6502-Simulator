@@ -92,7 +92,7 @@ draw_code_viewer :: () {
 	scroll_size := viewer.size + max_value;
 	min_size := Vec2.{30 * 16.0, 1 * 16.0};
 
-	draw_scrollbar(viewer.pos, viewer.size, z = 3, *viewer.scrollbar_pos, scroll_size, min_size, max_value, settings.platform.code_cursor_speed_slow + 1, settings.platform.code_cursor_speed_fast + 1);
+	draw_scrollbar(viewer.pos, viewer.size, z = 3, *viewer.scrollbar_pos, scroll_size, min_size, max_value, settings.platform.code_cursor_speed_slow, settings.platform.code_cursor_speed_fast);
 
 	x_visible := min_size.x + viewer.size.x < scroll_size.x;
 	draw_colored_text(x_visible);
@@ -148,7 +148,7 @@ draw_program_memory :: () {
 	min_size       := Vec2.{0, 0};
 	max_value      := Vec2.{0, (2048 - rows_on_screen) * 16};
 
-	draw_scrollbar(pos, size, z = 1, *scroll_pos, .{0, 2048 * 16}, min_size, max_value, settings.platform.memory_cursor_speed_slow + 1, settings.platform.memory_cursor_speed_fast + 1);
+	draw_scrollbar(pos, size, z = 1, *scroll_pos, .{0, 2048 * 16}, min_size, max_value, settings.platform.memory_cursor_speed_slow, settings.platform.memory_cursor_speed_fast);
 
 	ui.memory_scrollbar_pos = scroll_pos.y;
 
@@ -377,7 +377,6 @@ draw_settings :: () {
 			value := cast(int)settings.platform.at_startup;
 			edit := combo_box(.{40 + w, 50 - 2}, .{190, 20}, 1, .["empty file", "last file"], *value);
 			settings.platform.at_startup = xx value;
-			
 			if edit then save_options_file();
 			
 			internal_scroll :: ($text: string, p: Panel, var: *u8, y: f32) {
@@ -385,25 +384,18 @@ draw_settings :: () {
 				w :: #run measure_text(text, 2).x;
 				
 				slider_val := cast(int)var.*;
-				edit := draw_step_hslider(.{40 + w, y}, .{150, 20}, CURSOR_SCROLLBAR_MIN_VALUE, CURSOR_SCROLLBAR_MAX_VALUE, *slider_val, it = xx y);
+				edit := input_int(.{40 + w, y}, 1, s = 2, *slider_val, min_value = 1, max_value = 255, it = xx y);
 				var.* = cast,trunc(u8)slider_val;
 				
-				draw_text(tprint("%", var.* + 1), p.pos + .{200 + w, y}, p.z + 1, 2, settings.themes.platform_text_normal);
-
-				if edit then ui.settings_platform_scrollbar_edited = true;
+				if edit then save_options_file();
 			}
 			
 			h_separator("scrollbars", .{10, 80}, SETTINGS_WIDTH - 20, 1);
-			
+
 			internal_scroll("code viewer scroll slow speed", p, *settings.platform.code_cursor_speed_slow, 100);
 			internal_scroll("code viewer scroll fast speed", p, *settings.platform.code_cursor_speed_fast, 125);
 			internal_scroll("memory viewer scroll slow speed", p, *settings.platform.memory_cursor_speed_slow, 155);
 			internal_scroll("memory viewer scroll fast speed", p, *settings.platform.memory_cursor_speed_fast, 180);
-			
-			if ui.settings_platform_scrollbar_edited && is_mouse_released(0) {
-				ui.settings_platform_scrollbar_edited = false;
-				save_options_file();
-			}
 		case .THEMING;
 			internal_selectable :: ($text: string, x: f32, y: *f32, col: *Col, loc := #caller_location) {
 				defer y.* += 16;

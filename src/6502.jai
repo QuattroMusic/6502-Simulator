@@ -65,10 +65,10 @@ At_Startup :: enum u8 {
 Platform_Settings :: struct {
 	at_startup: At_Startup = .OPEN_EMPTY_FILE;
 	
-	code_cursor_speed_slow: u8 = 2;
-	code_cursor_speed_fast: u8 = 5;
-	memory_cursor_speed_slow: u8 = 0;
-	memory_cursor_speed_fast: u8 = 7;
+	code_cursor_speed_slow: u8 = 3;
+	code_cursor_speed_fast: u8 = 6;
+	memory_cursor_speed_slow: u8 = 1;
+	memory_cursor_speed_fast: u8 = 8;
 }
 
 Settings :: struct {

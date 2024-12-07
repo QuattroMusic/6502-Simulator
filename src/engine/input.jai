@@ -2,6 +2,7 @@ fetch_window_inputs :: () {
 	memcpy(input_button_states_old.data, input_button_states.data, size_of(type_of(input_button_states)));
 	memcpy(input_keyboard_states_old.data, input_keyboard_states.data, size_of(type_of(input_keyboard_states)));
 	mouse_dz = 0;
+	pressed_char = 0;
 	
 	while true {
 		msg: MSG;
@@ -27,6 +28,7 @@ reset_input :: () {
 is_mouse_pressed  :: (key: int) -> bool { return  input_button_states[key] && !input_button_states_old[key]; }
 is_mouse_down     :: (key: int) -> bool { return  input_button_states[key]; }
 is_mouse_released :: (key: int) -> bool { return !input_button_states[key] &&  input_button_states_old[key]; }
+is_mouse_up       :: (key: int) -> bool { return !input_button_states[key]; }
 
 is_key_pressed  :: (key: int) -> bool { return  input_keyboard_states[key] && !input_keyboard_states_old[key]; }
 is_key_down     :: (key: int) -> bool { return  input_keyboard_states[key]; }
@@ -37,6 +39,7 @@ mouse_y: int;
 mouse_dz: int;
 
 last_down_char: u8;
+pressed_char: u8;
 
 input_button_states: [3]bool;
 input_button_states_old: [3]bool;
@@ -45,6 +48,7 @@ input_keyboard_states: [0xFF]bool;
 input_keyboard_states_old: [0xFF]bool;
 
 KEY_DELETE :: 8;
+KEY_ENTER  :: 13;
 KEY_SHIFT  :: 16;
 KEY_CTRL   :: 17;
 KEY_ALT    :: 18;

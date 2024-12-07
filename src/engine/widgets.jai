@@ -321,6 +321,61 @@ combo_box :: (pos: Vec2, size: Vec2, z: f32, items: []string, selected: *int, it
 	return fire_internal;
 }
 
+input_int :: (pos: Vec2, z: f32, $s: f32, value: *int, $min_value: int, $max_value: int, it: int = 0, loc := #caller_location) -> bool {
+	size :: #run Vec2.{count_digits(max_value) * 8.0 * s + 8.0, s * 8.0 + 4};
+	
+	state, press, uuid := create_selectable_region(.INPUT, loc, it, pos, size, z);
+	widget := *table_find_pointer(*widgets, uuid).input_int;
+	
+	unfocused := false;
+	if is_mouse_pressed(0) || is_key_pressed(KEY_ESC) || is_key_pressed(KEY_ENTER) {
+		if press then widget.selected = true;
+		else {
+			widget.selected = false;
+			unfocused = true;
+		}
+	}
+	
+	_, border, text := fetch_colors(state);
+	
+	// at the moment it doesn't handle negative values
+	if widget.selected {
+		if is_mouse_up(0) {
+			border = settings.themes.platform_widget_border_hover;
+			text = settings.themes.platform_text_hover;
+		}
+		
+		if is_digit(pressed_char) {
+			v := pressed_char - #char "0";
+			new_value: int = value.* * 10 + v;
+			
+			value.* = min(new_value, max_value);
+			widget.edited = true;
+		}
+		if is_key_pressed(KEY_DELETE) {
+			value.* /= 10;
+			widget.edited = true;
+		}
+	} else {
+		if value.* < min_value {
+			value.* = min_value;
+			widget.edited = true;
+		}
+	}
+	
+	draw_widget_rect_lines(pos, size, z, border);
+	
+	fmt :: #bake_arguments formatInt(minimum_digits = 3, padding = #char " ");
+	draw_widget_text(tprint("%", fmt(value.*)), pos + .{4, size.y / 2 - 9}, 1, s, text);
+	
+	if unfocused {
+		defer widget.edited = false;
+		return widget.edited;
+	}
+	
+	return false;
+}
+
 color_picker :: (pos: Vec2, z: f32, rgb: *Col, it: int = 0, loc := #caller_location) -> bool {
 	width  :: 207.0;
 	height :: 216.0;
@@ -606,9 +661,9 @@ fetch_parent :: () -> Panel {
 
 fetch_colors :: (state: Interaction_State) -> (main: Col, border: Col, text: Col) {
 	if #complete state == {
-		case .NORMAL;  return settings.themes.platform_widget_bg_normal,  settings.themes.platform_widget_border_normal,  settings.themes.platform_text_normal;
-		case .HOVER;   return settings.themes.platform_widget_bg_hover, settings.themes.platform_widget_border_hover, settings.themes.platform_text_hover;
-		case .PRESSED; return settings.themes.platform_widget_bg_press, settings.themes.platform_widget_border_press, settings.themes.platform_text_press;
+		case .NORMAL;  return settings.themes.platform_widget_bg_normal, settings.themes.platform_widget_border_normal, settings.themes.platform_text_normal;
+		case .HOVER;   return settings.themes.platform_widget_bg_hover,  settings.themes.platform_widget_border_hover,  settings.themes.platform_text_hover;
+		case .PRESSED; return settings.themes.platform_widget_bg_press,  settings.themes.platform_widget_border_press,  settings.themes.platform_text_press;
 	}
 }
 
@@ -706,6 +761,7 @@ Widget_Type :: enum {
 	COMBO;
 	COLOR_PICKER;
 	TEXT;
+	INPUT;
 }
 
 Widget_Color_Picker :: struct {
@@ -715,6 +771,11 @@ Widget_Color_Picker :: struct {
 
 Widget_Combo_Box :: struct {
 	opened: bool;
+}
+
+Widget_Input_Int :: struct {
+	selected: bool;
+	edited: bool;
 }
 
 Widget :: struct {
@@ -728,6 +789,7 @@ Widget :: struct {
 	union {
 		color_picker: Widget_Color_Picker;
 		combo_box: Widget_Combo_Box;
+		input_int: Widget_Input_Int;
 	}
 }
 

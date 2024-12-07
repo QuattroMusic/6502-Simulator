@@ -140,6 +140,7 @@ EventsManager :: (hwnd: *void, msg: u32, wparam: u64, lparam: s64) -> s64 #c_cal
 				key := cast,no_check(u8)wparam;
 				input_keyboard_states[key] = true;
 				last_down_char      = key;
+				pressed_char        = key;
 			}
 		case WM_SYSKEYUP; #through;
 		case WM_KEYUP;
