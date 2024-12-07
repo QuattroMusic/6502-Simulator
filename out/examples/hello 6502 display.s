@@ -297,7 +297,7 @@ draw:
 	
 	jsr calculate_abs_coords
 	
-	lda #1  ; white
+	lda #3  ; white
 	ldx #0
 	sta (coords, X)
 	

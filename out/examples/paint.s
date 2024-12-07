@@ -5,10 +5,10 @@
 ; note: run at 5 - 10 khz for best result
 
 ; colors:
-; 1 = black, 2 = white, 3 = gray
-; 4 = red, 5 = orange, 6 = yellow
-; 7 = green, 8 = blue, 9 = purple
-; 0 = pink
+; 1 = black, 2 = white,  3 = gray
+; 4 = red,   5 = orange, 6 = yellow
+; 7 = green, 8 = cyan,   9 = blue
+; 0 = purple
 
 col_black   = 0
 col_white   = 3
