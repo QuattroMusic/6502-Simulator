@@ -7,6 +7,7 @@ init_window :: (width: s32, height: s32) {
 	vp.height = height;
 
 	init_rendering();
+	init_widgets();
 
 	QueryPerformanceFrequency(*vp.perf_count_frequency);
 	QueryPerformanceCounter(*vp.last_counter);

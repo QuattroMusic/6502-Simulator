@@ -601,7 +601,13 @@ widgets_draw_panels :: () {
 	}
 }
 
+init_widgets :: () {
+	init(*widgets);
+	init(*panels);
+}
+
 deinit_widgets :: () {
+	deinit(*widgets);
 	deinit(*panels);
 }
 
