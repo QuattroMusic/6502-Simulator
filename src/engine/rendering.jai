@@ -1,13 +1,13 @@
 draw_rect :: inline (pos: Vec2, size: Vec2, z: f32, col: Col) {
-	element_add(*quad_buffer, .{pos.x, pos.y, z, size.x, size.y, col.data});
+	element_add(*quad_buffer, .{floor(pos.x), floor(pos.y), z, size.x, size.y, col.data});
 }
 
 draw_color_picker_rect :: inline (pos: Vec2, size: Vec2, z: f32, v: f32) {
-	element_add(*spec_buffer, .{pos.x, pos.y, z, size.x, size.x, v});
+	element_add(*spec_buffer, .{floor(pos.x), floor(pos.y), z, size.x, size.x, v});
 }
 
 draw_rect :: inline (pos: Vec2, size: Vec2, z: f32, c1: Col, c2: Col, c3: Col, c4: Col) {
-	element_add(*flex_buffer, .{pos.x, pos.y, z, size.x, size.y, c1.data, c2.data, c3.data, c4.data});
+	element_add(*flex_buffer, .{floor(pos.x), floor(pos.y), z, size.x, size.y, c1.data, c2.data, c3.data, c4.data});
 }
 
 draw_panel :: ($$text: string, pos: Vec2, size: Vec2, layer: f32) {
@@ -40,7 +40,7 @@ draw_character :: ($$c: u8, pos: Vec2, layer: f32, scale: f32, col: Col) {
 
 	s := scale * 8;
 	
-	element_add(*font_buffer, .{pos.x, pos.y, layer, xx s, col.data, uv});
+	element_add(*font_buffer, .{floor(pos.x), floor(pos.y), layer, xx s, col.data, uv});
 }
 
 draw_text :: (text: string, pos: Vec2, layer: f32, scale: f32, color: Col, $wrap: f32 = 0) {
@@ -71,7 +71,7 @@ draw_icon :: (icon: Icon, pos: Vec2, layer: f32, $scale: f32, col: Col) {
 
 	s :: 8.0 * scale;
 
-	element_add(*font_buffer, .{pos.x, pos.y, layer, xx s, col.data, uv});
+	element_add(*font_buffer, .{floor(pos.x), floor(pos.y), layer, xx s, col.data, uv});
 }
 
 get_icon_mapping :: (icon: Icon) -> uvx: f32 {
