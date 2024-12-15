@@ -143,7 +143,6 @@ init:
 ### Version 2.0
 - [x] render and gui revamp
 - [x] options panel + save configurations to file
-- [ ] browser panel
 
 ### Version 3.0
 - [ ] panel for the 6502 instruction set
