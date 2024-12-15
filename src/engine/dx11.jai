@@ -3,20 +3,20 @@ init_rendering :: () {
 	init_shaders();
 	init_font();
 	init_graphics();
-	reset_drawing_area();
 }
 
 deinit_rendering :: () {
 	release_buffer :: (buff: Buffer_Data) {
-		if buff.layout  then IUnknown_Release(buff.layout);
-		if buff.VS      then IUnknown_Release(buff.VS);
-		if buff.PS      then IUnknown_Release(buff.PS);
-		if buff.VBuffer then IUnknown_Release(buff.VBuffer);
-		if buff.IBuffer then IUnknown_Release(buff.IBuffer);
+		if buff.layout          then IUnknown_Release(buff.layout);
+		if buff.VS              then IUnknown_Release(buff.VS);
+		if buff.GS              then IUnknown_Release(buff.GS);
+		if buff.PS              then IUnknown_Release(buff.PS);
+		if buff.elements_buffer then IUnknown_Release(buff.elements_buffer);
 	}
 
 	release_buffer(quad_buffer);
 	release_buffer(font_buffer);
+	release_buffer(spec_buffer);
 
 	if camera_buffer then IUnknown_Release(camera_buffer);
 
@@ -95,75 +95,97 @@ create_depth_stencil :: () {
 }
 
 init_shaders :: () {
-	VS, vertex_error, vertex_res :: #run D3DCompile(quad_shader, "basic", .[], null, "VShader", "vs_5_0", 0, 0);
-	PS, pixel_error,  pixel_res  :: #run D3DCompile(quad_shader, "basic", .[], null, "PShader", "ps_5_0", 0, 0);
-
-	#if vertex_res then log_error("[%]: %\n", vertex_res, vertex_error);
-	#if pixel_res  then log_error("[%]: %\n", pixel_res,  pixel_error);
-
-	ID3D11Device_CreateVertexShader(dev, VS.data, xx VS.count, null, *quad_buffer.VS);
-	ID3D11Device_CreatePixelShader( dev, PS.data, xx PS.count, null, *quad_buffer.PS);
-
-	ied :: D3D11_INPUT_ELEMENT_DESC.[
-		.{"POSITION", 0, .R32G32B32_FLOAT,    0,  0, .VERTEX_DATA, 0},
-		.{"COLOR",    0, .R32G32B32A32_FLOAT, 0, 12, .VERTEX_DATA, 0}
+	compile_shader :: ($name: string) -> (V: string, G: string, P: string) #compile_time {
+		path := tprint("src/engine/shaders/%.hlsl", name);
+		Vdata, error, result := D3DCompileFromFile(path, .[], null, "VShader", "vs_5_0", 0, 0);
+		Gdata                := D3DCompileFromFile(path, .[], null, "GShader", "gs_5_0", 0, 0);
+		Pdata                := D3DCompileFromFile(path, .[], null, "PShader", "ps_5_0", 0, 0);
+		
+		// just one error check, since all the three components are in the same file
+		error_string: string;
+		if error {
+			error_string.count = cast(s64)ID3D10Blob_GetBufferSize(error);
+			error_string.data = ID3D10Blob_GetBufferPointer(error);
+		}
+		#if DEBUG assert(!result, "\n%", error_string);
+		
+		Vbytecode: string;
+		Vbytecode.count = cast(s64)ID3D10Blob_GetBufferSize(Vdata);
+		Vbytecode.data  = ID3D10Blob_GetBufferPointer(Vdata);
+		
+		Gbytecode: string;
+		Gbytecode.count = cast(s64)ID3D10Blob_GetBufferSize(Gdata);
+		Gbytecode.data = ID3D10Blob_GetBufferPointer(Gdata);
+		
+		Pbytecode: string;
+		Pbytecode.count = cast(s64)ID3D10Blob_GetBufferSize(Pdata);
+		Pbytecode.data = ID3D10Blob_GetBufferPointer(Pdata);
+		
+		return Vbytecode, Gbytecode, Pbytecode;
+	}
+	create_input_layout :: ($name: string, $ied: []D3D11_INPUT_ELEMENT_DESC, buff: Buffer_Data) {
+		V, G, P :: #run compile_shader(name);
+		
+		ID3D11Device_CreateVertexShader(  dev, V.data, xx V.count, null, *buff.VS);
+		ID3D11Device_CreateGeometryShader(dev, G.data, xx G.count, null, *buff.GS);
+		ID3D11Device_CreatePixelShader(   dev, P.data, xx P.count, null, *buff.PS);
+		
+		ID3D11Device_CreateInputLayout(dev, ied.data, xx ied.count, V.data, xx V.count, *buff.layout);
+	}
+	
+	ied1 :: D3D11_INPUT_ELEMENT_DESC.[
+		.{"POSITION", 0, .R32G32B32_FLOAT, 0,  0, .VERTEX_DATA, 0},
+		.{"SIZE",     0, .R32G32_FLOAT,    0, 12, .VERTEX_DATA, 0},
+		.{"COLOR",    0, .R32_UINT,        0, 20, .VERTEX_DATA, 0}
 	];
-	ID3D11Device_CreateInputLayout(dev, ied.data, xx ied.count, VS.data, xx VS.count, *quad_buffer.layout);
+	create_input_layout("quad", ied1, quad_buffer);
 
-	VS2, vertex_error2, vertex_res2 :: #run D3DCompile(texture_shader, "texture", .[], null, "VShader", "vs_5_0", 0, 0);
-	PS2, pixel_error2, pixel_res2   :: #run D3DCompile(texture_shader, "texture", .[], null, "PShader", "ps_5_0", 0, 0);
-
-	#if vertex_res2 then log_error("[%]: %\n", vertex_res2, vertex_error2);
-	#if pixel_res2  then log_error("[%]: %\n", pixel_res2, pixel_error2);
-
-	ID3D11Device_CreateVertexShader(dev, VS2.data, xx VS2.count, null, *font_buffer.VS);
-	ID3D11Device_CreatePixelShader( dev, PS2.data, xx PS2.count, null, *font_buffer.PS);
 	ied2 :: D3D11_INPUT_ELEMENT_DESC.[
-		.{"POSITION", 0, .R32G32B32_FLOAT,    0,  0, .VERTEX_DATA, 0},
-		.{"COLOR",    0, .R32G32B32A32_FLOAT, 0, 12, .VERTEX_DATA, 0},
-		.{"TEXCOORD", 0, .R32G32_FLOAT,       0, 28, .VERTEX_DATA, 0}
+		.{"POSITION", 0, .R32G32B32_FLOAT, 0,  0, .VERTEX_DATA, 0},
+		.{"SIZE",     0, .R32_UINT,        0, 12, .VERTEX_DATA, 0},
+		.{"COLOR",    0, .R32_UINT,        0, 16, .VERTEX_DATA, 0},
+		.{"TEX",      0, .R32_FLOAT,       0, 20, .VERTEX_DATA, 0},
 	];
-	ID3D11Device_CreateInputLayout(dev, ied2.data, ied2.count, VS2.data, xx VS2.count, *font_buffer.layout);
+	create_input_layout("font", ied2, font_buffer);
+
+	ied3 :: D3D11_INPUT_ELEMENT_DESC.[
+		.{"POSITION", 0, .R32G32B32_FLOAT, 0,  0, .VERTEX_DATA, 0},
+		.{"SIZE",     0, .R32G32_FLOAT,    0, 12, .VERTEX_DATA, 0},
+		.{"COLOR",    0, .R32_FLOAT,       0, 20, .VERTEX_DATA, 0}
+	];
+	create_input_layout("spec", ied3, spec_buffer);
+
+	ied4 :: D3D11_INPUT_ELEMENT_DESC.[
+		.{"POSITION", 0, .R32G32B32_FLOAT, 0,  0, .VERTEX_DATA, 0},
+		.{"SIZE",     0, .R32G32_FLOAT,    0, 12, .VERTEX_DATA, 0},
+		.{"TL_COL",   0, .R32_UINT,        0, 20, .VERTEX_DATA, 0},
+		.{"TR_COL",   0, .R32_UINT,        0, 24, .VERTEX_DATA, 0},
+		.{"BL_COL",   0, .R32_UINT,        0, 28, .VERTEX_DATA, 0},
+		.{"BR_COL",   0, .R32_UINT,        0, 32, .VERTEX_DATA, 0}
+	];
+	create_input_layout("flex", ied4, flex_buffer);
 }
 
 init_font :: () {
-	// The font is stored internally as lines of bits. If a bit is 1, there's the pixel, and if not, it's empty
-	// so, we should convert the packed data to the format for DX11
-	mem := cast(*u8)alloc(texture_width * texture_height * texture_channels,, temp);
-
-	off: int;
-	for texture_data {
-		v := it;
-		for 0..63 {
-			x := ifx (v >> (63 - it)) & 1 then 255 else 0;
-
-			mem[it * 4     + off] = xx x;
-			mem[it * 4 + 1 + off] = xx x;
-			mem[it * 4 + 2 + off] = xx x;
-			mem[it * 4 + 3 + off] = xx x;
-		}
-		off += 64 * 4;
-	}
-
 	desc: D3D11_TEXTURE2D_DESC;
 	desc.Width            = xx texture_width;
 	desc.Height           = xx texture_height;
 	desc.MipLevels        = 1;
 	desc.ArraySize        = 1;
-	desc.Format           = .R8G8B8A8_UNORM;
+	desc.Format           = .A8_UNORM;
 	desc.SampleDesc.Count = 1;
 	desc.Usage            = .IMMUTABLE;
 	desc.BindFlags        = .SHADER_RESOURCE;
 
 	init_data: D3D11_SUBRESOURCE_DATA;
-	init_data.pSysMem = mem;
-	init_data.SysMemPitch = xx (texture_width * 4);
-	init_data.SysMemSlicePitch = xx ((cast(u32)init_data.SysMemPitch) * cast(u32)texture_height);
+	init_data.pSysMem = texture_data.data;
+	init_data.SysMemPitch = xx texture_width;
+	init_data.SysMemSlicePitch = xx (cast(u32)texture_width * cast(u32)texture_height);
 
 	ID3D11Device_CreateTexture2D(dev, *desc, *init_data, *texture);
 
 	SRVDesc: D3D11_SHADER_RESOURCE_VIEW_DESC;
-	SRVDesc.Format = .R8G8B8A8_UNORM;
+	SRVDesc.Format = desc.Format;
 	SRVDesc.ViewDimension = .TEXTURE2D;
 	SRVDesc.Texture2D.MipLevels = 1;
 	ID3D11Device_CreateShaderResourceView(dev, texture, *SRVDesc, *texture_resource_view);
@@ -190,44 +212,36 @@ init_graphics :: () {
 	buff_desc.BindFlags = .CONSTANT_BUFFER;
 	ID3D11Device_CreateBuffer(dev, *buff_desc, null, *camera_buffer);
 
-	quad_buffer.vertices_data = alloc(size_of(quad_buffer.vertex_type) * quad_buffer.vertices_allocated);
-	quad_buffer.indices_data  = alloc(size_of(u32)                     * quad_buffer.indices_allocated);
-	font_buffer.vertices_data = alloc(size_of(font_buffer.vertex_type) * font_buffer.vertices_allocated);
-	font_buffer.indices_data  = alloc(size_of(u32)                     * font_buffer.indices_allocated);
+	quad_buffer.elements_view.data = quad_elements.data;
+	font_buffer.elements_view.data = font_elements.data;
+	spec_buffer.elements_view.data = spec_elements.data;
+	flex_buffer.elements_view.data = flex_elements.data;
 
-	create_vertices_buffer_dx11(*quad_buffer);
-	create_indices_buffer_dx11(*quad_buffer);
-	create_vertices_buffer_dx11(*font_buffer);
-	create_indices_buffer_dx11(*font_buffer);
-
-	ID3D11DeviceContext_IASetPrimitiveTopology(devcon, .TRIANGLELIST);
+	create_vertices_buffer_dx11(*quad_buffer, quad_elements.count);
+	create_vertices_buffer_dx11(*font_buffer, font_elements.count);
+	create_vertices_buffer_dx11(*spec_buffer, spec_elements.count);
+	create_vertices_buffer_dx11(*flex_buffer, flex_elements.count);
 
 	rasterizer_desc: D3D11_RASTERIZER_DESC;
 	rasterizer_desc.FillMode = .SOLID;
 	rasterizer_desc.CullMode = .FRONT;
-	rasterizer_desc.ScissorEnable = xx true;
 	ID3D11Device_CreateRasterizerState(dev, *rasterizer_desc, *rasterizer);
 
 	ID3D11DeviceContext_RSSetState(devcon, rasterizer);
 
 	rtbd: D3D11_RENDER_TARGET_BLEND_DESC;
-	rtbd.BlendEnable            =  xx true;
-	rtbd.SrcBlend               = .SRC_ALPHA;
-	rtbd.DestBlend              = .INV_SRC_ALPHA;
-	rtbd.BlendOp                = .ADD;
-	rtbd.SrcBlendAlpha          = .ONE;
-	rtbd.BlendOpAlpha           = .ADD;
-	rtbd.DestBlendAlpha         = .ZERO;
-	rtbd.RenderTargetWriteMask  =  xx D3D11_COLOR_WRITE_ENABLE.ALL;
+	rtbd.BlendEnable            = xx false;
+	rtbd.RenderTargetWriteMask  = xx D3D11_COLOR_WRITE_ENABLE.ALL;
 
 	blend_desc: D3D11_BLEND_DESC;
 	blend_desc.AlphaToCoverageEnable = xx true;
+	blend_desc.IndependentBlendEnable = xx false;
 	blend_desc.RenderTarget[0] = rtbd;
 
 	ID3D11Device_CreateBlendState(dev, *blend_desc, *transparency);
 
-	ID3D11DeviceContext_OMSetBlendState(devcon, transparency, null, 0xFFFFFFFF);
-	
+	ID3D11DeviceContext_OMSetBlendState(devcon, transparency, null, 0x000000FF);
+
 	update_camera();
 }
 
@@ -258,10 +272,11 @@ begin_drawing :: () {
 	ID3D11DeviceContext_ClearDepthStencilView(devcon, depth_stencil_view, flags, 1, 0);
 }
 
-draw_buffer :: (data: *Buffer_Data) {
-	if data.indices_count == 0 then return;
+flush_buffer :: (data: *Buffer_Data) {
+	if data.elements_view.count == 0 then return;
 
 	ID3D11DeviceContext_VSSetShader(devcon, data.VS, null, 0);
+	ID3D11DeviceContext_GSSetShader(devcon, data.GS, null, 0);
 	ID3D11DeviceContext_PSSetShader(devcon, data.PS, null, 0);
 
 	ID3D11DeviceContext_IASetInputLayout(devcon, data.layout);
@@ -270,83 +285,47 @@ draw_buffer :: (data: *Buffer_Data) {
 
 	stride: u32 = size;
 	offset: u32 = 0;
-	ID3D11DeviceContext_IASetVertexBuffers(devcon, 0, 1, *data.VBuffer, *stride, *offset);
-	ID3D11DeviceContext_IASetIndexBuffer(devcon, data.IBuffer, .R32_UINT, 0);
 
-	// Todo - something more performant? Or is this already performant?
+	ID3D11DeviceContext_IASetVertexBuffers(devcon, 0, 1, *data.elements_buffer, *stride, *offset);
+
 	ms: D3D11_MAPPED_SUBRESOURCE;
-	ID3D11DeviceContext_Map(devcon, data.VBuffer, 0, .WRITE_DISCARD, 0, *ms);
-	memcpy(ms.pData, data.vertices_data, size * data.vertices_count);
-	ID3D11DeviceContext_Unmap(devcon, data.VBuffer, 0);
+	ID3D11DeviceContext_Map(devcon, data.elements_buffer, 0, .WRITE_DISCARD, 0, *ms);
+	memcpy(ms.pData, data.elements_view.data, size * data.elements_view.count);
+	ID3D11DeviceContext_Unmap(devcon, data.elements_buffer, 0);
 
-	ID3D11DeviceContext_Map(devcon, data.IBuffer, 0, .WRITE_DISCARD, 0, *ms);
-	memcpy(ms.pData, data.indices_data, size_of(u32) * data.indices_count);
-	ID3D11DeviceContext_Unmap(devcon, data.IBuffer, 0);
+	ID3D11DeviceContext_Draw(devcon, xx data.elements_view.count, 0);
 
-	ID3D11DeviceContext_DrawIndexed(devcon, data.indices_count, 0, 0);
-
-	data.indices_count = 0;
-	data.vertices_count = 0;
-}
-
-flush_buffers :: () {
-	draw_buffer(*quad_buffer);
-	draw_buffer(*font_buffer);
+	data.elements_view.count = 0;
 }
 
 finalize_drawing :: () {
-	flush_buffers();
+	ID3D11DeviceContext_IASetPrimitiveTopology(devcon, .POINTLIST);
+	flush_buffer(*quad_buffer);
+	flush_buffer(*font_buffer);
+	flush_buffer(*spec_buffer);
+	flush_buffer(*flex_buffer);
+
 	IDXGISwapChain_Present(swapchain, 0, 0);
 }
 
-vertices_add :: (using buff: *Buffer_Data, val: buff.vertex_type) {
-	if vertices_count == vertices_allocated then resize_vertices(buff, vertices_allocated * 2);
-	vertices_data[vertices_count] = val;
+element_add :: (using buff: *Buffer_Data, val: buff.vertex_type) {
+	if(elements_view.count == BUFFER_MAX_SIZE) {
+		flush_buffer(buff);
+	}
 
-	vertices_count += 1;
+	#no_abc {
+		elements_view[elements_view.count] = val;
+		elements_view.count += 1;
+	}
 }
 
-indices_add :: (using buff: *Buffer_Data, val: u32) {
-	if indices_count == indices_allocated then resize_indices(buff, indices_allocated * 2);
-	indices_data[indices_count] = val;
-
-	indices_count += 1;
-}
-
-resize_vertices :: (using buff: *Buffer_Data, new_amt: u32) {
-	size :: size_of(buff.vertex_type);
-
-	vertices_data = realloc(vertices_data, new_amt * size, vertices_allocated * size);
-	vertices_allocated = new_amt;
-
-	IUnknown_Release(VBuffer);
-	create_vertices_buffer_dx11(buff);
-}
-
-resize_indices :: (using buff: *Buffer_Data, new_amt: u32) {
-	indices_data = realloc(indices_data, new_amt * size_of(u32), indices_allocated * size_of(u32));
-	indices_allocated = new_amt;
-
-	IUnknown_Release(IBuffer);
-	create_indices_buffer_dx11(buff);
-}
-
-create_vertices_buffer_dx11 :: (using buff: *Buffer_Data) {
-	vert_buff_desc: D3D11_BUFFER_DESC;
-	vert_buff_desc.Usage          = .DYNAMIC;
-	vert_buff_desc.ByteWidth      = size_of(buff.vertex_type) * vertices_allocated;
-	vert_buff_desc.BindFlags      = .VERTEX_BUFFER;
-	vert_buff_desc.CPUAccessFlags = .WRITE;
-	ID3D11Device_CreateBuffer(dev, *vert_buff_desc, null, *VBuffer);
-}
-
-create_indices_buffer_dx11 :: (using buff: *Buffer_Data) {
-	idx_buff_desc: D3D11_BUFFER_DESC;
-	idx_buff_desc.Usage          = .DYNAMIC;
-	idx_buff_desc.ByteWidth      = size_of(u32) * indices_allocated;
-	idx_buff_desc.BindFlags      = .INDEX_BUFFER;
-	idx_buff_desc.CPUAccessFlags = .WRITE;
-	ID3D11Device_CreateBuffer(dev, *idx_buff_desc, null, *IBuffer);
+create_vertices_buffer_dx11 :: (using buff: *Buffer_Data, amt: s64) {
+	buff_desc: D3D11_BUFFER_DESC;
+	buff_desc.Usage          = .DYNAMIC;
+	buff_desc.ByteWidth      = xx (size_of(buff.vertex_type) * amt);
+	buff_desc.BindFlags      = .VERTEX_BUFFER;
+	buff_desc.CPUAccessFlags = .WRITE;
+	ID3D11Device_CreateBuffer(dev, *buff_desc, null, *elements_buffer);
 }
 
 update_camera :: () {
@@ -357,31 +336,8 @@ update_camera :: () {
 }
 
 clear_background :: (col: Col) {
-	ID3D11DeviceContext_ClearRenderTargetView(devcon, back_buffer, *col.component);
-}
-
-set_drawing_area :: (pos: Vec2, size: Vec2) {
-	flush_buffers();
-
-	r: RECT;
-	r.left = xx pos.x;
-	r.top = xx pos.y;
-	r.right = xx (pos.x + size.x);
-	r.bottom = xx (pos.y + size.y);
-
-	ID3D11DeviceContext_RSSetScissorRects(devcon, 1, *r);
-}
-
-reset_drawing_area :: () {
-	flush_buffers();
-
-	r: RECT;
-	r.left = 0;
-	r.right = 0;
-	r.right = xx vp.width;
-	r.bottom = xx vp.height;
-
-	ID3D11DeviceContext_RSSetScissorRects(devcon, 1, *r);
+	c: [4]float = .[col.r / 255.0, col.g / 255.0, col.b / 255.0, col.a / 255.0];
+	ID3D11DeviceContext_ClearRenderTargetView(devcon, back_buffer, *c);
 }
 
 resize_viewport :: () {
@@ -396,42 +352,60 @@ resize_viewport :: () {
 }
 
 #scope_module
-Buffer_Data :: struct (vertex_type: $T) {
-	vertices_data: *vertex_type;
-	indices_data: *u32;
-	vertices_allocated: u32 = 8;
-	indices_allocated:  u32 = 8;
-	vertices_count:     u32 = 0;
-	indices_count:      u32 = 0;
+Buffer_Data :: struct (vertex_type: Type) {
+	elements_view: [] vertex_type;
 
 	VS: *ID3D11VertexShader;
+	GS: *ID3D11GeometryShader;
 	PS: *ID3D11PixelShader;
 
-	VBuffer: *ID3D11Buffer;
-	IBuffer: *ID3D11Buffer;
+	elements_buffer: *ID3D11Buffer;
 
 	layout: *ID3D11InputLayout;
 }
 
-quad_buffer: Buffer_Data(Vertex);
-font_buffer: Buffer_Data(Tex_Vertex);
+BUFFER_MAX_SIZE :: 0x800;
 
-Vertex :: struct {
+quad_elements: [BUFFER_MAX_SIZE] Quad_Vertex;
+font_elements: [BUFFER_MAX_SIZE] Font_Vertex;
+spec_elements: [BUFFER_MAX_SIZE] Spec_Vertex;
+flex_elements: [BUFFER_MAX_SIZE] Flex_Vertex;
+
+quad_buffer: Buffer_Data(Quad_Vertex);
+font_buffer: Buffer_Data(Font_Vertex);
+spec_buffer: Buffer_Data(Spec_Vertex);
+flex_buffer: Buffer_Data(Flex_Vertex);
+
+Quad_Vertex :: struct {
 	x, y, z: f32;
-	col: [4] f32;
+	w, h: f32;
+	col: u32;
 }
 
-Tex_Vertex :: struct {
+Font_Vertex :: struct {
 	x, y, z: f32;
-	col: [4] f32;
-	uv: [2] f32;
+	s: u32;
+	col: u32;
+	uvx: f32;
+}
+
+Spec_Vertex :: struct {
+	x, y, z: f32;
+	w, h: f32;
+	value: f32;
+}
+
+Flex_Vertex :: struct {
+	x, y, z: f32;
+	w, h: f32;
+	c1, c2, c3, c4: u32;
 }
 
 camera: Matrix4;
 
-swapchain:  *IDXGISwapChain;
-dev:        *ID3D11Device;
-devcon:     *ID3D11DeviceContext;
+swapchain:   *IDXGISwapChain;
+dev:         *ID3D11Device;
+devcon:      *ID3D11DeviceContext;
 back_buffer: *ID3D11RenderTargetView;
 
 camera_buffer: *ID3D11Buffer;
@@ -444,94 +418,36 @@ tex_sampler_state: *ID3D11SamplerState;
 
 transparency: *ID3D11BlendState;
 
-depth_stencil_view: *ID3D11DepthStencilView;
+depth_stencil_view:   *ID3D11DepthStencilView;
 depth_stencil_buffer: *ID3D11Texture2D;
-depth_stencil_state: *ID3D11DepthStencilState;
+depth_stencil_state:  *ID3D11DepthStencilState;
 
-texture_data :: u64.[
-	0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000_000000000000,
-	0x38fc3cf8fefe3ec6, 0x7e06c6c0c6c67cfc, 0x7cfc787ec6c6c6c6, 0x66fe_788078100060,
-	0x6cc666ccc0c060c6, 0x1806ccc0eee6c6c6, 0xc6c6cc18c6c6c6ee, 0x660e_604018280020,
-	0xc6c6c0c6c0c0c0c6, 0x1806d8c0fef6c6c6, 0xc6c6c018c6c6d67c, 0x661c_602018440030,
-	0xc6fcc0c6fcfccefe, 0x1806f0c0fefec6c6, 0xc6ce7c18c6eefe38, 0x3c38_601018000000,
-	0xfec6c0c6c0c0c6c6, 0x1806f8c0d6dec6fc, 0xdef80618c67cfe7c, 0x1870_600818000000,
-	0xc6c666ccc0c066c6, 0x18c6dcc0c6cec6c0, 0xccdcc618c638eeee, 0x18e0_600418000000,
-	0xc6fc3cf8fec03ec6, 0x7e7ccefec6c67cc0, 0x7ace7c187c10c6c6, 0x18fe_780278007e00,
+texture_data, texture_width, texture_height :: #run -> ([]u8, int, int) {
+	// The font is stored internally as lines of bits. If a bit is 1, there's the pixel, and if not, it's empty
+	// so, we should convert the packed data to the format for DX11
+	texture_data :: u64.[
+		0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000_000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x000000_0000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x000000_0000000000,
+		0x003e7e420c000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x001c6c0010002030, 0x3060000000000002, 0x38187c7e1cfc3cfe, 0x787c_00600c006038, 0x3838fc3cf8fefe3e, 0xc67e06c6c0c6c67c, 0xfc7cfc787ec6c6c6, 0xc666fe_7880781000, 0x6038fc3cf8fefe3e, 0xc67e06c6c0c6c67c, 0xfc7cfc787ec6c6c6, 0xc666fe_381070003c,
+		0x007e4224147e0000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x001c6c283cc45030, 0x6030281000000004, 0x4c38c60c3cc060c6, 0xc4c6_60601800304c, 0x446cc666ccc0c060, 0xc61806ccc0eee6c6, 0xc6c6c6cc18c6c6c6, 0xee660e_6040182800, 0x206cc666ccc0c060, 0xc61806ccc0eee6c6, 0xc6c6c6cc18c6c6c6, 0xee660e_6010180024,
+		0x7e46421824420000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0038247c60c85010, 0x6030101000000008, 0xc6180e186cfcc00c, 0xe4c6_6000307e180c, 0x4cc6c6c0c6c0c0c0, 0xc61806d8c0fef6c6, 0xc6c6c6c018c6c6d6, 0x7c661c_6020184400, 0x30c6c6c0c6c0c0c0, 0xc61806d8c0fef6c6, 0xc6c6c6c018c6c6d6, 0x7c661c_6010183224,
+		0x7e46421824240000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0030482838102020, 0x60307c7c607c0010, 0xc6183c3ccc06fc18, 0x787e_006060000c18, 0x54c6fcc0c6fcfcce, 0xfe1806f0c0fefec6, 0xc6c6ce7c18c6eefe, 0x383c38_6010180000, 0x00c6fcc0c6fcfcce, 0xfe1806f0c0fefec6, 0xc6c6ce7c18c6eefe, 0x383c38_e0101c4c24,
+		0x0046422414180000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0020007c0c205400, 0x6030101060000020, 0xc6187806fe06c630, 0x9e06_6060307e1810, 0x5cfec6c0c6c0c0c6, 0xc61806f8c0d6dec6, 0xfcdef80618c67cfe, 0x7c1870_6008180000, 0x00fec6c0c6c0c0c6, 0xc61806f8c0d6dec6, 0xfcdef80618c67cfe, 0x7c1870_6010180024,
+		0x007c7e420c000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x00000028784cc800, 0x6030281020006040, 0x6418e0c60cc6c630, 0x860c_602018003000, 0x42c6c666ccc0c066, 0xc618c6dcc0c6cec6, 0xc0ccdcc618c638ee, 0xee18e0_6004180000, 0x00c6c666ccc0c066, 0xc618c6dcc0c6cec6, 0xc0ccdcc618c638ee, 0xee18e0_6010180024,
+		0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x00800000108c7400, 0x3060000040006080, 0x387efe7c0c7c7c30, 0x7c78_00400c006010, 0x3cc6fc3cf8fec03e, 0xc67e7ccefec6c67c, 0xc07ace7c187c10c6, 0xc618fe_780278007e, 0x00c6fc3cf8fec03e, 0xc67e7ccefec6c67c, 0xc07ace7c187c10c6, 0xc618fe_381070003c,
+	];
 
-	0x0000000000000000, 0x00000000000000_00, 0x0000000000000000, 0x00_00000000000000,
-	0x1c6c001000203030, 0x60000000000002_38, 0x187c7e1cfc3cfe78, 0x7c_00600c00603838,
-	0x1c6c283cc4503060, 0x30281000000004_4c, 0x38c60c3cc060c6c4, 0xc6_60601800304c44,
-	0x38247c60c8501060, 0x30101000000008_c6, 0x180e186cfcc00ce4, 0xc6_6000307e180c4c,
-	0x3048283810202060, 0x307c7c607c0010_c6, 0x183c3ccc06fc1878, 0x7e_006060000c1854,
-	0x20007c0c20540060, 0x30101060000020_c6, 0x187806fe06c6309e, 0x06_6060307e18105c,
-	0x000028784cc80060, 0x30281020006040_64, 0x18e0c60cc6c63086, 0x0c_60201800300042,
-	0x800000108c740030, 0x60000040006080_38, 0x7efe7c0c7c7c307c, 0x78_00400c0060103c,
+	texture_height   :: 8;
+	texture_width    :: texture_data.count * 8;
+	mem: [texture_width * texture_height]u8;
 
-	0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000,
-	0x381070003c000000, 0x003e7e4200000000, 0x0000000000000000, 0x0000000000000000,
-	0x6010180024000000, 0x007e422400000000, 0x0000000000000000, 0x0000000000000000,
-	0x6010183224000000, 0x7e46421800000000, 0x0000000000000000, 0x0000000000000000,
-	0xe0101c4c24000000, 0x7e46421800000000, 0x0000000000000000, 0x0000000000000000,
-	0x6010180024000000, 0x0046422400000000, 0x0000000000000000, 0x0000000000000000,
-	0x6010180024000000, 0x007c7e4200000000, 0x0000000000000000, 0x0000000000000000,
-	0x381070003c000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000
-];
-
-texture_height   :: #run texture_data.count / 4;
-texture_width    :: #run texture_data.count / texture_height * 64;
-texture_channels :: 4;  // Todo - is there a way to only have one channel? afterall it's just 0 or 255
-
-#scope_file
-quad_shader :: #string DONE
-cbuffer cp_per_object {
-	float4x4 camera_data;
-}
-
-struct VOut {
-    float4 position: SV_POSITION;
-    float4 color: COLOR;
+	off: int;
+	for texture_data {
+		v := it;
+		for 0..63 {
+			x := ifx (v >> (63 - it)) & 1 then 255;
+			mem[it + off] = xx x;
+		}
+		off += 64;
+	}
+	return mem, texture_width, texture_height;
 };
-
-VOut VShader(float4 position: POSITION, float4 color: COLOR) {
-    VOut output;
-
-    output.position = mul(position + float4(0, 0, 1, 0), camera_data);
-    output.color    = color;
-
-    return output;
-}
-
-float4 PShader(float4 position: SV_POSITION, float4 color: COLOR) : SV_TARGET {
-    return color;
-}
-DONE
-
-texture_shader :: #string DONE
-Texture2D ObjTexture;
-SamplerState ObjSamplerState;
-
-cbuffer cp_per_object {
-	float4x4 camera_data;
-}
-
-struct VS_OUTPUT {
-	float4 Pos : SV_POSITION;
-	float4 Color: COLOR;
-	float2 TexCoord : TEXCOORD;
-};
-
-VS_OUTPUT VShader(float4 inPos : POSITION, float4 inCol : COLOR, float2 inTexCoord : TEXCOORD) {
-    VS_OUTPUT output;
-
-    output.Pos = mul(inPos + float4(0, 0, 1, 0), camera_data);
-	output.Color = inCol;
-    output.TexCoord = inTexCoord;
-
-    return output;
-}
-
-float4 PShader(VS_OUTPUT input) : SV_TARGET {
-	float4 f = ObjTexture.Sample(ObjSamplerState, input.TexCoord);
-	return f * input.Color;
-}
-DONE

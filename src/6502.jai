@@ -1,16 +1,114 @@
+Theming :: struct {
+	// we're using the color picker in HSV for a better precision
+	// at the end of the chain we're still converting the HSV to RGB for GPU reasons
+	// hence, we're storing data as HSV and RGB
+	general_text:              Col = .{240, 240, 220, 255};
+	general_flag_off:          Col = .{202,  45,  31, 255};
+	general_flag_on:           Col = .{ 59, 187,  20, 255};
+	general_debug_stack_empty: Col = .{ 59, 187,  20, 255};
+	general_debug_stack_full:  Col = .{202,  45,  31, 255};
+	general_stack_focus:       Col = .{202,  45,  31, 255};
+	
+	platform_widget_bg_normal:     Col = .{ 73,  62,  51, 255};
+	platform_widget_bg_hover:      Col = .{188, 126,  59, 255};
+	platform_widget_bg_press:      Col = .{246, 164,  76, 255};
+	platform_widget_border_normal: Col = .{196, 126,  43, 255};
+	platform_widget_border_hover:  Col = .{ 49,  43,  40, 255};
+	platform_widget_border_press:  Col = .{ 80,  77,  73, 255};
+	platform_text_normal:          Col = .{246, 151,  48, 255};
+	platform_text_hover:           Col = .{216, 210, 206, 255};
+	platform_text_press:           Col = .{104,  95,  93, 255};
+	platform_background:           Col = .{ 32,  30,  28, 255};
+	platform_deep_background:      Col = .{ 10,  10,   5, 255};
+	platform_line:                 Col = .{254, 170,  55, 255};
+	platform_disabled:             Col = .{ 79,  85,  90, 255};
+	
+	viewer_text:        Col = .{240, 240, 220, 255};
+	viewer_number:      Col = .{ 64, 104, 200, 255};
+	viewer_comment:     Col = .{110, 110, 110, 255};
+	viewer_dotdir:      Col = .{221, 119,  17, 255};
+	viewer_label:       Col = .{234, 191,  21, 255};
+	viewer_instruction: Col = .{130, 102, 193, 255};
+	viewer_string:      Col = .{ 59, 187,  20, 255};
+	
+	memory_normal_empty:  Col = .{240, 240, 220, 255};
+	memory_normal_used:   Col = .{ 59, 187,  20, 255};
+	memory_stack_empty:   Col = .{130, 102, 193, 255};
+	memory_stack_used:    Col = .{ 64, 104, 200, 255};
+	memory_display_empty: Col = .{238, 210,   5, 255};
+	memory_display_used:  Col = .{221, 119,  17, 255};
+	memory_input:         Col = .{255, 110, 199, 255};
+	
+	display_col0:  Col = .{ 12,  12,  12, 255};
+	display_col1:  Col = .{ 70,  70,  70, 255};
+	display_col2:  Col = .{110, 110, 110, 255};
+	display_col3:  Col = .{240, 240, 220, 255};
+	display_col4:  Col = .{202,  45,  31, 255};
+	display_col5:  Col = .{158,  97,  50, 255};
+	display_col6:  Col = .{221, 119,  17, 255};
+	display_col7:  Col = .{238, 210,   5, 255};
+	display_col8:  Col = .{ 59, 187,  20, 255};
+	display_col9:  Col = .{ 71, 148,  81, 255};
+	display_col10: Col = .{ 64, 104, 200, 255};
+	display_col11: Col = .{ 74, 145, 175, 255};
+	display_col12: Col = .{ 51, 201, 187, 255};
+	display_col13: Col = .{130, 102, 193, 255};
+	display_col14: Col = .{170,  71, 204, 255};
+	display_col15: Col = .{255, 110, 199, 255};
+}
+
+At_Startup :: enum u8 {
+	OPEN_EMPTY_FILE;
+	OPEN_LAST_FILE;
+}
+
+Platform_Settings :: struct {
+	at_startup: At_Startup = .OPEN_EMPTY_FILE;
+	
+	fps_lock: u16 = 60;
+	
+	code_cursor_speed_slow: u8 = 3;
+	code_cursor_speed_fast: u8 = 6;
+	memory_cursor_speed_slow: u8 = 1;
+	memory_cursor_speed_fast: u8 = 8;
+}
+
+Settings :: struct {
+	platform: Platform_Settings;
+	
+	themes: Theming;
+	themes_saved_state: Theming;
+}
+
+Settings_Focused_Tab :: enum {
+	PLATFORM;
+	THEMING;
+}
+
 General_UI :: struct {
-	memory_scrollbar_selected: bool;
 	memory_scrollbar_pos: f32;
 
-	show_popup: bool;
-	popup_title: string;
-	error_message: string;
-	popup_error_type: Error_Type;
+	modal_error_message: string;
+	modal_error_type: Error_Type;
 
-	display_pressed_pos: Vec2;
-	display_pos: Vec2;
-	display_selected: bool;
-	display_visible: bool;
+	settings_focused_tab: Settings_Focused_Tab;
+
+	settings_theming_color_edited: bool;
+	settings_platform_scrollbar_edited: bool;
+	settings_theming_scroll_pos: Vec2;
+	
+	settings_platform_view_fps_lock: u16;
+	
+	internal_selected: *Col;
+
+	display_panel:  ID;
+	modal_panel:    ID;
+	settings_panel: ID;
+}
+
+Calculator_Page :: enum {
+	CALCULATOR;
+	CONVERSION;
 }
 
 Error_Type :: enum {
@@ -38,10 +136,10 @@ Code_Viewer :: struct {
 	pos: Vec2;
 	size: Vec2;
 
-	scrollbar_selected: bool;
-	scrollbar_pos: f32;
+	scrollbar_pos: Vec2;
+	longest_line: u32;
 	row_digits: u32;
-	
+
 	file_modtime: Apollo_Time;
 
 	content:     [..] u8;
@@ -91,6 +189,7 @@ Emulator :: struct {
 }
 
 ui: General_UI;
+settings: Settings = ---;
 viewer: Code_Viewer;
 
 Hz  :: (f: type_of(engine.metrics.update_rate)) -> type_of(engine.metrics.update_rate) { return f; }
@@ -149,8 +248,8 @@ unpack_P :: (data: u8) {
 cpu_stop :: () {
 	engine.running = false;
 	engine.thread_running = false;
-
-	log_info("CPU Stop");
+	
+	engine.current_instruction = 0xFF;  // intentionally out of range
 }
 
 cpu_reset :: () {
@@ -161,7 +260,8 @@ cpu_reset :: () {
 	engine.A = 0;
 	engine.X = 0;
 	engine.Y = 0;
-	log_info("CPU Reset");
+	
+	engine.current_instruction = 0xFF;  // intentionally out of range
 }
 
 cpu_init :: () {
@@ -173,7 +273,8 @@ cpu_init :: () {
 	engine.A = 0;
 	engine.X = 0;
 	engine.Y = 0;
-	log_info("CPU Init");
+	
+	engine.current_instruction = 0xFF;  // intentionally out of range
 }
 
 virtual_cpu_reset :: () {
@@ -184,7 +285,8 @@ virtual_cpu_reset :: () {
 	engine.A = 0;
 	engine.X = 0;
 	engine.Y = 0;
-	log_info("Virtual CPU Reset");
+	
+	engine.current_instruction = 0xFF;  // intentionally out of range
 }
 
 virtual_cpu_init :: () {
@@ -196,7 +298,8 @@ virtual_cpu_init :: () {
 	engine.A = 0;
 	engine.X = 0;
 	engine.Y = 0;
-	log_info("Virtual CPU Init");
+	
+	engine.current_instruction = 0xFF;  // intentionally out of range
 }
 
 next_instruction :: () {
@@ -242,39 +345,36 @@ lock_frame_rate_6502 :: () {
 }
 
 compile_program :: () {
-	file, success := file_open("vasm6502_oldstyle.exe");
+	compiler_path := tprint(get_asset_path("vasm6502_oldstyle.exe"));
+	out_path := tprint(get_asset_path("out.bin"));
+	
+	file, success := file_open(compiler_path);  // Todo - robustness
 	defer file_close(*file);
 	if !success {
-		ui.show_popup = true;
-		ui.popup_title = "No compiler found";
-		ui.popup_error_type = .UNABLE_TO_FIND_COMPILER;
+		display_error_panel(.UNABLE_TO_FIND_COMPILER, "no compiler found");
 		return;
 	}
-	
+
 	if !viewer.file_path {
-		ui.show_popup = true;
-		ui.popup_title = "No input file";
-		ui.popup_error_type = .NO_INPUT_FILE_GIVEN;
+		display_error_panel(.NO_INPUT_FILE_GIVEN, "no input file");
 		return;
 	}
-	
+
 	path := get_absolute_path(viewer.file_path,, temp);
-	fmt := tprint("vasm6502_oldstyle.exe -Fbin -o \"out.bin\" -dotdir \"%\"", path);
 	
+	fmt := tprint("% -Fbin -o \"%\" -dotdir \"%\"", compiler_path, out_path, path);
+
 	out := break_command_into_strings(fmt);
 	res, output_string, error_string := run_command(..out, capture_and_return_output = true,, allocator = temp);
-	
+
 	engine.compilation_successful = false;
-	
+
 	if res.exit_code != 0 {
-		ui.show_popup = true;
-		ui.popup_title = "Compilation failed";
-		ui.error_message = copy_string(error_string);
-		ui.popup_error_type = .FAILED_COMPILATION;
+		ui.modal_error_message = copy_string(error_string);
+		display_error_panel(.FAILED_COMPILATION, "compilation failed");
 		return;
 	}
-	
-	
+
 	engine.compilation_successful = true;
 }
 
@@ -377,13 +477,12 @@ compact_absolute_Y_address :: (func: (u16)) {
 }
 
 intrinsic_to_string :: (code: Opcode) -> string {
-	// This function is used to not increase the load size of the 6502 engine
 	info :: type_info(Opcode);
 	c := cast(u8)code;
 	s: string;
 
 	for info.values if it == c then s = info.names[it_index];
-	
+
 	if s.count == 3 then return s;
 	else {
 		t := s;
@@ -391,19 +490,19 @@ intrinsic_to_string :: (code: Opcode) -> string {
 		t.count -= 4;
 		s.count = 3;
 		if t == {
-			case "IMM"; return tprint("% #n",    s);
-			case "ZPG"; return tprint("% n",     s);
-			case "ZPX"; return tprint("% n, X",  s);
-			case "ZPY"; return tprint("% n, Y",  s);
-			case "ABS"; return tprint("% nn",    s);
-			case "ABX"; return tprint("% nn, X", s);
-			case "ABY"; return tprint("% nn, Y", s);
-			case "INX"; return tprint("% (n, X)",  s);
-			case "INY"; return tprint("% (n), Y",  s);
-			case "ACC"; return tprint("% A",     s);
+			case "IMM"; return tprint("% #n",     s);
+			case "ZPG"; return tprint("% n",      s);
+			case "ZPX"; return tprint("% n, X",   s);
+			case "ZPY"; return tprint("% n, Y",   s);
+			case "ABS"; return tprint("% nn",     s);
+			case "ABX"; return tprint("% nn, X",  s);
+			case "ABY"; return tprint("% nn, Y",  s);
+			case "INX"; return tprint("% (n, X)", s);
+			case "INY"; return tprint("% (n), Y", s);
+			case "ACC"; return tprint("% A",      s);
+			case; return "";
 		}
 	}
-	return "";
 }
 
 Opcode :: enum u8 {

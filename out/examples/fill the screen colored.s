@@ -14,7 +14,7 @@ reset:
 
 outer:
     inc color
-    cmp #9
+    cmp #15
     bne no_reset_col
     lda #0
     sta color

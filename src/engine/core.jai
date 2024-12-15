@@ -7,6 +7,7 @@ init_window :: (width: s32, height: s32) {
 	vp.height = height;
 
 	init_rendering();
+	init_widgets();
 
 	QueryPerformanceFrequency(*vp.perf_count_frequency);
 	QueryPerformanceCounter(*vp.last_counter);
@@ -15,6 +16,8 @@ init_window :: (width: s32, height: s32) {
 
 deinit_window :: () {
 	deinit_rendering();
+	deinit_widgets();
+	
 	timeEndPeriod(1);
 }
 
@@ -36,7 +39,7 @@ get_monitor_size :: () -> (w: s32, h: s32) {
 }
 
 lock_frame_rate :: () {
-    target_s: f32 = 1.0 / vp.target_frame_rate;
+    target_s: f32 = 1.0 / settings.platform.fps_lock;
     seconds_elapsed_for_frame: f32 = (cast(f32)(read_os_timer() - vp.last_counter)) / vp.perf_count_frequency;
     if seconds_elapsed_for_frame < target_s {
         if vp.sleep_is_granular {
@@ -124,27 +127,28 @@ EventsManager :: (hwnd: *void, msg: u32, wparam: u64, lparam: s64) -> s64 #c_cal
 	if msg == {
 		case WM_CLOSE; #through;
 		case WM_QUIT;  vp.running = false;
-		case WM_SETFOCUS; vp.reduced = false;
+		case WM_SETFOCUS; vp.reduced = false; focused_uuid = 0;
 		case WM_KILLFOCUS; reset_input();
 		case WM_SIZE;
 			w := cast,trunc(s32)(lparam & 0xFFFF);
 			h := cast,trunc(s32)((lparam >> 16) & 0xFFFF);
 			vp.width = w;
 			vp.height = h;
-			if vp.running {
-				resize_viewport();
-				// Todo - use this when i decide to remove the depth stencil
-				// ID3D11DeviceContext_OMSetRenderTargets(devcon, 1, *back_buffer, null);
-			}
+			if vp.running then resize_viewport();
 		case WM_SYSKEYDOWN; #through;
 		case WM_KEYFIRST;
 			if wparam <= 0xFF {
-				input_keyboard_states[cast,no_check(u8)wparam] = true;
-				last_pressed_char = cast,no_check(u8)wparam;
+				key := cast,no_check(u8)wparam;
+				input_keyboard_states[key] = true;
+				last_down_char      = key;
+				pressed_char        = key;
 			}
 		case WM_SYSKEYUP; #through;
 		case WM_KEYUP;
-			if wparam <= 0xFF then input_keyboard_states[wparam] = false;
+			if wparam <= 0xFF {
+				key := cast,no_check(u8)wparam;
+				input_keyboard_states[key] = false;
+			}
 		case WM_MOUSEMOVE;
 			mouse_x =  lparam        & 0xFFFF;
 			mouse_y = (lparam >> 16) & 0xFFFF;
@@ -164,6 +168,8 @@ EventsManager :: (hwnd: *void, msg: u32, wparam: u64, lparam: s64) -> s64 #c_cal
 
 			amt := DragQueryFileA(data, 0xFFFFFFFF, null, 0);  // fetch the dropped file amount
 			if amt > 1 then return DefWindowProcA(hwnd, msg, wparam, lparam);
+
+			engine.compilation_successful = false;
 
 			buff: [MAX_PATH]u8;
 			DragQueryFileA(data, 0, buff.data, buff.count);
@@ -241,11 +247,6 @@ handle_viewport_resize :: () {
 		MoveWindow(vp.window, r.left, r.top, xx vx, xx vy, xx true);
 	}
 	if is_mouse_released(0) then vp.enable_resizing = false;
-
-	p1 := Vec2.{xx vp.width, xx vp.height};
-	p2 := Vec2.{xx (vp.width - s), xx vp.height};
-	p3 := Vec2.{xx vp.width, xx (vp.height - s)};
-	draw_triangle(p1, p2, p3, 1, COLOR_LINE);
 }
 
 Viewport :: struct {
@@ -260,7 +261,6 @@ Viewport :: struct {
 	
 	perf_count_frequency: s64;
 	last_counter: s64;
-	target_frame_rate: int = 60;
 	
 	window_style :: WS_POPUP;
 	

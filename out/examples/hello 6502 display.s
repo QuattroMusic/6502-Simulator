@@ -297,7 +297,7 @@ draw:
 	
 	jsr calculate_abs_coords
 	
-	lda #1  ; white
+	lda #3  ; white
 	ldx #0
 	sta (coords, X)
 	
@@ -374,7 +374,7 @@ calculate_abs_coords:
     txa
     adc coords
     sta coords
-    lda #$02  ; dispay offset (0x0200)
+    lda #$02  ; display offset (0x200)
     adc coords + 1
     sta coords + 1
     rts

@@ -5,21 +5,21 @@
 ; note: run at 5 - 10 khz for best result
 
 ; colors:
-; 1 = black, 2 = white, 3 = gray
-; 4 = red, 5 = orange, 6 = yellow
-; 7 = green, 8 = blue, 9 = purple
-; 0 = pink
+; 1 = black, 2 = white,  3 = gray
+; 4 = red,   5 = orange, 6 = yellow
+; 7 = green, 8 = cyan,   9 = blue
+; 0 = purple
 
 col_black   = 0
-col_white   = 1
+col_white   = 3
 col_gray    = 2
-col_red     = 3
-col_orange  = 4
-col_yellow  = 5
-col_green   = 6
-col_skyblue = 7
-col_blue    = 8
-col_purple  = 9
+col_red     = 4
+col_orange  = 6
+col_yellow  = 7
+col_green   = 8
+col_skyblue = 12
+col_blue    = 10
+col_purple  = 13
 
 x_pos = 0
 y_pos = 1
@@ -284,7 +284,7 @@ calculate_abs_coords:
     txa
     adc coords
     sta coords
-    lda #$02  ; dispay offset (0x0200)
+    lda #$02  ; display offset (0x200)
     adc coords + 1
     sta coords + 1
     rts

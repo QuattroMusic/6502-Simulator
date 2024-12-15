@@ -1,11 +1,11 @@
 draw_header :: () {
 	h :: HEADER_HEIGHT;
 
-	draw_rect(.{0, 0}, .{xx vp.width, h}, 0, COLOR_BACKGROUND);
-	draw_rect_lines(.{0, 0}, .{xx vp.width, xx vp.height}, 1, COLOR_LINE);
-	draw_rect(.{0, h - 1}, .{xx vp.width, 1}, 1, COLOR_LINE);
+	draw_rect(.{0, 0}, .{xx vp.width, h}, 0, settings.themes.platform_background);
+	draw_rect_lines(.{0, 0}, .{xx vp.width, xx vp.height}, 1, settings.themes.platform_line);
+	draw_rect(.{0, h - 1}, .{xx vp.width, 1}, 1, settings.themes.platform_line);
 
-	draw_text("6502 Simulator", .{10, 4}, 1, 3, WHITE);
+	draw_text("6502 Simulator", .{10, 4}, 1, 3, settings.themes.general_text);
 
 	if button(.REDUCE, .{cast(f32)vp.width - h * 3, 0}, .{h, h}, 1, 2) {
 		if !vp.reduced {
@@ -13,14 +13,11 @@ draw_header :: () {
 		}
 		vp.reduced = !vp.reduced;
 	}
-	
+
 	icon: Icon = ifx vp.maximized then .MINIMIZE else .MAXIMIZE;
 	if button(icon, .{cast(f32)vp.width - h * 2, 0}, .{h, h}, 1, 2) {
-		if !vp.maximized {
-			ShowWindow(vp.window, SW_MAXIMIZE);
-		} else {
-			ShowWindow(vp.window, SW_RESTORE);
-		}
+		if !vp.maximized then ShowWindow(vp.window, SW_MAXIMIZE);
+		else                  ShowWindow(vp.window, SW_RESTORE);
 
 		vp.maximized = !vp.maximized;
 	}
@@ -30,24 +27,23 @@ draw_header :: () {
 }
 
 draw_buttons_controls :: () {
-	t :: 1;
 	if !engine.thread_running {
-		if button("Compile and run", .{10, 40}, .{170, 25}, 1, t) {
+		if button("Compile and run", .{10, 40}, .{170, 25}, 1) {
 			compile_program();
 			if engine.compilation_successful {
-				read_ROM("out.bin");
+				read_ROM(get_asset_path("out.bin"));  // Todo - robustness
 				cpu_reset();
 				cpu_start();
 			}
 		}
-		if button("Compile", .{190, 40}, .{100, 25}, 1, t) {
+		if button("Compile", .{190, 40}, .{100, 25}, 1) {
 			compile_program();
 			if engine.compilation_successful {
-				read_ROM("out.bin");
+				read_ROM(get_asset_path("out.bin"));  // Todo - robustness
 				cpu_reset();
 			}
 		}
-		if engine.compilation_successful && button("Run", .{300, 40}, .{60, 25}, 1, t) {
+		if engine.compilation_successful && button("Run", .{300, 40}, .{60, 25}, 1) {
 			cpu_reset();
 			cpu_start();
 		}
@@ -56,27 +52,27 @@ draw_buttons_controls :: () {
 		running := engine.running;
 		if !engine.debug {
 			if engine.running {
-				if button("Pause", .{100, 40}, .{80, 25}, 1, t) {
+				if button("Pause", .{100, 40}, .{80, 25}, 1) {
 					running = false;
 				}
 			} else {
-				if button("Resume", .{100, 40}, .{80, 25}, 1, t) {
+				if button("Resume", .{100, 40}, .{80, 25}, 1) {
 					running = true;
 				}
 			}
 		}
 		engine.running = running;
-		if button("Stop", .{10, 40}, .{80, 25}, 1, t) {
+		if button("Stop", .{10, 40}, .{80, 25}, 1) {
 			cpu_stop();
 		}
 	}
 
-	if button("Reset", .{370, 40}, .{80, 25}, 1, t) {
+	if button("Reset", .{370, 40}, .{80, 25}, 1) {
 		cpu_reset();
 	}
-	
-	if button("Display", .{460, 40}, .{80, 25}, 1, t) {
-		toggle_display();
+
+	if button("Display", .{460, 40}, .{80, 25}, 1) {
+		toggle_panel(ui.display_panel, centered = true);
 	}
 }
 
@@ -87,56 +83,39 @@ draw_code_viewer :: () {
 	viewer.size = .{vp.width - MIN_SCREEN_WIDTH / 2.0 + 20, vp.height - 84.0};
 
 	draw_panel(viewer.file_name, viewer.pos, viewer.size, 3);
-	draw_rect(viewer.pos, viewer.size, 0, COLOR_BACKGROUND);
+	draw_rect(viewer.pos, viewer.size, 0, settings.themes.platform_background);
 
-	handle_scrollbar();
+	char_per_lines := floor(viewer.size.x / 16) - 2;
 
-	set_drawing_area(offset, viewer.size); {
-		draw_colored_text();
-		draw_line_count_bar();
-		draw_scrollbars();
-	} reset_drawing_area();
-}
+	max_value := Vec2.{(viewer.longest_line) * 16.0, viewer.rows_length.count * 16.0};
+	scroll_size := viewer.size + max_value;
+	min_size := Vec2.{30 * 16.0, 1 * 16.0};
 
-handle_memory_scrollbar :: (pos: Vec2, size: Vec2) {
-	if is_mouse_inside_rect(pos, size) {
-		if mouse_dz && !ui.show_popup {
-			amt := mouse_dz * 16;
-			ui.memory_scrollbar_pos -= amt;
-		}
-	}
-	if is_mouse_pressed(0) && can_interact_with_widget(0) && is_mouse_inside_rect(.{pos.x + size.x - 12, pos.y}, .{12, size.y}) {
-		ui.memory_scrollbar_selected = true;
-	}
-	
-	if ui.memory_scrollbar_selected {
-		aspect_ratio := size.y / (2048 * 16);
-		bar_height := aspect_ratio * size.y;
-		ui.memory_scrollbar_pos = (mouse_y - pos.y - bar_height / 2) / aspect_ratio;
-	}
+	draw_scrollbar(viewer.pos, viewer.size, z = 3, *viewer.scrollbar_pos, scroll_size, min_size, max_value, settings.platform.code_cursor_speed_slow, settings.platform.code_cursor_speed_fast);
 
-	if is_mouse_released(0) && ui.memory_scrollbar_selected {
-		ui.memory_scrollbar_selected = false;
-	}
-	rows_on_screen := floor((size.y - 8) / 16);
-	ui.memory_scrollbar_pos = clamp(round_up(ui.memory_scrollbar_pos, 16), 0, (2048.0 - rows_on_screen) * 16);
+	x_visible := min_size.x + viewer.size.x < scroll_size.x;
+	draw_colored_text(x_visible);
+	draw_line_count_bar(x_visible);
 }
 
 draw_RAM_content :: (offset: Vec2, start: int, end: int, pos_y: f32, height: f32) {
 	for y: start..end {
 		hex := formatInt(y * 16, base = 16, minimum_digits = 4);
-		draw_text(tprint("%:", hex), offset + .{5, 9.0 + y * 16}, 2, 1, COLOR_TEXT_NORMAL);
+		draw_text(tprint("%:", hex), offset + .{5, 9.0 + y * 16}, 2, 1, settings.themes.platform_text_normal);
 		for x: 0..15 {
-			col := WHITE;
 			data := engine.RAM[y * 16 + x];
+			
+			col: Col = ---;
 			if 16 <= y && y < 32 {
-				col = ifx data then BLUE else PURPLE;
+				col = ifx data then settings.themes.memory_stack_used else settings.themes.memory_stack_empty;
 			} else if 32 <= y && y < 632 {
-				col = ifx data then ORANGE else YELLOW;
+				col = ifx data then settings.themes.memory_display_used else settings.themes.memory_display_empty;
 			} else if y == 632 && x <= 9 {
-				col = PINK;
+				col = settings.themes.memory_input;
 			} else if data {
-				col = GREEN;
+				col = settings.themes.memory_normal_used;
+			} else {
+				col = settings.themes.memory_normal_empty;
 			}
 
 			hex := formatInt(data, base = 16, minimum_digits = 2);
@@ -150,7 +129,7 @@ draw_RAM_content :: (offset: Vec2, start: int, end: int, pos_y: f32, height: f32
 		y := 260 + (cast(f32)(engine.S / 16)) * (16);
 		w := 16 * 2 + 2;
 		h := 18;
-		draw_rect_lines(offset + .{xx x, xx y}, .{xx w, xx h}, 3, RED, 2);
+		draw_rect_lines(offset + .{xx x, xx y}, .{xx w, xx h}, 3, settings.themes.general_stack_focus, 2);
 	}
 }
 
@@ -158,37 +137,24 @@ draw_program_memory :: () {
 	pos:  Vec2 = .{vp.width + 40.0 - MIN_SCREEN_WIDTH / 2, 74};
 	size: Vec2 = .{MIN_SCREEN_WIDTH / 2 - 50.0, vp.height - MIN_SCREEN_HEIGHT / 2.0 + 10};
 
-	handle_memory_scrollbar(pos, size);
+	child_begin("memory", pos, size, 3);  child_end();
 
-	draw_panel("Memory", pos, size, 3);
-	draw_rect(pos, size, 0, COLOR_BACKGROUND);
+	draw_rect(pos, size, 0, settings.themes.platform_background);
+	draw_rect(pos, .{48, size.y}, 1, settings.themes.platform_widget_bg_normal);
 
-	draw_rect(pos, .{48, size.y}, 1, COLOR_WIDGET_BG);
+	rows_on_screen := floor((size.y - 8) / 16);
+	scroll_pos     := Vec2.{0, ui.memory_scrollbar_pos};
+	min_size       := Vec2.{0, 0};
+	max_value      := Vec2.{0, (2048 - rows_on_screen) * 16};
 
-	set_drawing_area(pos, size); {
-		aspect_ratio := size.y / (2048 * 16);
-		bar_height := aspect_ratio * size.y;
+	draw_scrollbar(pos, size, z = 1, *scroll_pos, .{0, 2048 * 16}, min_size, max_value, settings.platform.memory_cursor_speed_slow, settings.platform.memory_cursor_speed_fast);
 
-		draw_rect(pos + .{size.x - 12, 0}, .{12, size.y}, 1, COLOR_WIDGET_BG);
-		
-		scroll_pos := pos + .{size.x - 12, ui.memory_scrollbar_pos * aspect_ratio};
-		
-		state := scrollbar_interaction(scroll_pos, .{12, size.y}, 2);
-		col: Col = ---;
-		if state == {
-			case .NORMAL;  col = COLOR_WIDGET_BORDER;
-			case .HOVER;   col = COLOR_WIDGET_BG_HOVERED;
-			case .PRESSED; col = COLOR_WIDGET_BG_PRESSED;
-		}
-		
-		draw_rect(scroll_pos, .{12, bar_height}, 2, col);
+	ui.memory_scrollbar_pos = scroll_pos.y;
 
-		offset := pos + .{2, -ui.memory_scrollbar_pos};
-		start: int = xx ((ui.memory_scrollbar_pos) / 16);
-		end: int = xx ((ui.memory_scrollbar_pos + size.y - 24) / 16);
-
-		draw_RAM_content(offset, start, end, pos.y, size.y);
-	} reset_drawing_area();
+	offset := pos + .{2, -ui.memory_scrollbar_pos};
+	start: int = xx ((ui.memory_scrollbar_pos) / 16);
+	end: int = xx ((ui.memory_scrollbar_pos + size.y - 24) / 16);
+	draw_RAM_content(offset, start, end, pos.y, size.y);
 }
 
 draw_program_registers :: () {
@@ -200,9 +166,9 @@ draw_program_registers :: () {
 		hex := formatInt(val, base = 16, minimum_digits = (#ifx s == 1 then 2 else 4));
 		bin := formatInt(val, base =  2, minimum_digits = (#ifx s == 1 then 8 else 16));
 
-		draw_text(tprint("0x%", hex), offset + pos + .{9,  8}, layer, 2, WHITE);
-		draw_text(tprint("0b%", bin), offset + pos + .{9, 30}, layer, 2, WHITE);
-		draw_text(tprint("%",   val), offset + pos + .{9, 52}, layer, 2, WHITE);
+		draw_text(tprint("0x%", hex), offset + pos + .{9,  8}, layer, 2, settings.themes.general_text);
+		draw_text(tprint("0b%", bin), offset + pos + .{9, 30}, layer, 2, settings.themes.general_text);
+		draw_text(tprint("%",   val), offset + pos + .{9, 52}, layer, 2, settings.themes.general_text);
 	}
 
 	layer :: 1;
@@ -213,58 +179,52 @@ draw_program_registers :: () {
 	panel_internal("A", engine.A, offset, .{ 10, 15}, .{176, 76}, layer);
 	panel_internal("X", engine.X, offset, .{196, 15}, .{176, 76}, layer);
 	panel_internal("Y", engine.Y, offset, .{382, 15}, .{176, 76}, layer);
-	// {
-		// draw_panel("Key", offset + .{415, 15}, .{85, 50}, layer);
-	// }
 
 	panel_internal("PC", engine.PC, offset, .{ 10, 104}, .{305, 76}, layer);
 	panel_internal("S", engine.S, offset,   .{382, 104}, .{175, 76}, layer);
-	{
-		// draw_panel("Executing", offset + .{365, 130}, .{135, 35}, layer);
-	}
+
 	{
 		x :: 570;
 		draw_panel("Flags", offset + .{x, 15}, .{68, 165}, layer);
-		draw_text("N:", offset + .{x + 9,  25},  layer, 2, WHITE);
-		draw_text("V:", offset + .{x + 9,  45 + 2},  layer, 2, WHITE);
-		draw_text("B:", offset + .{x + 9,  65 + 4},  layer, 2, WHITE);
-		draw_text("D:", offset + .{x + 9,  85 + 6},  layer, 2, WHITE);
-		draw_text("I:", offset + .{x + 9, 105 + 8}, layer, 2, WHITE);
-		draw_text("Z:", offset + .{x + 9, 125 + 10}, layer, 2, WHITE);
-		draw_text("C:", offset + .{x + 9, 145 + 12}, layer, 2, WHITE);
+		draw_text("N:", offset + .{x + 9,  25},      layer, 2, settings.themes.general_text);
+		draw_text("V:", offset + .{x + 9,  45 + 2},  layer, 2, settings.themes.general_text);
+		draw_text("B:", offset + .{x + 9,  65 + 4},  layer, 2, settings.themes.general_text);
+		draw_text("D:", offset + .{x + 9,  85 + 6},  layer, 2, settings.themes.general_text);
+		draw_text("I:", offset + .{x + 9, 105 + 8},  layer, 2, settings.themes.general_text);
+		draw_text("Z:", offset + .{x + 9, 125 + 10}, layer, 2, settings.themes.general_text);
+		draw_text("C:", offset + .{x + 9, 145 + 12}, layer, 2, settings.themes.general_text);
 		using engine.flags;
-		
+
 		fmtBool :: (v: bool) -> string {
 			str := tprint("%", v);
 			return string.{1, str.data};
 		}
-		
-		draw_text(tprint("%", cast(u8)N), offset + .{x + 45, 25},  layer, 2, ifx N then GREEN else RED);
-		draw_text(tprint("%", cast(u8)V), offset + .{x + 45, 45 + 2},  layer, 2, ifx V then GREEN else RED);
-		draw_text(tprint("%", cast(u8)B), offset + .{x + 45, 65 + 4},  layer, 2, ifx B then GREEN else RED);
-		draw_text(tprint("%", cast(u8)D), offset + .{x + 45, 85 + 6},  layer, 2, ifx D then GREEN else RED);
-		draw_text(tprint("%", cast(u8)I), offset + .{x + 45, 105 + 8}, layer, 2, ifx I then GREEN else RED);
-		draw_text(tprint("%", cast(u8)Z), offset + .{x + 45, 125 + 10}, layer, 2, ifx Z then GREEN else RED);
-		draw_text(tprint("%", cast(u8)C), offset + .{x + 45, 145 + 12}, layer, 2, ifx C then GREEN else RED);
+
+		draw_text(tprint("%", cast(u8)N), offset + .{x + 45, 25      }, layer, 2, ifx N then settings.themes.general_flag_on else settings.themes.general_flag_off);
+		draw_text(tprint("%", cast(u8)V), offset + .{x + 45, 45   + 2}, layer, 2, ifx V then settings.themes.general_flag_on else settings.themes.general_flag_off);
+		draw_text(tprint("%", cast(u8)B), offset + .{x + 45, 65   + 4}, layer, 2, ifx B then settings.themes.general_flag_on else settings.themes.general_flag_off);
+		draw_text(tprint("%", cast(u8)D), offset + .{x + 45, 85   + 6}, layer, 2, ifx D then settings.themes.general_flag_on else settings.themes.general_flag_off);
+		draw_text(tprint("%", cast(u8)I), offset + .{x + 45, 105  + 8}, layer, 2, ifx I then settings.themes.general_flag_on else settings.themes.general_flag_off);
+		draw_text(tprint("%", cast(u8)Z), offset + .{x + 45, 125 + 10}, layer, 2, ifx Z then settings.themes.general_flag_on else settings.themes.general_flag_off);
+		draw_text(tprint("%", cast(u8)C), offset + .{x + 45, 145 + 12}, layer, 2, ifx C then settings.themes.general_flag_on else settings.themes.general_flag_off);
 	}
 }
 
 draw_program_debug :: () {
 	offset := Vec2.{vp.width + 40.0 - MIN_SCREEN_WIDTH / 2, vp.height - MIN_SCREEN_HEIGHT / 4 + 95.0};
 
-	// draw_panel("Debug", offset, .{MIN_SCREEN_WIDTH / 2 - 450.0, MIN_SCREEN_HEIGHT / 4 - 65.0}, 1);
-	draw_panel("Debug", offset, .{240, MIN_SCREEN_HEIGHT / 4 - 105.0}, 1);
+	draw_panel("Debug", offset, .{190, MIN_SCREEN_HEIGHT / 4 - 105.0}, 1);
 
-	checkbox(*engine.debug, "Enable debug", offset + .{15, 15}, .{20, 20}, 1);
+	checkbox("debugger", offset + .{15, 15}, .{20, 20}, 1, *engine.debug);
 	if engine.debug && engine.thread_running {
-		if button("Step", offset + .{170, 13}, .{60, 25}, 1, 1) {
+		if button("Step", offset + .{120, 13}, .{60, 25}, 1, 1) {
 			next_instruction();
 		}
 	}
 
 	draw_panel("Stack used", offset + .{10, 50}, .{170, 35}, 1);
 	stack_used := (255.0 - engine.S) / 255;
-	col: Col = stack_used * RED + (1 - stack_used) * GREEN;
+	col: Col = stack_used * settings.themes.general_debug_stack_full + (1 - stack_used) * settings.themes.general_debug_stack_empty;
 
 	ff := formatFloat(stack_used * 100, trailing_width = 1, zero_removal = .NO);
 
@@ -272,20 +232,20 @@ draw_program_debug :: () {
 }
 
 draw_current_instruction :: () {
-	offset := Vec2.{vp.width - MIN_SCREEN_WIDTH / 2 + 290.0, vp.height - MIN_SCREEN_HEIGHT / 4 + 95.0};
+	offset := Vec2.{vp.width - MIN_SCREEN_WIDTH / 2 + 240.0, vp.height - MIN_SCREEN_HEIGHT / 4 + 95.0};
 	draw_panel("Executing", offset, .{vp.width - 220.0 - offset.x, 40}, 1);
-	
+
 	intrins := intrinsic_to_string(engine.current_instruction);
-	
-	draw_text(intrins, offset + .{12, 11}, 1, 2, WHITE);
+
+	draw_text(intrins, offset + .{12, 11}, 1, 2, settings.themes.general_text);
 }
 
 draw_input :: () {
-	offset := Vec2.{vp.width - MIN_SCREEN_WIDTH / 2 + 290.0, vp.height - MIN_SCREEN_HEIGHT / 4 + 150.0};
+	offset := Vec2.{vp.width - MIN_SCREEN_WIDTH / 2 + 240.0, vp.height - MIN_SCREEN_HEIGHT / 4 + 150.0};
 	draw_panel("Input", offset, .{vp.width - 220.0 - offset.x, 40}, 1);
-	
+
 	data := engine.RAM[MEMORY_INPUT_ADDRESS];
-	
+
 	fmt: string;
 	if data == {
 		case 0;         fmt = "NONE";
@@ -297,19 +257,19 @@ draw_input :: () {
 		case;
 			fmt = tprint("% / KEY_%", data, string.{1, *data});
 	}
-	
-	draw_text(fmt, offset + .{12, 11}, 1, 2, WHITE);
+
+	draw_text(fmt, offset + .{12, 11}, 1, 2, settings.themes.general_text);
 }
 
 draw_program_frequency :: () {
 	offset := Vec2.{vp.width - 210.0, vp.height - MIN_SCREEN_HEIGHT / 4 + 95.0};
 	draw_panel("Frequency", offset, .{200, MIN_SCREEN_HEIGHT / 4 - 105.0}, 1);
 
-	checkbox(*engine.metrics.unlock, "free", offset + .{10, 15}, .{20, 20}, 1);
+	checkbox("free", offset + .{10, 15}, .{20, 20}, 1, *engine.metrics.unlock);
 
 	str: string;
 	freq := engine.metrics.update_rate;
-	
+
 	     if freq < kHz(1) str = tprint(" %Hz", formatInt(freq,                 minimum_digits = 3, padding = #char " "));
 	else if freq < MHz(1) str = tprint("%kHz", formatInt(freq / 1_000,         minimum_digits = 3, padding = #char " "));
 	else if freq < GHz(1) str = tprint("%MHz", formatInt(freq / 1_000_000,     minimum_digits = 3, padding = #char " "));
@@ -325,71 +285,265 @@ draw_program_frequency :: () {
 	draw_step_hslider(offset + .{20, 55}, .{160, 20}, 1, freqs.count, *idx, disabled = engine.metrics.unlock);
 	engine.metrics.update_rate = freqs[idx];
 
-	draw_text(str, offset + .{90, 16}, 1, 2, ifx engine.metrics.unlock then GRAY else COLOR_TEXT_NORMAL);
-}
-
-toggle_display :: () {
-	ui.display_visible = !ui.display_visible;
-
-	padding :: 4;
-
-	w :: DISPLAY_WIDTH  * 8 + padding * 2;
-	h :: DISPLAY_HEIGHT * 8 + padding * 2 + 24;
-
-	x := (vp.width - w) / 2;
-	y := (vp.height - h) / 2;
-	ui.display_pos = .{xx x, xx y};
+	draw_text(str, offset + .{90, 16}, 1, 2, ifx engine.metrics.unlock then settings.themes.platform_disabled else settings.themes.platform_text_normal);
 }
 
 draw_display :: () {
-	padding :: 4;
-	
-	w :: DISPLAY_WIDTH  * 8 + padding * 2;
-	h :: DISPLAY_HEIGHT * 8 + padding * 2 + 24;
-	
-	mouse_over_panel = false;
 
-	if !ui.display_visible then return;
-	
-	if is_mouse_inside_rect(.{ui.display_pos.x, ui.display_pos.y}, .{w - 24, 24}) {
-		mouse_over_panel = true;
-		if is_mouse_pressed(0) {
-			ui.display_pressed_pos.x = mouse_x - ui.display_pos.x;
-			ui.display_pressed_pos.y = mouse_y - ui.display_pos.y;
-			ui.display_selected = true;
-		}
+	handle_input_and_time();
+
+	padding :: 4;
+
+	p := fetch_parent();
+	draw_rect_lines(p.pos + .{padding, padding}, .{DISPLAY_WIDTH * 8, DISPLAY_HEIGHT * 8}, p.z + 1, settings.themes.platform_widget_border_normal, 1);
+
+	width: int;
+	row_data: u8 = engine.RAM[0x0200];  // first value
+	row_x := p.pos.x + padding;
+	row_y := p.pos.y + padding;
+
+	DISPLAY_COLOR : [16]Col;
+	memcpy(DISPLAY_COLOR.data, *settings.themes.display_col0, size_of(type_of(DISPLAY_COLOR)));
+
+	draw_internal :: () #expand {
+		col: Col = ifx `data >= 0 && `data < DISPLAY_COLOR.count then DISPLAY_COLOR[`row_data] else DISPLAY_COLOR[0];
+		draw_rect(.{`row_x, `row_y}, .{8.0 * `width, 8}, `p.z + 1, col);
+		`row_x = (((`it - 0x0200) % DISPLAY_WIDTH) * 8) + p.pos.x + padding;
+		`row_y = (((`it - 0x0200) / DISPLAY_WIDTH) * 8) + p.pos.y + padding;
 	}
-	if ui.display_selected {
-		delta := Vec2.{xx mouse_x, xx mouse_y} - ui.display_pressed_pos;
-		ui.display_pos = delta;
-	}
-	if is_mouse_released(0) then ui.display_selected = false;
-	
-	ui.display_pos.x = clamp(ui.display_pos.x, -w + 24 * 2, vp.width - 24 * 2.0);
-	ui.display_pos.y = clamp(ui.display_pos.y, HEADER_HEIGHT, cast(f32)vp.height - 24);
-	
-	if is_mouse_inside_rect(.{ui.display_pos.x, ui.display_pos.y + 24}, .{w, h - 24}) {
-		mouse_over_panel = true;
-	}
-	
-	if button(.CLOSE, .{ui.display_pos.x + w - 24, ui.display_pos.y}, .{24, 24}, 5, 2) {
-		ui.display_visible = false;
-		return;
-	}
-	
-	draw_window(ui.display_pos, .{w, h}, 4, "Display");
-	
-	draw_rect_lines(ui.display_pos + .{padding, padding + 24}, .{DISPLAY_WIDTH * 8, DISPLAY_HEIGHT * 8}, 5, COLOR_WIDGET_BORDER, 1);
-	
+
 	for 0x0200..(0x0200 + DISPLAY_WIDTH * DISPLAY_HEIGHT - 1) {
 		data := engine.RAM[it];
-		x := (((it - 0x0200) % DISPLAY_WIDTH) * 8) + ui.display_pos.x + padding;
-		y := (((it - 0x0200) / DISPLAY_WIDTH) * 8) + ui.display_pos.y + padding + 24;
-		
-		col: Col = BLACK;
-		if data >= 0 && data < DISPLAY_COLOR.count {
-			col = DISPLAY_COLOR[data];
-		}
-		draw_rect(.{x, y}, .{8, 8}, 5, col);
+
+		// some sort of greedy meshing (not advanced, works rows per rows)
+		if data != row_data {
+			draw_internal();
+			width = 1;
+			row_data = data;
+		} else if ((it - 0x0200) % DISPLAY_WIDTH) == 0 {
+			draw_internal();
+			width = 1;
+		} else width += 1;
+	}
+	col: Col = DISPLAY_COLOR[row_data];
+	draw_rect(.{row_x, row_y}, .{8.0 * width, 8}, p.z + 1, col);
+}
+
+draw_modal :: () {
+	x := (vp.width  - MODAL_WIDTH)  / 2.0;
+	y := (vp.height - MODAL_HEIGHT) / 2.0;
+
+	if #complete ui.modal_error_type == {
+		case .FAILED_COMPILATION;
+			draw_widget_text(ui.modal_error_message, .{10, 10}, 1, 2, settings.themes.general_text, wrap = MODAL_WIDTH - 20);
+		case .UNABLE_TO_OPEN_BINARY;
+			draw_widget_text("Unable to open binary file <out.bin> for reading", .{10, 10}, 1, 2, settings.themes.general_text);
+		case .INCOMPATIBLE_ROM_SIZE;
+			draw_widget_text("Incompatible ROM size", .{10, 10}, 1, 2, settings.themes.general_text);
+			draw_widget_text("ROM size must to be 32kB", .{10, 26}, 1, 2, settings.themes.general_text);
+		case .ERROR_OPENING_FILE;
+			draw_widget_text("An error has occured while opening the file", .{10, 10}, 1, 2, settings.themes.general_text);
+		case .READING_FILE_TIMED_OUT;
+			draw_widget_text("Reading file timed out", .{10, 10}, 1, 2, settings.themes.general_text);
+		case .NO_INPUT_FILE_GIVEN;
+			draw_widget_text("No input file given", .{10, 10}, 1, 2, settings.themes.general_text);
+		case .GIVEN_FILE_NOT_VALID;
+			draw_widget_text("Unsupported given file", .{10, 10}, 1, 2, settings.themes.general_text);
+			draw_widget_text("File must to have the '.s' extension", .{10, 26}, 1, 2, settings.themes.general_text);
+		case .UNABLE_TO_FIND_COMPILER;
+			draw_widget_text("Unable to find 'vasm6502_oldstyle.exe', aborting", .{10, 10}, 1, 2, settings.themes.general_text);
+	}
+	
+	engine.compilation_successful = false;
+}
+
+draw_settings :: () {
+	tab: int = xx ui.settings_focused_tab;
+	tab_bar(.{10, 10}, SETTINGS_WIDTH - 20, 1, .["platform", "theming"], *tab);
+	ui.settings_focused_tab = xx tab;
+	
+	if ui.settings_focused_tab == {
+		case .PLATFORM;
+			draw_widget_text("at startup, open:", .{20, 50}, 1, 2, settings.themes.platform_text_normal);
+			w :: #run measure_text("at startup, open", 2).x;
+			
+			{
+				value := cast(int)settings.platform.at_startup;
+				edit := combo_box(.{40 + w, 50 - 2}, .{190, 20}, 1, .["empty file", "last file"], *value);
+				settings.platform.at_startup = xx value;
+				if edit then save_options_file();
+			}
+			
+			{
+				draw_widget_text("fps lock:", .{20, 70}, 1, 2, settings.themes.platform_text_normal);
+				value := cast(int)ui.settings_platform_view_fps_lock;
+				if input_int(.{165, 70}, 1, 2, *value, 1, 3000) {
+					settings.platform.fps_lock = ui.settings_platform_view_fps_lock;
+					save_options_file();
+				}
+				ui.settings_platform_view_fps_lock = xx value;
+			}
+			
+			internal_scroll :: ($text: string, var: *u8, y: f32) {
+				draw_widget_text(text, .{20, y}, 1, 2, settings.themes.platform_text_normal);
+				w :: #run measure_text(text, 2).x;
+				
+				slider_val := cast(int)var.*;
+				edit := input_int(.{40 + w, y}, 1, s = 2, *slider_val, min_value = 1, max_value = 255, it = xx y);
+				var.* = cast,trunc(u8)slider_val;
+				
+				if edit then save_options_file();
+			}
+			
+			h_separator("scrollbars", .{10, 110}, SETTINGS_WIDTH - 20, 1);
+
+			internal_scroll("code viewer scroll slow speed", *settings.platform.code_cursor_speed_slow, 130);
+			internal_scroll("code viewer scroll fast speed", *settings.platform.code_cursor_speed_fast, 155);
+			internal_scroll("memory viewer scroll slow speed", *settings.platform.memory_cursor_speed_slow, 185);
+			internal_scroll("memory viewer scroll fast speed", *settings.platform.memory_cursor_speed_fast, 210);
+		case .THEMING;
+			internal_selectable :: ($text: string, x: f32, y: *f32, col: *Col, loc := #caller_location) {
+				defer y.* += 16;
+				
+				y_off := y.*;
+				y_off -= ui.settings_theming_scroll_pos.y;
+				if y_off < 40 || y_off > SETTINGS_HEIGHT - 50 then return;
+				s :: #run measure_text(text, 2);
+				
+				box_pos := Vec2.{x, y_off + 2};
+				box_size :: Vec2.{14, 14};
+				
+				state, _, _ := create_selectable_region(.TEXT, loc, 0, .{10, y_off}, s, 2);
+				state       |= create_selectable_region(.BUTTON, loc, 1, box_pos, box_size, 2);
+
+				_, border_col, text_col := fetch_colors(state);
+				
+				draw_widget_text(text, .{10, y_off}, 1, 2, text_col);
+				
+				draw_widget_rect(box_pos, box_size, 1, col.*);
+				draw_widget_rect_lines(box_pos, box_size, 2, border_col);
+				
+				if state != .NORMAL && (is_mouse_inside_widget_rect(box_pos, box_size) || is_mouse_inside_widget_rect(.{10, y_off}, .{s.x, 16})) {
+					if is_mouse_pressed(0) {
+						ui.internal_selected = col;
+					}
+					if is_mouse_pressed(1) {
+						// horrible hack (or is it?)
+						// get the offset using `settings.themes` as the base (it will always be positive)
+						// then apply the offset to `settings.themes_saved_state`
+						offset := cast(u64)col - cast(u64)(*settings.themes);
+						#if DEBUG then assert(!(offset >> 63), "Offset strangely become negative, how so?");
+						new_pos := cast(*Col)((cast(*u8)*settings.themes_saved_state) + offset);
+						memcpy(col, new_pos, size_of(Col));
+						
+						ui.internal_selected = col;
+						
+						save_theme_file();
+					}
+				}
+			}
+			
+			internal_separator :: ($text: string, y: *f32) {
+				y.* += 20;
+				defer y.* += 5;
+				
+				y_off := y.*;
+				y_off -= ui.settings_theming_scroll_pos.y;
+				if y_off < 40 || y_off > SETTINGS_HEIGHT - 45 then return;
+				
+				h_separator(text, .{10, y_off}, SETTINGS_WIDTH - 280, 1);
+			}
+			
+			draw_widget_rect(.{SETTINGS_WIDTH - 240, 40}, .{1, SETTINGS_HEIGHT - 70}, 1, settings.themes.platform_line);
+			
+			{
+				draw_scrollbar(.{10, 40}, .{SETTINGS_WIDTH - 260, SETTINGS_HEIGHT - 81}, z = 1, *ui.settings_theming_scroll_pos, .{0, 16 * 56}, .{0, 0}, .{0, 16 * (65 - 32)}, 1, 1);
+				draw_widget_rect_lines(.{SETTINGS_WIDTH - 250 - WIDGET_SCROLLBAR_SIZE, 40}, .{WIDGET_SCROLLBAR_SIZE, SETTINGS_HEIGHT - 80}, 3, settings.themes.platform_line);
+
+				using settings.themes;
+				y: f32 = 25;
+				
+				internal_separator("general",                  *y);
+				internal_selectable("text",              300,  *y, *general_text);
+				internal_selectable("flag off",          300,  *y, *general_flag_off);
+				internal_selectable("flag on",           300,  *y, *general_flag_on);
+				internal_selectable("debug stack empty", 300,  *y, *general_debug_stack_empty);
+				internal_selectable("debug stack full",  300,  *y, *general_debug_stack_full);
+				internal_selectable("stack focus",       300,  *y, *general_stack_focus);
+
+				internal_separator("platform",                       *y);
+				internal_selectable("widget background normal", 410, *y, *platform_widget_bg_normal);
+				internal_selectable("widget background hover",  410, *y, *platform_widget_bg_hover);
+				internal_selectable("widget background press",  410, *y, *platform_widget_bg_press);
+				internal_selectable("widget border normal",     410, *y, *platform_widget_border_normal);
+				internal_selectable("widget border hover",      410, *y, *platform_widget_border_hover);
+				internal_selectable("widget border press",      410, *y, *platform_widget_border_press);
+				internal_selectable("text normal",              410, *y, *platform_text_normal);
+				internal_selectable("text hover",               410, *y, *platform_text_hover);
+				internal_selectable("text press",               410, *y, *platform_text_press);
+				internal_selectable("background",               410, *y, *platform_background);
+				internal_selectable("deep background",          410, *y, *platform_deep_background);
+				internal_selectable("line",                     410, *y, *platform_line);
+				internal_selectable("disabled",                 410, *y, *platform_disabled);
+				
+				internal_separator("code viewer",       *y);
+				internal_selectable("text",        210, *y, *viewer_text);
+				internal_selectable("number",      210, *y, *viewer_number);
+				internal_selectable("comment",     210, *y, *viewer_comment);
+				internal_selectable("dotdir",      210, *y, *viewer_dotdir);
+				internal_selectable("label",       210, *y, *viewer_label);
+				internal_selectable("instruction", 210, *y, *viewer_instruction);
+				internal_selectable("string",      210, *y, *viewer_string);
+				
+				internal_separator("memory",              *y);
+				internal_selectable("normal empty",  230, *y, *memory_normal_empty);
+				internal_selectable("normal used",   230, *y, *memory_normal_used);
+				internal_selectable("stack empty",   230, *y, *memory_stack_empty);
+				internal_selectable("stack used",    230, *y, *memory_stack_used);
+				internal_selectable("display empty", 230, *y, *memory_display_empty);
+				internal_selectable("display used",  230, *y, *memory_display_used);
+				internal_selectable("input",         230, *y, *memory_input);
+				
+				internal_separator("display",      *y);
+				internal_selectable("col 1",  130, *y, *display_col0);
+				internal_selectable("col 2",  130, *y, *display_col1);
+				internal_selectable("col 3",  130, *y, *display_col2);
+				internal_selectable("col 4",  130, *y, *display_col3);
+				internal_selectable("col 5",  130, *y, *display_col4);
+				internal_selectable("col 6",  130, *y, *display_col5);
+				internal_selectable("col 7",  130, *y, *display_col6);
+				internal_selectable("col 8",  130, *y, *display_col7);
+				internal_selectable("col 9",  130, *y, *display_col8);
+				internal_selectable("col 10", 130, *y, *display_col9);
+				internal_selectable("col 11", 130, *y, *display_col10);
+				internal_selectable("col 12", 130, *y, *display_col11);
+				internal_selectable("col 13", 130, *y, *display_col12);
+				internal_selectable("col 14", 130, *y, *display_col13);
+				internal_selectable("col 15", 130, *y, *display_col14);
+				internal_selectable("col 16", 130, *y, *display_col15);
+			}
+
+			{
+				pos := Vec2.{SETTINGS_WIDTH - 233, 275};
+				h_separator("info", .{SETTINGS_WIDTH - 233, 275}, 225, 1);
+				
+				draw_widget_text("- left click the colored box", pos + .{0,  20}, 1, 1, settings.themes.platform_text_normal);
+				draw_widget_text("  or the text to select",      pos + .{0,  30}, 1, 1, settings.themes.platform_text_normal);
+				draw_widget_text("  the color",                  pos + .{0,  40}, 1, 1, settings.themes.platform_text_normal);
+				draw_widget_text("- right click to revert to",   pos + .{0,  60}, 1, 1, settings.themes.platform_text_normal);
+				draw_widget_text("  default value",              pos + .{0,  70}, 1, 1, settings.themes.platform_text_normal);
+				draw_widget_text("- to revert everything,",      pos + .{0,  90}, 1, 1, settings.themes.platform_text_normal);
+				draw_widget_text("  simply delete the file",     pos + .{0, 100}, 1, 1, settings.themes.platform_text_normal);
+				draw_widget_text("- enjoy!",                     pos + .{0, 120}, 1, 1, settings.themes.platform_text_normal);
+			}
+			
+			if(color_picker(.{SETTINGS_WIDTH - 225, 45}, 1, ui.internal_selected)) {
+				ui.settings_theming_color_edited = true;
+			}
+			
+			if(ui.settings_theming_color_edited && is_mouse_released(0)) {
+				ui.settings_theming_color_edited = false;
+				save_theme_file();
+			}
 	}
 }

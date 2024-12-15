@@ -1,44 +1,28 @@
-draw_rect :: (pos: Vec2, size: Vec2, layer: f32, col: Col) {
-	vert_count := quad_buffer.vertices_count;
-
-	vertices_add(*quad_buffer, .{pos.x         , pos.y         , layer, col.component});
-	vertices_add(*quad_buffer, .{pos.x + size.x, pos.y         , layer, col.component});
-	vertices_add(*quad_buffer, .{pos.x + size.x, pos.y + size.y, layer, col.component});
-	vertices_add(*quad_buffer, .{pos.x         , pos.y + size.y, layer, col.component});
-
-	indices_add(*quad_buffer, vert_count + 1);
-	indices_add(*quad_buffer, vert_count    );
-	indices_add(*quad_buffer, vert_count + 2);
-	indices_add(*quad_buffer, vert_count + 2);
-	indices_add(*quad_buffer, vert_count    );
-	indices_add(*quad_buffer, vert_count + 3);
+draw_rect :: inline (pos: Vec2, size: Vec2, z: f32, col: Col) {
+	element_add(*quad_buffer, .{floor(pos.x), floor(pos.y), z, size.x, size.y, col.data});
 }
 
-draw_triangle :: (p1: Vec2, p2: Vec2, p3: Vec2, layer: f32, col: Col) {
-	vert_count := quad_buffer.vertices_count;
-	
-	vertices_add(*quad_buffer, .{p1.x, p1.y, layer, col.component});
-	vertices_add(*quad_buffer, .{p2.x, p2.y, layer, col.component});
-	vertices_add(*quad_buffer, .{p3.x, p3.y, layer, col.component});
-	
-	indices_add(*quad_buffer, vert_count + 1);
-	indices_add(*quad_buffer, vert_count    );
-	indices_add(*quad_buffer, vert_count + 2);
+draw_color_picker_rect :: inline (pos: Vec2, size: Vec2, z: f32, v: f32) {
+	element_add(*spec_buffer, .{floor(pos.x), floor(pos.y), z, size.x, size.x, v});
+}
+
+draw_rect :: inline (pos: Vec2, size: Vec2, z: f32, c1: Col, c2: Col, c3: Col, c4: Col) {
+	element_add(*flex_buffer, .{floor(pos.x), floor(pos.y), z, size.x, size.y, c1.data, c2.data, c3.data, c4.data});
 }
 
 draw_panel :: ($$text: string, pos: Vec2, size: Vec2, layer: f32) {
 	p :: 4;
 
-	draw_rect(pos, .{p, 1}, layer, COLOR_LINE);
-	draw_rect(pos, .{1, size.y}, layer, COLOR_LINE);
-	draw_rect(pos + .{0, size.y - 1}, .{size.x, 1}, layer, COLOR_LINE);
-	draw_rect(pos + .{size.x - 1, 0}, .{1, size.y}, layer, COLOR_LINE);
+	draw_rect(pos, .{p, 1}, layer, settings.themes.platform_line);
+	draw_rect(pos, .{1, size.y}, layer, settings.themes.platform_line);
+	draw_rect(pos + .{0, size.y - 1}, .{size.x, 1}, layer, settings.themes.platform_line);
+	draw_rect(pos + .{size.x - 1, 0}, .{1, size.y}, layer, settings.themes.platform_line);
 
 	s :: 1;
 	m := measure_text(text, s);
-	draw_text(text, pos + .{p + 4, -m.y / 2}, layer, s, COLOR_LINE);
+	draw_text(text, pos + .{p + 4, -m.y / 2}, layer, s, settings.themes.platform_line);
 
-	draw_rect(pos + .{p + 8 + m.x, 0}, .{size.x - p - 8 - m.x, 1}, layer, COLOR_LINE);
+	draw_rect(pos + .{p + 8 + m.x, 0}, .{size.x - p - 8 - m.x, 1}, layer, settings.themes.platform_line);
 }
 
 draw_rect_lines :: (pos: Vec2, size: Vec2, layer: f32, col: Col, t: f32 = 1) {
@@ -48,14 +32,20 @@ draw_rect_lines :: (pos: Vec2, size: Vec2, layer: f32, col: Col, t: f32 = 1) {
 	draw_rect(pos + .{0, size.y - t}, .{size.x, t}, layer, col);
 }
 
+draw_character :: ($$c: u8, pos: Vec2, layer: f32, scale: f32, col: Col) {
+	#if is_constant(c) { #if c == #char " " || c == #char "\t" || c == #char "\r" then return; }
+	else               {  if c == #char " " || c == #char "\t" || c == #char "\r" then return; }
+	
+	uv := get_char_mapping(c);
 
+	s := scale * 8;
+	
+	element_add(*font_buffer, .{floor(pos.x), floor(pos.y), layer, xx s, col.data, uv});
+}
 
-draw_text :: (text: string, pos: Vec2, layer: f32, scale: f32, color: Col, wrap: f32 = 0) {
+draw_text :: (text: string, pos: Vec2, layer: f32, scale: f32, color: Col, $wrap: f32 = 0) {
 	x_pos: f32;
 	y_pos: f32;
-
-	uv_x := 8.0 / texture_width;
-	uv_y := 8.0 / texture_height;
 
 	s := 8.0 * scale;
 
@@ -63,90 +53,42 @@ draw_text :: (text: string, pos: Vec2, layer: f32, scale: f32, color: Col, wrap:
 		if it == #char "\n" {
 			x_pos = 0;
 			y_pos += s;
+			continue;
 		} else if it != #char " " && it != #char "\t" && it != #char "\r" {
-			uv := get_char_mapping(it);
-			vert_count := font_buffer.vertices_count;
-
-			vertices_add(*font_buffer, .{pos.x + x_pos    , pos.y + y_pos    , layer, color.component, .[uv.x       , uv.y       ]});
-			vertices_add(*font_buffer, .{pos.x + x_pos + s, pos.y + y_pos    , layer, color.component, .[uv.x + uv_x, uv.y       ]});
-			vertices_add(*font_buffer, .{pos.x + x_pos + s, pos.y + y_pos + s, layer, color.component, .[uv.x + uv_x, uv.y + uv_y]});
-			vertices_add(*font_buffer, .{pos.x + x_pos    , pos.y + y_pos + s, layer, color.component, .[uv.x       , uv.y + uv_y]});
-
-			indices_add(*font_buffer, vert_count + 1);
-			indices_add(*font_buffer, vert_count    );
-			indices_add(*font_buffer, vert_count + 2);
-			indices_add(*font_buffer, vert_count + 2);
-			indices_add(*font_buffer, vert_count    );
-			indices_add(*font_buffer, vert_count + 3);
+			draw_character(cast,trunc(u8)it, pos + .{x_pos, y_pos}, layer, scale, color);
 		}
+		
 		x_pos += s;
-		if wrap && x_pos + s > wrap {
+		#if wrap if x_pos + s > wrap {
 			x_pos = 0;
 			y_pos += s;
 		}
 	}
 }
 
-draw_icon :: (icon: Icon, pos: Vec2, layer: f32, $scale: f32, color: Col) {
+draw_icon :: (icon: Icon, pos: Vec2, layer: f32, $scale: f32, col: Col) {
 	uv := get_icon_mapping(icon);
-
-	vert_count := font_buffer.vertices_count;
 
 	s :: 8.0 * scale;
 
-	uv_x := 8.0 / texture_width;
-	uv_y := 8.0 / texture_height;
-
-	vertices_add(*font_buffer, .{pos.x    , pos.y    , layer, color.component, .[uv.x       , uv.y       ]});
-	vertices_add(*font_buffer, .{pos.x + s, pos.y    , layer, color.component, .[uv.x + uv_x, uv.y       ]});
-	vertices_add(*font_buffer, .{pos.x + s, pos.y + s, layer, color.component, .[uv.x + uv_x, uv.y + uv_y]});
-	vertices_add(*font_buffer, .{pos.x    , pos.y + s, layer, color.component, .[uv.x       , uv.y + uv_y]});
-
-	indices_add(*font_buffer, vert_count + 1);
-	indices_add(*font_buffer, vert_count    );
-	indices_add(*font_buffer, vert_count + 2);
-	indices_add(*font_buffer, vert_count + 2);
-	indices_add(*font_buffer, vert_count    );
-	indices_add(*font_buffer, vert_count + 3);
+	element_add(*font_buffer, .{floor(pos.x), floor(pos.y), layer, xx s, col.data, uv});
 }
 
-get_icon_mapping :: (icon: Icon) -> (uv: Vec2) {
+get_icon_mapping :: (icon: Icon) -> uvx: f32 {
 	if #complete icon == {
-		case .REDUCE;      return .{64.0 / texture_width, 16.0 / texture_height};
-		case .MINIMIZE;    return .{72.0 / texture_width, 16.0 / texture_height};
-		case .MAXIMIZE;    return .{80.0 / texture_width, 16.0 / texture_height};
-		case .CLOSE;       return .{88.0 / texture_width, 16.0 / texture_height};
+		case .REDUCE;      return #run  0.0 / texture_width;
+		case .MINIMIZE;    return #run  8.0 / texture_width;
+		case .MAXIMIZE;    return #run 16.0 / texture_width;
+		case .CLOSE;       return #run 24.0 / texture_width;
+		case .ARROW_LEFT;  return #run 32.0 / texture_width;
+		case .ARROW_DOWN;  return #run 40.0 / texture_width;
 	}
 }
 
-get_char_mapping :: (c: u8) -> (uv: Vec2) {
-	// since the font is monospace, we don't need to return the size, it's always the same
-
-	if c >= #char "a" && c <= #char "z" {
-		x: f32 = ((c - #char "a") * 8.0) / texture_width;
-		y: f32 = 0;
-		return .{x, y};
-	} else if c >= #char "A" && c <= #char "Z" {
-		x: f32 = ((c - #char "A") * 8.0) / texture_width;
-		y: f32 = 0;
-		return .{x, y};
-	} else if c >= #char "!" && c <= #char "@" {
-		x: f32 = ((c - #char "!") * 8.0) / texture_width;
-		y: f32 = 8.0 / texture_height;
-		return .{x, y};
-	} else if c >= #char "[" && c <= #char "`" {
-		x: f32 = (208.0 + ((c - #char "[") * 8.0)) / texture_width;
-		y: f32 = 0.0 / texture_height;
-		return .{x, y};
-	} else if c >= #char "{" && c <= #char "~" {
-		x: f32 = ((c - #char "{") * 8.0) / texture_width;
-		y: f32 = 16.0 / texture_height;
-		return .{x, y};
-	} else {
-		x: f32 = 32.0 / texture_width;
-		y: f32 = 16.0 / texture_height;
-		return .{x, y};
-	}
+get_char_mapping :: inline ($$c: u8) -> uvx: f32 {
+	// since the font is monospace, there's no need to return the size
+	char := clamp(c, 32, 127);
+	return 8.0 * char / texture_width;
 }
 
 measure_text :: ($$text: string, $scale: f32) -> Vec2 {
@@ -175,37 +117,6 @@ Icon :: enum {
 	MINIMIZE;
 	MAXIMIZE;
 	CLOSE;
+	ARROW_LEFT;
+	ARROW_DOWN;
 }
-
-COLOR_WIDGET_BG             :: #run Col.{  73,  62,  51, 255} / 255;
-COLOR_WIDGET_BG_HOVERED     :: #run Col.{ 188, 126,  59, 255 } / 255;
-COLOR_WIDGET_BG_PRESSED     :: #run Col.{ 246, 164,  76, 255 } / 255;
-COLOR_WIDGET_BORDER         :: #run Col.{ 196, 126,  43, 255 } / 255;
-COLOR_WIDGET_BORDER_HOVERED :: #run Col.{  49,  43,  40, 255 } / 255;
-COLOR_WIDGET_BORDER_PRESSED :: #run Col.{  80,  77,  73, 255 } / 255;
-
-COLOR_TEXT_NORMAL     :: #run Col.{ 246, 151,  48, 255 } / 255;
-COLOR_TEXT_HOVERED    :: #run Col.{ 216, 210, 206, 255 } / 255;
-COLOR_TEXT_PRESSED    :: #run Col.{ 104,  95,  93, 255 } / 255;
-
-COLOR_BACKGROUND      :: #run Col.{  32,  30,  28, 255 } / 255;
-COLOR_DEEP_BACKGROUND :: #run Col.{  10,  10,   5, 255 } / 255;
-
-COLOR_LINE            :: #run Col.{ 254, 170,  55, 255 } / 255;
-COLOR_DISABLED        :: #run Col.{  73,  85,  97, 255 } / 255;
-
-WHITE  :: #run Col.{240, 240, 220, 255} / 255;
-GREEN  :: #run Col.{ 59, 187,  20, 255} / 255;
-RED    :: #run Col.{202,  45,  31, 255} / 255;
-PURPLE :: #run Col.{130, 102, 193, 255} / 255;
-ORANGE :: #run Col.{221, 119,  17, 255} / 255;
-YELLOW :: #run Col.{238, 210,   5, 255} / 255;
-PINK   :: #run Col.{255, 110, 199, 255} / 255;
-GRAY   :: #run Col.{110, 110, 110, 255} / 255;
-BLUE   :: #run Col.{ 64, 104, 200, 255} / 255;
-AMBER  :: #run Col.{234, 191,  21, 255} / 255;
-BLACK  :: #run Col.{ 12,  12,  12, 255} / 255;
-
-DISPLAY_COLOR :: Col.[
-	BLACK, WHITE, GRAY, RED, ORANGE, YELLOW, GREEN, BLUE, PURPLE, PINK
-];

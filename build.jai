@@ -40,7 +40,7 @@ setup_game_workspace :: () -> Workspace {
     options := get_build_options(w);
     options.output_executable_name = app_name;
     options.output_path            = "out";
-	options.text_output_flags      = 0;
+	if compile_type & .DEBUG then options.text_output_flags = 0;
 	
     if       compile_type & .DEBUG    { options.backend = .X64;  set_optimization(*options, .DEBUG); }
     else if (compile_type & .RELEASE) { options.backend = .LLVM; set_optimization(*options, .OPTIMIZED); }

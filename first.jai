@@ -3,13 +3,7 @@ update_6502 :: () {
 	handle_viewport_movement();
 	handle_viewport_resize();
 
-	handle_widget_layering();
-
-	handle_input_and_time();
-	
 	handle_displayed_file();
-
-	if ui.show_popup then draw_popup(800, 400);
 
 	draw_header();
 	draw_buttons_controls();
@@ -21,13 +15,16 @@ update_6502 :: () {
 	draw_current_instruction();
 	draw_input();
 
-	draw_display();
+	if is_key_pressed(KEY_ESC) then toggle_panel(ui.settings_panel, centered = true);
+
+	widgets_draw_panels();
 }
 
 draw_one_frame :: () {
-	if !vp.reduced {  // I should find a way to entirely disable this until it's not reduced anymore
+	if !vp.reduced {  // Todo - I should find a way to entirely disable this until it's not reduced anymore
+		begin_widgets();
 		begin_drawing();
-		clear_background(COLOR_DEEP_BACKGROUND);
+		clear_background(settings.themes.platform_deep_background);
 
 		update_6502();
 
@@ -37,31 +34,58 @@ draw_one_frame :: () {
 	reset_temporary_storage();
 }
 
+setup_windows :: () {
+	padding :: 4;
+	w :: DISPLAY_WIDTH  * 8 + padding * 2;
+	h :: DISPLAY_HEIGHT * 8 + padding * 2 + 24;
+	ui.display_panel = create_new_panel(draw_display, "display", .{w, h});
+
+	modal_on_close :: () {  // Todo - Temporary!
+		// there's a silly bug about this that I cannot explaint
+		// the Basic()(MEMORY_DEBUGGER = true) sometimes shows an allocation and sometimes it doesn't
+		// even if I free the memory, the bytes aren't decreasing (?)
+		// with my good sense, I'm stil free-ing the memory, you know
+		// I absolutely need to throw away the vasm compiler and build one
+		// ~ Quattro 2024 / 10 / 11
+		if ui.modal_error_type == .FAILED_COMPILATION then free(ui.modal_error_message);
+	}
+
+	ui.modal_panel = create_new_panel(draw_modal, "", .{800, 600}, on_close = modal_on_close, modal = true);
+
+	ui.settings_panel = create_new_panel(draw_settings, "settings", .{SETTINGS_WIDTH, SETTINGS_HEIGHT});
+	
+	ui.internal_selected = *settings.themes.general_text;
+}
+
 main :: () {
 	#if !DEBUG {
 		WR :: #import "Windows_Resources";
 		#run WR.disable_runtime_console();
 	}
-	
+
 	cpu_init();
 	init_window(MIN_SCREEN_WIDTH, MIN_SCREEN_HEIGHT);
 
-	// init_code_viewer("examples/paint.s");
+	init_settings();
+
+	// init_code_viewer("examples\\paint.s");
+
+	setup_windows();
 
 	while vp.running {
 		lock_frame_rate();
 		fetch_window_inputs();
 
+		// if is_key_pressed(KEY_ESC) then break;
+
+		// if is_mouse_pressed(2) then report_memory_leaks();
+		
 		draw_one_frame();
 	}
 	deinit_window();
-	
+
 	// run_all_tests();
 }
-
-LOG_INFO       :: false;
-LOG_EDITOR     :: false;
-LOG_VERBOSE    :: false;
 
 ROM_SIZE      :: 0x8000;
 RAM_SIZE      :: 0x8000;
@@ -79,25 +103,71 @@ MEMORY_MILLISECOND_ADDRESS :: 0x2788;  // 2 bytes
 MIN_SCREEN_WIDTH  :: 1400;
 MIN_SCREEN_HEIGHT :: 800;
 
-DISPLAY_WIDTH :: 120;
+DISPLAY_WIDTH  :: 120;
 DISPLAY_HEIGHT :: 80;
 
-APP_MAJOR_VERSION :: 1;
+MODAL_WIDTH  :: 800;
+MODAL_HEIGHT :: 600;
+
+SETTINGS_WIDTH  :: 700;
+SETTINGS_HEIGHT :: 450;
+
+APP_MAJOR_VERSION :: 2;
 APP_MINOR_VERSION :: 0;
+
+DATA_FOLDER_NAME :: "data";
+THEME_FILE_NAME :: "theme";
+SETTINGS_FILE_NAME :: "settings";
+
+CURSOR_SCROLLBAR_MIN_VALUE :: 1;
+CURSOR_SCROLLBAR_MAX_VALUE :: 20;
 
 Vec2 :: Vector2;
 Vec3 :: Vector3;
 Vec4 :: Vector4;
-Col  :: Vector4;
 f32  :: float32;
 f64  :: float64;
+
+Col :: struct {
+	r, g, b, a: u8;
+	#place r; data: u32;
+}
+
+operator * :: (col: Col, s: f32) -> Col #symmetric {
+	out: Col = ---;
+	out.r = cast(u8)(col.r * s);
+	out.g = cast(u8)(col.g * s);
+	out.b = cast(u8)(col.b * s);
+	out.a = col.a;
+	return out;
+}
+
+operator + :: (a: Col, b: Col) -> Col {
+	out: Col = ---;
+	out.r = a.r + b.r;
+	out.g = a.g + b.g;
+	out.b = a.b + b.b;
+	out.a = a.a + b.a;
+	return out;
+}
+
+operator == :: (a: Col, b: Col) -> bool {
+	return memcmp(*a, *b, size_of(Col)) == 0;
+}
+
+floor :: inline (v: Vec2) -> Vec2 {
+	return .{floor(v.x), floor(v.y)};
+}
 
 #import "Basic";
 #import "Math";
 #import "File";
+#import "File_Utilities";
 #import "Thread";
 #import "Process";
-#import "File_Utilities";
+#import "Hash";
+#import "Hash_Table";
+#import "Sort";
 
 #import "d3d11";
 #import "d3d_compiler";
@@ -113,7 +183,6 @@ f64  :: float64;
 #load "src/engine/input.jai";
 #load "src/engine/rendering.jai";
 #load "src/engine/widgets.jai";
-#load "src/engine/logging.jai";
 
 #load "src/code_viewer/drawing.jai";
 #load "src/code_viewer/code_viewer.jai";
@@ -123,5 +192,6 @@ f64  :: float64;
 #load "src/intrinsics.jai";
 #load "src/gui.jai";
 #load "src/utils.jai";
+#load "src/files.jai";
 
 #load "tests.jai";
