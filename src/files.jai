@@ -49,6 +49,7 @@ init_theming :: () {
 }
 
 setup_file_header :: (f: *File) {
+	// must to be variables for pointers reasons
 	maj_version := APP_MAJOR_VERSION;
 	min_version := APP_MINOR_VERSION;
 	file_write(f, *maj_version, 1);
@@ -138,7 +139,7 @@ parse_options_file :: () {
 	
 	maj_version, min_version := get_file_header(*file);
 	
-	if maj_version == 2 && min_version == 0 {
+	if maj_version == 2 && (min_version == 0 || min_version == 1) {
 		parse_settings_version_2(*file);
 	} else {
 		assert(false, "Unable to read settings file, corrupted");
@@ -153,7 +154,7 @@ parse_theme_file :: () {
 	
 	maj_version, min_version := get_file_header(*file);
 	
-	if maj_version == 2 && min_version == 0 {
+	if maj_version == 2 && (min_version == 0 || min_version == 1) {
 		parse_theming_version_2(*file);
 	} else {
 		assert(false, "Unable to read theming file, corrupted");
