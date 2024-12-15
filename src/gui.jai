@@ -213,11 +213,11 @@ draw_program_registers :: () {
 draw_program_debug :: () {
 	offset := Vec2.{vp.width + 40.0 - MIN_SCREEN_WIDTH / 2, vp.height - MIN_SCREEN_HEIGHT / 4 + 95.0};
 
-	draw_panel("Debug", offset, .{240, MIN_SCREEN_HEIGHT / 4 - 105.0}, 1);
+	draw_panel("Debug", offset, .{190, MIN_SCREEN_HEIGHT / 4 - 105.0}, 1);
 
-	checkbox("Enable debug", offset + .{15, 15}, .{20, 20}, 1, *engine.debug);
+	checkbox("debugger", offset + .{15, 15}, .{20, 20}, 1, *engine.debug);
 	if engine.debug && engine.thread_running {
-		if button("Step", offset + .{170, 13}, .{60, 25}, 1, 1) {
+		if button("Step", offset + .{120, 13}, .{60, 25}, 1, 1) {
 			next_instruction();
 		}
 	}
