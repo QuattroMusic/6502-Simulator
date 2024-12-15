@@ -377,11 +377,13 @@ draw_settings :: () {
 			{
 				draw_widget_text("fps lock:", .{20, 70}, 1, 2, settings.themes.platform_text_normal);
 				value := cast(int)ui.settings_platform_view_fps_lock;
-				if input_int(.{165, 70}, 1, 2, *value, 1, 3000) {
+				changed_value := input_int(.{165, 70}, 1, 2, *value, 1, 3000);
+				ui.settings_platform_view_fps_lock = xx value;
+				
+				if changed_value {
 					settings.platform.fps_lock = ui.settings_platform_view_fps_lock;
 					save_options_file();
 				}
-				ui.settings_platform_view_fps_lock = xx value;
 			}
 			
 			internal_scroll :: ($text: string, var: *u8, y: f32) {
