@@ -331,7 +331,7 @@ input_int :: (pos: Vec2, z: f32, $s: f32, value: *int, $min_value: int, $max_val
 	unfocused := false;
 	if is_mouse_pressed(0) || is_key_pressed(KEY_ESC) || is_key_pressed(KEY_ENTER) {
 		if press then widget.selected = true;
-		else {
+		else if !press && widget.selected {
 			widget.selected = false;
 			unfocused = true;
 		}
