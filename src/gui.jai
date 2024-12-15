@@ -232,7 +232,7 @@ draw_program_debug :: () {
 }
 
 draw_current_instruction :: () {
-	offset := Vec2.{vp.width - MIN_SCREEN_WIDTH / 2 + 290.0, vp.height - MIN_SCREEN_HEIGHT / 4 + 95.0};
+	offset := Vec2.{vp.width - MIN_SCREEN_WIDTH / 2 + 240.0, vp.height - MIN_SCREEN_HEIGHT / 4 + 95.0};
 	draw_panel("Executing", offset, .{vp.width - 220.0 - offset.x, 40}, 1);
 
 	intrins := intrinsic_to_string(engine.current_instruction);
@@ -241,7 +241,7 @@ draw_current_instruction :: () {
 }
 
 draw_input :: () {
-	offset := Vec2.{vp.width - MIN_SCREEN_WIDTH / 2 + 290.0, vp.height - MIN_SCREEN_HEIGHT / 4 + 150.0};
+	offset := Vec2.{vp.width - MIN_SCREEN_WIDTH / 2 + 240.0, vp.height - MIN_SCREEN_HEIGHT / 4 + 150.0};
 	draw_panel("Input", offset, .{vp.width - 220.0 - offset.x, 40}, 1);
 
 	data := engine.RAM[MEMORY_INPUT_ADDRESS];
