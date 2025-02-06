@@ -39,11 +39,11 @@ init_d3d :: () {
 	swapchain_desc.BufferDesc.Height = xx vp.height;
 	swapchain_desc.BufferUsage = .RENDER_TARGET_OUTPUT;
 	swapchain_desc.OutputWindow = vp.window;
-	swapchain_desc.SampleDesc.Count = 4;
+	swapchain_desc.SampleDesc.Count = 1;
 	swapchain_desc.Windowed = xx true;
-
+	
 	D3D11CreateDeviceAndSwapChain(null, .HARDWARE, null, 0, null, 0, D3D11_SDK_VERSION, *swapchain_desc, *swapchain, *dev, null, *devcon);
-
+	
 	set_render_target();
 	set_viewport();
 	create_depth_stencil();
@@ -56,7 +56,7 @@ create_depth_stencil :: () {
 	depth_buffer_desc.MipLevels        = 1;
 	depth_buffer_desc.ArraySize        = 1;
 	depth_buffer_desc.Format           = .D32_FLOAT_S8X24_UINT;
-	depth_buffer_desc.SampleDesc.Count = 4;
+	depth_buffer_desc.SampleDesc.Count = 1;
 	depth_buffer_desc.Usage            = .DEFAULT;
 	depth_buffer_desc.BindFlags        = .DEPTH_STENCIL;
 
@@ -261,8 +261,8 @@ set_viewport :: () {
 	viewport.TopLeftY = 0;
 	viewport.Width    = xx vp.width;
 	viewport.Height   = xx vp.height;
-	viewport.MinDepth = 0;
-	viewport.MaxDepth = 1;
+	viewport.MinDepth = 0.0;
+	viewport.MaxDepth = 1.0;
 
 	ID3D11DeviceContext_RSSetViewports(devcon, 1, *viewport);
 }

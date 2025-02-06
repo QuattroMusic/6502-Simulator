@@ -119,13 +119,13 @@ HSV_to_RGB :: (col: Vec3) -> Col {
 _profile_ident: int;
 
 profile_block :: () #expand {
-	_profile_ident += 1;
 	`_start := current_time_monotonic();
+	_profile_ident += 1;
 	
 	`defer {
 		_end := current_time_monotonic();
 		
-		ctx: Context;
+		ctx: #Context;
 		ctx.allocator = temp;
 		push_context,defer_pop ctx;
 		
@@ -135,8 +135,8 @@ profile_block :: () #expand {
 			append(*s, "\t");
 		}
 		name :: #procedure_name();
-		delta := to_microseconds(_end - _start);
-		append(*s, tprint("% took %us", name, delta));
+		delta := to_nanoseconds(_end - _start);
+		append(*s, tprint("% took %us", name, delta / 1000.0));
 		print(builder_to_string(*s));
 		
 		_profile_ident -= 1;

@@ -99,6 +99,11 @@ draw_code_viewer :: () {
 }
 
 draw_RAM_content :: (offset: Vec2, start: int, end: int, pos_y: f32, height: f32) {
+	chars :: u8.[
+		#char "0", #char "1", #char "2", #char "3", #char "4", #char "5", #char "6", #char "7",
+		#char "8", #char "9", #char "A", #char "B", #char "C", #char "D", #char "E", #char "F"
+	];
+	
 	for y: start..end {
 		hex := formatInt(y * 16, base = 16, minimum_digits = 4);
 		draw_text(tprint("%:", hex), offset + .{5, 9.0 + y * 16}, 2, 1, settings.themes.platform_text_normal);
@@ -118,8 +123,14 @@ draw_RAM_content :: (offset: Vec2, start: int, end: int, pos_y: f32, height: f32
 				col = settings.themes.memory_normal_empty;
 			}
 
-			hex := formatInt(data, base = 16, minimum_digits = 2);
-			draw_text(tprint("%", hex), offset + .{55.0 + x * (32 + 4), 4.0 + y * 16}, 2, 2, col);
+			lo := (data     ) & 0xF;
+			hi := (data >> 4) & 0xF;
+			
+			c1 := chars[lo];
+			c2 := chars[hi];
+			
+			draw_character(c1, offset + .{55.0 + x * (32 + 4), 4.0 + y * 16}, 2, 2, col);
+			draw_character(c2, offset + .{71.0 + x * (32 + 4), 4.0 + y * 16}, 2, 2, col);
 		}
 	}
 

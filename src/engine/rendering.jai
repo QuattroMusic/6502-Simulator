@@ -54,7 +54,7 @@ draw_text :: (text: string, pos: Vec2, layer: f32, scale: f32, color: Col, $wrap
 			x_pos = 0;
 			y_pos += s;
 			continue;
-		} else if it != #char " " && it != #char "\t" && it != #char "\r" {
+		} else {
 			draw_character(cast,trunc(u8)it, pos + .{x_pos, y_pos}, layer, scale, color);
 		}
 		

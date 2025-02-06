@@ -25,10 +25,11 @@ draw_one_frame :: () {
 		begin_widgets();
 		begin_drawing();
 		clear_background(settings.themes.platform_deep_background);
-
 		update_6502();
-
 		finalize_widgets();
+		
+
+
 		finalize_drawing();
 	}
 	reset_temporary_storage();
@@ -41,7 +42,7 @@ setup_windows :: () {
 	ui.display_panel = create_new_panel(draw_display, "display", .{w, h});
 
 	modal_on_close :: () {  // Todo - Temporary!
-		// there's a silly bug about this that I cannot explaint
+		// there's a silly bug about this that I cannot explain
 		// the Basic()(MEMORY_DEBUGGER = true) sometimes shows an allocation and sometimes it doesn't
 		// even if I free the memory, the bytes aren't decreasing (?)
 		// with my good sense, I'm stil free-ing the memory, you know

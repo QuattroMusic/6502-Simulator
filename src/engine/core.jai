@@ -121,7 +121,7 @@ create_window :: (width: s32, height: s32) -> *void {
 }
 
 EventsManager :: (hwnd: *void, msg: u32, wparam: u64, lparam: s64) -> s64 #c_call {
-	ctx: Context;
+	ctx: #Context;
 	push_context,defer_pop ctx;
 
 	if msg == {
