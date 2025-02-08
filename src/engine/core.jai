@@ -17,8 +17,16 @@ init_window :: (width: s32, height: s32) {
 deinit_window :: () {
 	deinit_rendering();
 	deinit_widgets();
+	destroy_window();
 	
 	timeEndPeriod(1);
+}
+
+destroy_window :: () {
+	DestroyWindow(vp.window);
+	
+	t := to_c_string(TITLE_NAME,, temp);
+	UnregisterClassA(t, null);
 }
 
 resize_window :: (w: s32, h: s32) {
@@ -62,10 +70,6 @@ read_os_timer :: () -> s64 {
 	return timer;
 }
 
-is_mouse_inside_rect :: (pos: Vec2, size: Vec2) -> bool {
-	return (xx pos.x <= mouse_x) && (mouse_x < xx (pos.x + size.x)) && (xx pos.y <= mouse_y) && (mouse_y < xx (pos.y + size.y));
-}
-
 create_window :: (width: s32, height: s32) -> *void {
 	_ole32 :: #system_library "Ole32";
 	_user32 :: #system_library "user32";
@@ -90,14 +94,14 @@ create_window :: (width: s32, height: s32) -> *void {
 
 	CoInitialize(null);
 
-	class_name := to_c_string("6502 Window",, temp);
+	class_name := to_c_string(TITLE_NAME,, temp);
 
 	info: WNDCLASSEXA;
-	info.cbSize = size_of(WNDCLASSEXA);
-	info.lpfnWndProc = xx EventsManager;
-	info.hInstance = GetModuleHandleA(null);
+	info.cbSize        = size_of(WNDCLASSEXA);
+	info.lpfnWndProc   = xx events_manager;
+	info.hInstance     = GetModuleHandleA(null);
 	info.lpszClassName = class_name;
-	info.hCursor = LoadCursorA(null, IDC_ARROW);
+	info.hCursor       = LoadCursorA(null, IDC_ARROW);
 	info.hbrBackground = CreateSolidBrush(0);
 
 	RegisterClassExA(*info);
@@ -110,7 +114,7 @@ create_window :: (width: s32, height: s32) -> *void {
 	r := RECT.{x, y, x + width, y + height};
 	AdjustWindowRect(*r, vp.window_style, xx false);
 
-	t := to_c_string("6502 Simulator",, temp);
+	t := to_c_string(TITLE_NAME,, temp);
 	win := CreateWindowExA(0, class_name, t, vp.window_style, r.left, r.top, r.right - r.left, r.bottom - r.top, null, null, null, null);
 
 	DragAcceptFiles(win, xx true);  // enable drop file on window
@@ -120,7 +124,7 @@ create_window :: (width: s32, height: s32) -> *void {
 	return win;
 }
 
-EventsManager :: (hwnd: *void, msg: u32, wparam: u64, lparam: s64) -> s64 #c_call {
+events_manager :: (hwnd: *void, msg: u32, wparam: u64, lparam: s64) -> s64 #c_call {
 	ctx: #Context;
 	push_context,defer_pop ctx;
 

@@ -82,10 +82,9 @@ draw_code_viewer :: () {
 	viewer.pos = offset;
 	viewer.size = .{vp.width - MIN_SCREEN_WIDTH / 2.0 + 20, vp.height - 84.0};
 
-	draw_panel(viewer.file_name, viewer.pos, viewer.size, 3);
 	draw_rect(viewer.pos, viewer.size, 0, settings.themes.platform_background);
 
-	char_per_lines := floor(viewer.size.x / 16) - 2;
+	char_per_lines := round_down(viewer.size.x / 16) - 2;
 
 	max_value := Vec2.{(viewer.longest_line) * 16.0, viewer.rows_length.count * 16.0};
 	scroll_size := viewer.size + max_value;
@@ -93,9 +92,12 @@ draw_code_viewer :: () {
 
 	draw_scrollbar(viewer.pos, viewer.size, z = 3, *viewer.scrollbar_pos, scroll_size, min_size, max_value, settings.platform.code_cursor_speed_slow, settings.platform.code_cursor_speed_fast);
 
+	
 	x_visible := min_size.x + viewer.size.x < scroll_size.x;
 	draw_colored_text(x_visible);
 	draw_line_count_bar(x_visible);
+	
+	draw_panel(viewer.file_name, viewer.pos, viewer.size, 3);
 }
 
 draw_RAM_content :: (offset: Vec2, start: int, end: int, pos_y: f32, height: f32) {
@@ -105,8 +107,20 @@ draw_RAM_content :: (offset: Vec2, start: int, end: int, pos_y: f32, height: f32
 	];
 	
 	for y: start..end {
-		hex := formatInt(y * 16, base = 16, minimum_digits = 4);
-		draw_text(tprint("%:", hex), offset + .{5, 9.0 + y * 16}, 2, 1, settings.themes.platform_text_normal);
+		// draw address
+		value := y * 16;
+		v0 := (value      ) & 0xF;
+		v1 := (value >>  4) & 0xF;
+		v2 := (value >>  8) & 0xF;
+		v3 := (value >> 12) & 0xF;
+		
+		draw_character(chars[v0], offset + .{5     , 9.0 + y * 16}, 2, 1, settings.themes.platform_text_normal);
+		draw_character(chars[v1], offset + .{5 +  8, 9.0 + y * 16}, 2, 1, settings.themes.platform_text_normal);
+		draw_character(chars[v2], offset + .{5 + 16, 9.0 + y * 16}, 2, 1, settings.themes.platform_text_normal);
+		draw_character(chars[v3], offset + .{5 + 24, 9.0 + y * 16}, 2, 1, settings.themes.platform_text_normal);
+		draw_character(#char ":", offset + .{5 + 32, 9.0 + y * 16}, 2, 1, settings.themes.platform_text_normal);
+		
+		// draw values
 		for x: 0..15 {
 			data := engine.RAM[y * 16 + x];
 			
@@ -126,11 +140,8 @@ draw_RAM_content :: (offset: Vec2, start: int, end: int, pos_y: f32, height: f32
 			lo := (data     ) & 0xF;
 			hi := (data >> 4) & 0xF;
 			
-			c1 := chars[lo];
-			c2 := chars[hi];
-			
-			draw_character(c1, offset + .{55.0 + x * (32 + 4), 4.0 + y * 16}, 2, 2, col);
-			draw_character(c2, offset + .{71.0 + x * (32 + 4), 4.0 + y * 16}, 2, 2, col);
+			draw_character(chars[lo], offset + .{55.0 + x * (32 + 4), 4.0 + y * 16}, 2, 2, col);
+			draw_character(chars[hi], offset + .{71.0 + x * (32 + 4), 4.0 + y * 16}, 2, 2, col);
 		}
 	}
 
@@ -148,12 +159,12 @@ draw_program_memory :: () {
 	pos:  Vec2 = .{vp.width + 40.0 - MIN_SCREEN_WIDTH / 2, 74};
 	size: Vec2 = .{MIN_SCREEN_WIDTH / 2 - 50.0, vp.height - MIN_SCREEN_HEIGHT / 2.0 + 10};
 
-	child_begin("memory", pos, size, 3);  child_end();
-
 	draw_rect(pos, size, 0, settings.themes.platform_background);
 	draw_rect(pos, .{48, size.y}, 1, settings.themes.platform_widget_bg_normal);
+	
+	child_begin("memory", pos, size, 3);  child_end();
 
-	rows_on_screen := floor((size.y - 8) / 16);
+	rows_on_screen := round_down((size.y - 8) / 16);
 	scroll_pos     := Vec2.{0, ui.memory_scrollbar_pos};
 	min_size       := Vec2.{0, 0};
 	max_value      := Vec2.{0, (2048 - rows_on_screen) * 16};
@@ -370,7 +381,7 @@ draw_modal :: () {
 
 draw_settings :: () {
 	tab: int = xx ui.settings_focused_tab;
-	tab_bar(.{10, 10}, SETTINGS_WIDTH - 20, 1, .["platform", "theming"], *tab);
+	tab_bar(.{10, 10}, SETTINGS_WIDTH - 20, 0, .["platform", "theming"], *tab);
 	ui.settings_focused_tab = xx tab;
 	
 	if ui.settings_focused_tab == {
@@ -388,7 +399,7 @@ draw_settings :: () {
 			{
 				draw_widget_text("fps lock:", .{20, 70}, 1, 2, settings.themes.platform_text_normal);
 				value := cast(int)ui.settings_platform_view_fps_lock;
-				changed_value := input_int(.{165, 70}, 1, 2, *value, 1, 3000);
+				changed_value := input_int(.{165, 70}, 1, 2, *value, 1, 9999);
 				ui.settings_platform_view_fps_lock = xx value;
 				
 				if changed_value {

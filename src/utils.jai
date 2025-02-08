@@ -9,6 +9,11 @@ round_up :: (n: f32, base: f32) -> f32 {
 	return n;
 }
 
+round_down :: (x: f32) -> f32 {
+	// ignoring negative numbers
+	return cast(f32, cast(s32, x));
+}
+
 print :: (v: Any) {
 	print("%\n", v);
 }
@@ -114,6 +119,32 @@ HSV_to_RGB :: (col: Vec3) -> Col {
 		case 5; return .{cast(u8)(col.z * 255), cast(u8)(p     * 255), cast(u8)(q     * 255), 255};
 		case;   return .{cast(u8)(col.z * 255), cast(u8)(t     * 255), cast(u8)(p     * 255), 255};
 	}
+}
+
+operator * :: (col: Col, s: f32) -> Col #symmetric {
+	out: Col = ---;
+	out.r = cast(u8)(col.r * s);
+	out.g = cast(u8)(col.g * s);
+	out.b = cast(u8)(col.b * s);
+	out.a = col.a;
+	return out;
+}
+
+operator + :: (a: Col, b: Col) -> Col {
+	out: Col = ---;
+	out.r = a.r + b.r;
+	out.g = a.g + b.g;
+	out.b = a.b + b.b;
+	out.a = a.a + b.a;
+	return out;
+}
+
+operator == :: (a: Col, b: Col) -> bool {
+	return a.data == b.data;
+}
+
+is_mouse_inside_rect :: (pos: Vec2, size: Vec2) -> bool {
+	return (xx pos.x <= mouse_x) && (mouse_x < xx (pos.x + size.x)) && (xx pos.y <= mouse_y) && (mouse_y < xx (pos.y + size.y));
 }
 
 _profile_ident: int;

@@ -192,7 +192,7 @@ parse_settings_version_2 :: (file: *File) {
 			assert(size == 10, "Unable to read settings file, corrupted");
 		}
 	}
-	fps_lock                 = read_u16_in_range(file, 1, 3000);
+	fps_lock                 = read_u16_in_range(file, 1, 9999);
 	code_cursor_speed_slow   = read_u8_in_range(file, CURSOR_SCROLLBAR_MIN_VALUE, CURSOR_SCROLLBAR_MAX_VALUE);
 	code_cursor_speed_fast   = read_u8_in_range(file, CURSOR_SCROLLBAR_MIN_VALUE, CURSOR_SCROLLBAR_MAX_VALUE);
 	memory_cursor_speed_slow = read_u8_in_range(file, CURSOR_SCROLLBAR_MIN_VALUE, CURSOR_SCROLLBAR_MAX_VALUE);

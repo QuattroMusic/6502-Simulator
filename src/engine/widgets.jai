@@ -64,7 +64,7 @@ button :: ($$text: string, pos: Vec2, size: Vec2, z: f32, $t: f32 = 1, disabled 
 	draw_widget_rect_lines(pos, size, z + 1, border_col, t);
 
 	s := measure_text(text, t);
-	draw_widget_text(text, floor(pos + size / 2 - s / 2), z + 1, t, text_col);
+	draw_widget_text(text, pos + size / 2 - s / 2, z + 1, t, text_col);
 
 	return fire;
 }
@@ -177,7 +177,7 @@ draw_scrollbar :: (pos: Vec2, size: Vec2, z: f32, scroll_pos: *Vec2, scroll_size
 		scroll_pos.*.y = clamp(val, 0, max_value.y - min_size.y);
 
 		draw_widget_rect(.{scroll_pos_x, scroll_pos_y}, .{WIDGET_SCROLLBAR_SIZE, size.y}, z, settings.themes.platform_widget_bg_normal);
-		draw_widget_rect(.{scroll_pos_x, floor(scroll_pos_y + aspect_ratio * scroll_pos.*.y)}, .{WIDGET_SCROLLBAR_SIZE, bar_height}, z + 1, bar_col);
+		draw_widget_rect(.{scroll_pos_x, scroll_pos_y + aspect_ratio * scroll_pos.*.y}, .{WIDGET_SCROLLBAR_SIZE, bar_height}, z + 1, bar_col);
 	}
 
 	if x_visible {
@@ -206,7 +206,7 @@ draw_scrollbar :: (pos: Vec2, size: Vec2, z: f32, scroll_pos: *Vec2, scroll_size
 		scroll_pos.*.x = clamp(val, 0, max_value.x - min_size.x);
 
 		draw_widget_rect(.{scroll_pos_x, scroll_pos_y}, .{size.x, WIDGET_SCROLLBAR_SIZE}, z, settings.themes.platform_widget_bg_normal);
-		draw_widget_rect(.{floor(scroll_pos_x + aspect_ratio * scroll_pos.*.x), scroll_pos_y}, .{bar_width, WIDGET_SCROLLBAR_SIZE}, z + 1, bar_col);
+		draw_widget_rect(.{scroll_pos_x + aspect_ratio * scroll_pos.*.x, scroll_pos_y}, .{bar_width, WIDGET_SCROLLBAR_SIZE}, z + 1, bar_col);
 	}
 }
 
@@ -444,7 +444,7 @@ color_picker :: (pos: Vec2, z: f32, rgb: *Col, it: int = 0, loc := #caller_locat
 	
 	rgb2 := HSV_to_RGB(.{widget.hsv.x, 1, 1});
 	p1 := Vec2.{s + 12, 8 + widget.hsv.x * (s - 1)};
-	draw_widget_rect_lines(p1 - .{2, 2}, .{24, 6}, z + 2, settings.themes.platform_line);
+	draw_widget_rect_lines(p1 - .{2, 2}, .{24, 6}, z + 3, settings.themes.platform_line);
 	draw_widget_rect(p1 - .{2, 2}, .{24, 6}, z + 2, rgb2);
 	
 	child_end();
@@ -513,7 +513,7 @@ child_begin :: ($$text: string, pos: Vec2, size: Vec2, z: f32) {
 	draw_widget_rect(pos + .{size.x - 1, 0}, .{1, size.y}, z, settings.themes.platform_line);
 
 	s :: 1;
-	m := measure_text(text, s);
+	m := measure_text(text, s);  // Todo - Quattro - text could be constant
 	draw_widget_text(text, pos + .{padding + 4, -m.y / 2}, z, s, settings.themes.platform_line);
 
 	draw_widget_rect(pos + .{padding + 8 + m.x, 0}, .{size.x - padding - 8 - m.x, 1}, z, settings.themes.platform_line);
@@ -552,15 +552,15 @@ begin_widgets :: () {
 
 finalize_widgets :: () {
 	target_fade := ifx modal_visible 0.75 else 0;
-	T :: 0.35;  // seconds took to reach target_fade
-	k := 1 / (T * vp.dt * 1000);
-
+	
+	// frame-independent lerp
+	k := 1 - pow(0.001, vp.dt);
 	fade_value = lerp(fade_value, target_fade, k);
 
 	// black background when modal is enabled
 	z := 10.0 + (panels.count - 1) * 5;
 	draw_rect(.{0, 0}, .{xx vp.width, xx vp.height}, z, .{0, 0, 0, cast(u8)(fade_value * 255)});
-
+	
 	assert(parent_panels.count == 0);
 }
 

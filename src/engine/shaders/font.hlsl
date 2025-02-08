@@ -8,23 +8,24 @@ cbuffer cp_per_object {
 struct Vertex_Out {
 	float4 pos:  SV_POSITION;
 	float2 size: SIZE;
-	uint col:    COLOR;
-	float tex:   TEX;
+	uint col:    COL;
+	float tex:   UVX;
 };
 
 struct Geom_Output {
     float4 pos: SV_POSITION;
-	uint col:   COLOR;
-	float2 tex: TEX;
+	uint col:   COL;
+	float2 tex: UVX;
 };
 
-Vertex_Out VShader(float3 position: POSITION, uint size: SIZE, uint inCol: COLOR, float in_texcoord: TEX) {
+Vertex_Out VShader(float3 position: POS, float2 size: SIZE, uint inCol: COL, float in_texcoord: UVX) {
 	Vertex_Out output;
 
-	output.pos = mul(float4(position, 0) + float4(0, 0, 1, 1), camera_data);
+	float4 new_pos = float4(position, 1);
+	output.pos = mul(new_pos, camera_data);
 
-	output.size.x = size * camera_data[0][0];
-	output.size.y = size * camera_data[1][1];
+	output.size.x = size.x * camera_data[0][0];
+	output.size.y = size.y * camera_data[1][1];
 
 	output.col = inCol;
 
@@ -64,6 +65,9 @@ float4 PShader(Geom_Output input) : SV_TARGET {
 	col.x = ( input.col        & 0xFF) / 255.0f;
 	col.y = ((input.col >> 8 ) & 0xFF) / 255.0f;
 	col.z = ((input.col >> 16) & 0xFF) / 255.0f;
+	col.w = ((input.col >> 24)       ) / 255.0f;
 
-	return float4(col.x, col.y, col.z, alpha);
+	col.w *= alpha;
+
+	return col;
 }

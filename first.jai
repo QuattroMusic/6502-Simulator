@@ -24,12 +24,12 @@ draw_one_frame :: () {
 	if !vp.reduced {  // Todo - I should find a way to entirely disable this until it's not reduced anymore
 		begin_widgets();
 		begin_drawing();
-		clear_background(settings.themes.platform_deep_background);
-		update_6502();
-		finalize_widgets();
 		
-
-
+		clear_background(settings.themes.platform_deep_background);
+		
+		update_6502();
+		
+		finalize_widgets();
 		finalize_drawing();
 	}
 	reset_temporary_storage();
@@ -77,14 +77,14 @@ main :: () {
 		lock_frame_rate();
 		fetch_window_inputs();
 
-		// if is_key_pressed(KEY_ESC) then break;
-
 		// if is_mouse_pressed(2) then report_memory_leaks();
+		
+		
 		
 		draw_one_frame();
 	}
 	deinit_window();
-
+	
 	// run_all_tests();
 }
 
@@ -123,6 +123,8 @@ SETTINGS_FILE_NAME :: "settings";
 CURSOR_SCROLLBAR_MIN_VALUE :: 1;
 CURSOR_SCROLLBAR_MAX_VALUE :: 20;
 
+TITLE_NAME :: "6502 Simulator";
+
 Vec2 :: Vector2;
 Vec3 :: Vector3;
 Vec4 :: Vector4;
@@ -132,32 +134,6 @@ f64  :: float64;
 Col :: struct {
 	r, g, b, a: u8;
 	#place r; data: u32;
-}
-
-operator * :: (col: Col, s: f32) -> Col #symmetric {
-	out: Col = ---;
-	out.r = cast(u8)(col.r * s);
-	out.g = cast(u8)(col.g * s);
-	out.b = cast(u8)(col.b * s);
-	out.a = col.a;
-	return out;
-}
-
-operator + :: (a: Col, b: Col) -> Col {
-	out: Col = ---;
-	out.r = a.r + b.r;
-	out.g = a.g + b.g;
-	out.b = a.b + b.b;
-	out.a = a.a + b.a;
-	return out;
-}
-
-operator == :: (a: Col, b: Col) -> bool {
-	return memcmp(*a, *b, size_of(Col)) == 0;
-}
-
-floor :: inline (v: Vec2) -> Vec2 {
-	return .{floor(v.x), floor(v.y)};
 }
 
 #import "Basic";
@@ -170,7 +146,7 @@ floor :: inline (v: Vec2) -> Vec2 {
 #import "Hash_Table";
 #import "Sort";
 
-#import "d3d11";
+#import "DX11";
 #import "d3d_compiler";
 #import "dxgi";
 

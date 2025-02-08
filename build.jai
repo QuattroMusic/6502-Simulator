@@ -61,7 +61,7 @@ wait_until_workspace_has_finished :: (w: Workspace) {
         if message.kind == .ERROR    then can_start = false;
     }
     compiler_end_intercept(w);
-	if(!can_start) then exit(1);
+	if(!can_start) then compiler_set_workspace_status(.FAILED);
 }
 
 #import "Compiler";

@@ -1,28 +1,34 @@
 draw_rect :: inline (pos: Vec2, size: Vec2, z: f32, col: Col) {
-	element_add(*quad_buffer, .{floor(pos.x), floor(pos.y), z, floor(size.x), floor(size.y), col.data});
+	element_add(*font_buffer, .{round_down(pos.x), round_down(pos.y), z, round_down(size.x), round_down(size.y), col.data, 8.0 * 8 / texture_width});
 }
 
 draw_color_picker_rect :: inline (pos: Vec2, size: Vec2, z: f32, v: f32) {
-	element_add(*spec_buffer, .{floor(pos.x), floor(pos.y), z, floor(size.x), floor(size.x), v});
+	element_add(*spec_buffer, .{round_down(pos.x), round_down(pos.y), z, round_down(size.x), round_down(size.x), v});
 }
 
 draw_rect :: inline (pos: Vec2, size: Vec2, z: f32, c1: Col, c2: Col, c3: Col, c4: Col) {
-	element_add(*flex_buffer, .{floor(pos.x), floor(pos.y), z, floor(size.x), floor(size.y), c1.data, c2.data, c3.data, c4.data});
+	element_add(*flex_buffer, .{round_down(pos.x), round_down(pos.y), z, round_down(size.x), round_down(size.y), c1.data, c2.data, c3.data, c4.data});
 }
 
 draw_panel :: ($$text: string, pos: Vec2, size: Vec2, layer: f32) {
 	p :: 4;
-
-	draw_rect(pos, .{p, 1}, layer, settings.themes.platform_line);
+	
+	s :: 1;
+	m: Vec2 = ---;
+	m = measure_text(text, s);
+	
+	if text.count != 0 {
+		draw_rect(pos, .{p, 1}, layer, settings.themes.platform_line);
+		draw_rect(pos + .{p + 8 + m.x, 0}, .{size.x - p - 8 - m.x, 1}, layer, settings.themes.platform_line);
+	} else {
+		draw_rect(pos, .{size.x, 1}, layer, settings.themes.platform_line);
+	}
+	
 	draw_rect(pos, .{1, size.y}, layer, settings.themes.platform_line);
 	draw_rect(pos + .{0, size.y - 1}, .{size.x, 1}, layer, settings.themes.platform_line);
 	draw_rect(pos + .{size.x - 1, 0}, .{1, size.y}, layer, settings.themes.platform_line);
 
-	s :: 1;
-	m := measure_text(text, s);
 	draw_text(text, pos + .{p + 4, -m.y / 2}, layer, s, settings.themes.platform_line);
-
-	draw_rect(pos + .{p + 8 + m.x, 0}, .{size.x - p - 8 - m.x, 1}, layer, settings.themes.platform_line);
 }
 
 draw_rect_lines :: (pos: Vec2, size: Vec2, layer: f32, col: Col, t: f32 = 1) {
@@ -36,11 +42,15 @@ draw_character :: ($$c: u8, pos: Vec2, layer: f32, scale: f32, col: Col) {
 	#if is_constant(c) { #if c == #char " " || c == #char "\t" || c == #char "\r" then return; }
 	else               {  if c == #char " " || c == #char "\t" || c == #char "\r" then return; }
 	
-	uv := get_char_mapping(c);
+	#if is_constant(c) {
+		uv :: #run get_char_mapping(c);
+	} else {
+		uv := get_char_mapping(c);
+	}
 
 	s := scale * 8;
 	
-	element_add(*font_buffer, .{floor(pos.x), floor(pos.y), layer, xx s, col.data, uv});
+	element_add(*font_buffer, .{round_down(pos.x), round_down(pos.y), layer, xx s, xx s, col.data, uv});
 }
 
 draw_text :: (text: string, pos: Vec2, layer: f32, scale: f32, color: Col, $wrap: f32 = 0) {
@@ -71,7 +81,7 @@ draw_icon :: (icon: Icon, pos: Vec2, layer: f32, $scale: f32, col: Col) {
 
 	s :: 8.0 * scale;
 
-	element_add(*font_buffer, .{floor(pos.x), floor(pos.y), layer, xx s, col.data, uv});
+	element_add(*font_buffer, .{round_down(pos.x), round_down(pos.y), layer, xx s, xx s, col.data, uv});
 }
 
 get_icon_mapping :: (icon: Icon) -> uvx: f32 {
