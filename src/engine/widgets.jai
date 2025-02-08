@@ -51,7 +51,7 @@ button :: ($$text: string, pos: Vec2, size: Vec2, z: f32, $t: f32 = 1, disabled 
 	bg_col:     Col = ---;
 	border_col: Col = ---;
 	text_col:   Col = ---;
-	
+
 	if disabled {
 		bg_col = settings.themes.platform_widget_bg_normal;
 		border_col = settings.themes.platform_disabled;
@@ -122,7 +122,7 @@ draw_step_hslider :: (pos: Vec2, size: Vec2, z: f32, amt: s32, value: *int, disa
 		col_step = settings.themes.platform_widget_border_normal;
 
 		state := create_selectable_region(.SLIDER, loc, it, pos, size, z);
-		
+
 		if state == .PRESSED {
 			col_main = settings.themes.platform_widget_bg_press;
 			value.* = xx clamp((cast(f32)get_relative_x() - pos.x) / size.x * amt, 0, xx (amt - 1));
@@ -143,7 +143,7 @@ draw_step_hslider :: (pos: Vec2, size: Vec2, z: f32, amt: s32, value: *int, disa
 
 	pos_x := pos.x + cast(f32)value.* / (amt - 1) * size.x;
 	draw_widget_rect(.{pos_x - 4, pos.y}, .{8, size.y}, z + 2, col_main);
-	
+
 	return edited;
 }
 
@@ -223,7 +223,7 @@ tab_bar :: (pos: Vec2, width: f32, z: f32, $tabs: []string, focused_tab: *int, i
 	for tabs {
 		d := measure_text(it, 2);
 		_, fire := create_selectable_region(.TAB, loc, it_ + it_index, pos + .{4 + x, 0}, .{d.x + 8, s}, z);
-		
+
 		if fire then focused_tab.* = it_index;
 
 		x += d.x + 16;
@@ -277,36 +277,36 @@ combo_box :: (pos: Vec2, size: Vec2, z: f32, items: []string, selected: *int, it
 	draw_widget_text( items[selected.*], pos + .{2, 1}, z, 2, text_col);
 
 	if fire then widget.*.opened = !widget.*.opened;
-	
+
 	h := items.count * 20.0;
-	
+
 	if is_mouse_pressed(0) && !is_mouse_inside_widget_rect(pos, .{size.x, h + 20.0}) then widget.*.opened = false;
 	if is_key_pressed(KEY_ESC) then widget.*.opened = false;
-	
+
 	fire_internal: bool;
-	
+
 	if state == .HOVER && mouse_dz {
 		selected.* = clamp(selected.* - mouse_dz, 0, items.count - 1);
 		fire_internal = true;
 	}
-	
+
 	if widget.opened {
 		draw_widget_icon(.ARROW_DOWN, pos + .{size.x - 18, 2}, z + 1, 2, text_col);
 		draw_widget_rect_lines(pos + .{size.x - 20, 0}, .{20, 20}, z + 1, border_col);
-		
+
 		draw_widget_rect(pos + .{0, 20}, .{size.x, h}, z + 1, settings.themes.platform_widget_bg_normal);
-		
+
 		for items {
 			state_internal:, fire_internal = create_selectable_region(.COMBO, loc, it_ + it_index + 1, pos + .{0, 20.0 * (it_index + 1)}, .{size.x, 20.0}, z);
-			
+
 			_, border_col, text_col := fetch_colors(state_internal);
 
 			rel_x := pos.x;
 			rel_y := pos.y + 20.0 * (it_index + 1);
-			
+
 			draw_widget_rect_lines(.{rel_x, rel_y}, .{size.x, 20.0}, z + 2, border_col);
 			draw_widget_text(it, .{rel_x + 2, rel_y + 1}, z + 2, 2, text_col);
-			
+
 			if fire_internal {
 				selected.* = it_index;
 				widget.*.opened = false;
@@ -317,17 +317,17 @@ combo_box :: (pos: Vec2, size: Vec2, z: f32, items: []string, selected: *int, it
 		draw_widget_icon(.ARROW_LEFT, pos + .{size.x - 18, 2}, z + 1, 2, text_col);
 		draw_widget_rect_lines(pos + .{size.x - 20, 0}, .{20, 20}, z + 1, border_col);
 	}
-	
+
 	return fire_internal;
 }
 
 input_int :: (pos: Vec2, z: f32, $s: f32, value: *int, $min_value: int, $max_value: int, it: int = 0, loc := #caller_location) -> bool {
 	digits :: #run count_digits(max_value);
 	size :: #run Vec2.{digits * 8.0 * s + 8.0, s * 8.0 + 4};
-	
+
 	state, press, uuid := create_selectable_region(.INPUT, loc, it, pos, size, z);
 	widget := *table_find_pointer(*widgets, uuid).input_int;
-	
+
 	unfocused := false;
 	if is_mouse_pressed(0) || is_key_pressed(KEY_ESC) || is_key_pressed(KEY_ENTER) {
 		if press then widget.selected = true;
@@ -336,20 +336,20 @@ input_int :: (pos: Vec2, z: f32, $s: f32, value: *int, $min_value: int, $max_val
 			unfocused = true;
 		}
 	}
-	
+
 	_, border, text := fetch_colors(state);
-	
+
 	// at the moment it doesn't handle negative values
 	if widget.selected {
 		if is_mouse_up(0) {
 			border = settings.themes.platform_widget_border_hover;
 			text = settings.themes.platform_text_hover;
 		}
-		
+
 		if is_digit(pressed_char) {
 			v := pressed_char - #char "0";
 			new_value: int = value.* * 10 + v;
-			
+
 			value.* = min(new_value, max_value);
 			widget.edited = true;
 		}
@@ -363,18 +363,18 @@ input_int :: (pos: Vec2, z: f32, $s: f32, value: *int, $min_value: int, $max_val
 			widget.edited = true;
 		}
 	}
-	
+
 	draw_widget_rect_lines(pos, size, z, border);
-	
+
 	fmt :: #bake_arguments formatInt(minimum_digits = digits, padding = #char " ");
 	draw_widget_text(tprint("%", fmt(value.*)), pos + .{4, size.y / 2 - 9}, 1, s, text);
-	
+
 	if unfocused {
 		value.* = clamp(value.*, min_value, max_value);
 		defer widget.edited = false;
 		return widget.edited;
 	}
-	
+
 	return false;
 }
 
@@ -383,14 +383,14 @@ color_picker :: (pos: Vec2, z: f32, rgb: *Col, it: int = 0, loc := #caller_locat
 	height :: 216.0;
 
 	child_begin("picker", pos, .{width, height}, z);
-	
+
 	s := width - 40;
 
 	state_quad, _, uuid := create_selectable_region(.COLOR_PICKER, loc, it,     .{8,      8}, .{s,  s}, z);
 	state_bar,  _, _    := create_selectable_region(.COLOR_PICKER, loc, it + 1, .{s + 12, 8}, .{20, s}, z);
-	
+
 	widget := *table_find_pointer(*widgets, uuid).color_picker;
-	
+
 	if widget.rgb != rgb.* {
 		widget.hsv = RGB_to_HSV(rgb.*);
 		widget.rgb = rgb.*;
@@ -399,21 +399,21 @@ color_picker :: (pos: Vec2, z: f32, rgb: *Col, it: int = 0, loc := #caller_locat
 	edited := false;
 	if state_quad == .PRESSED {
 		mouse := get_relative_pos();
-		
+
 		widget.*.hsv.y = clamp((mouse.x - 8) / s, 0, 1);
 		widget.*.hsv.z = clamp(1 - (mouse.y - 8) / s, 0, 1);
-		
+
 		edited = true;
 	} else if state_bar == .PRESSED {
 		y := get_relative_y();
-		
+
 		widget.*.hsv.x = clamp((y - 8) / s, 0, 1);
 
 		edited = true;
 	}
-	
+
 	rgb.* = HSV_to_RGB(widget.hsv);
-	
+
 	text_pos :: Vec2.{18, 162};
 	fmt :: #bake_arguments formatInt(minimum_digits = 3, padding = #char " ");
 	draw_widget_text(tprint("R: %", fmt(rgb.r)),                         text_pos + .{  0, 20}, z, 1, settings.themes.platform_text_normal);
@@ -422,31 +422,31 @@ color_picker :: (pos: Vec2, z: f32, rgb: *Col, it: int = 0, loc := #caller_locat
 	draw_widget_text(tprint("H: %", fmt(cast(s32)(widget.hsv.x * 360))), text_pos + .{  0, 36}, z, 1, settings.themes.platform_text_normal);
 	draw_widget_text(tprint("S: %", fmt(cast(s32)(widget.hsv.y * 100))), text_pos + .{ 62, 36}, z, 1, settings.themes.platform_text_normal);
 	draw_widget_text(tprint("V: %", fmt(cast(s32)(widget.hsv.z * 100))), text_pos + .{124, 36}, z, 1, settings.themes.platform_text_normal);
-	
+
 	{
 		p := fetch_parent();
 		draw_color_picker_rect(p.pos + .{8, 8}, .{s, s}, p.z + z, widget.hsv.x);
 	}
-	
+
 	draw_widget_rect(.{s + 12,             8}, .{20, s / 6 + 1}, z, .{255,   0,   0, 255}, .{255,   0,   0, 255}, .{255, 255,   0, 255}, .{255, 255,   0, 255});
 	draw_widget_rect(.{s + 12, s     / 6 + 8}, .{20, s / 6 + 1}, z, .{255, 255,   0, 255}, .{255, 255,   0, 255}, .{  0, 255,   0, 255}, .{  0, 255,   0, 255});
 	draw_widget_rect(.{s + 12, s * 2 / 6 + 8}, .{20, s / 6 + 1}, z, .{  0, 255,   0, 255}, .{  0, 255,   0, 255}, .{  0, 255, 255, 255}, .{  0, 255, 255, 255});
 	draw_widget_rect(.{s + 12, s * 3 / 6 + 8}, .{20, s / 6 + 1}, z, .{  0, 255, 255, 255}, .{  0, 255, 255, 255}, .{  0,   0, 255, 255}, .{  0,   0, 255, 255});
 	draw_widget_rect(.{s + 12, s * 4 / 6 + 8}, .{20, s / 6 + 1}, z, .{  0,   0, 255, 255}, .{  0,   0, 255, 255}, .{255,   0, 255, 255}, .{255,   0, 255, 255});
 	draw_widget_rect(.{s + 12, s * 5 / 6 + 8}, .{20, s / 6 + 1}, z, .{255,   0, 255, 255}, .{255,   0, 255, 255}, .{255,   0,   0, 255}, .{255,   0,   0, 255});
-	
+
 	draw_widget_rect_lines(.{8, 8}, .{s, s}, z + 1, settings.themes.platform_line);
 	draw_widget_rect_lines(.{s + 12, 8}, .{20, s}, z + 1, settings.themes.platform_line);
-	
+
 	cursor := Vec2.{(s - 2) * widget.hsv.y, (s - 2) * (1 - widget.hsv.z)} + .{9, 9};
 	draw_widget_rect(cursor - .{3, 3}, .{6, 6}, z + 2, rgb.*);
 	draw_widget_rect_lines(cursor - .{4, 4}, .{8, 8}, z + 2, settings.themes.platform_line);
-	
+
 	rgb2 := HSV_to_RGB(.{widget.hsv.x, 1, 1});
 	p1 := Vec2.{s + 12, 8 + widget.hsv.x * (s - 1)};
 	draw_widget_rect_lines(p1 - .{2, 2}, .{24, 6}, z + 3, settings.themes.platform_line);
 	draw_widget_rect(p1 - .{2, 2}, .{24, 6}, z + 2, rgb2);
-	
+
 	child_end();
 
 	return edited;
@@ -513,7 +513,9 @@ child_begin :: ($$text: string, pos: Vec2, size: Vec2, z: f32) {
 	draw_widget_rect(pos + .{size.x - 1, 0}, .{1, size.y}, z, settings.themes.platform_line);
 
 	s :: 1;
-	m := measure_text(text, s);  // Todo - Quattro - text could be constant
+	#if is_constant(text) then m :: #run measure_text(text, s);
+	                      else m :=      measure_text(text, s);
+
 	draw_widget_text(text, pos + .{padding + 4, -m.y / 2}, z, s, settings.themes.platform_line);
 
 	draw_widget_rect(pos + .{padding + 8 + m.x, 0}, .{size.x - padding - 8 - m.x, 1}, z, settings.themes.platform_line);
@@ -552,7 +554,7 @@ begin_widgets :: () {
 
 finalize_widgets :: () {
 	target_fade := ifx modal_visible 0.75 else 0;
-	
+
 	// frame-independent lerp
 	k := 1 - pow(0.001, vp.dt);
 	fade_value = lerp(fade_value, target_fade, k);
@@ -560,7 +562,7 @@ finalize_widgets :: () {
 	// black background when modal is enabled
 	z := 10.0 + (panels.count - 1) * 5;
 	draw_rect(.{0, 0}, .{xx vp.width, xx vp.height}, z, .{0, 0, 0, cast(u8)(fade_value * 255)});
-	
+
 	assert(parent_panels.count == 0);
 }
 
@@ -628,7 +630,7 @@ toggle_panel :: (uuid: ID, pos: Vec2 = .{}, $centered := false) {
 	} else {
 		p.*.visible = true;
 	}
-	
+
 	#if centered {
 		x := (vp.width - p.size.x) / 2;
 		y := (vp.height - p.size.y) / 2;
@@ -660,7 +662,7 @@ fetch_parent :: () -> Panel {
 	if parent_panels.count {
 		return parent_panels[parent_panels.count - 1];
 	}
-	
+
 	p: Panel = ---;
 	p.pos = .{0, 0};
 	p.z = 0;
@@ -677,9 +679,9 @@ fetch_colors :: (state: Interaction_State) -> (main: Col, border: Col, text: Col
 
 create_selectable_region :: (type: Widget_Type, loc: Source_Code_Location, it: int, pos: Vec2, size: Vec2, z: f32) -> (Interaction_State, bool, ID) {
 	uuid := hash_widget(loc, it);
-	
+
 	widget, newly_added := find_or_add(*widgets, uuid);
-	
+
 	if newly_added {
 		widget.*.uuid = uuid;
 		widget.*.type = type;
@@ -687,7 +689,7 @@ create_selectable_region :: (type: Widget_Type, loc: Source_Code_Location, it: i
 		widget.*.z    = z;
 	}
 	widget.*.pos  = pos;
-	
+
 	state, fire := widget_interaction(uuid);
 	return state, fire, uuid;
 }
@@ -695,10 +697,10 @@ create_selectable_region :: (type: Widget_Type, loc: Source_Code_Location, it: i
 #scope_file
 widget_interaction :: (uuid: ID) -> (Interaction_State, fire: bool) {
 	p := fetch_parent();
-	
+
 	widget := table_find_pointer(*widgets, uuid);
 	#if DEBUG then assert(widget != null);
-	
+
 	state: Interaction_State = .NORMAL;
 
 	fire := false;
@@ -789,11 +791,11 @@ Widget_Input_Int :: struct {
 Widget :: struct {
 	type: Widget_Type;
 	uuid: ID;
-	
+
 	pos: Vec2;
 	size: Vec2;
 	z: f32;
-	
+
 	union {
 		color_picker: Widget_Color_Picker;
 		combo_box: Widget_Combo_Box;
