@@ -5,7 +5,7 @@ draw_header :: () {
 	draw_rect_lines(.{0, 0}, .{xx vp.width, xx vp.height}, 1, settings.themes.platform_line);
 	draw_rect(.{0, h - 1}, .{xx vp.width, 1}, 1, settings.themes.platform_line);
 
-	draw_text("6502 Simulator", .{10, 4}, 1, 3, settings.themes.general_text);
+	draw_text(TITLE_NAME, .{10, 4}, 1, 3, settings.themes.general_text);
 
 	if button(.REDUCE, .{cast(f32)vp.width - h * 3, 0}, .{h, h}, 1, 2) {
 		if !vp.reduced {
@@ -399,7 +399,7 @@ draw_settings :: () {
 			{
 				draw_widget_text("fps lock:", .{20, 70}, 1, 2, settings.themes.platform_text_normal);
 				value := cast(int)ui.settings_platform_view_fps_lock;
-				changed_value := input_int(.{165, 70}, 1, 2, *value, 1, 9999);
+				changed_value := input_int(.{165, 70}, 1, 2, *value, 1, 3000);
 				ui.settings_platform_view_fps_lock = xx value;
 				
 				if changed_value {

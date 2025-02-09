@@ -106,11 +106,6 @@ General_UI :: struct {
 	settings_panel: ID;
 }
 
-Calculator_Page :: enum {
-	CALCULATOR;
-	CONVERSION;
-}
-
 Error_Type :: enum {
 	FAILED_COMPILATION;
 	UNABLE_TO_OPEN_BINARY;
