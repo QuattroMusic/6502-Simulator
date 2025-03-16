@@ -31,7 +31,7 @@ compile_type := CompileFlag.DEBUG;
 
 	wait_until_workspace_has_finished(game_ws);
 
-    reset_temporary_storage();  // just for good practice, even if it's not necessary!
+    reset_temporary_storage();
 }
 
 setup_game_workspace :: () -> Workspace {

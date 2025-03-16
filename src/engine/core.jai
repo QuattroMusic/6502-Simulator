@@ -9,8 +9,13 @@ init_window :: (width: s32, height: s32) {
 	init_rendering();
 	init_widgets();
 
+	reset_input();
+	
 	QueryPerformanceFrequency(*vp.perf_count_frequency);
-	QueryPerformanceCounter(*vp.last_counter);
+	
+	vp.last_counter = read_os_timer();
+	vp.init_time    = read_os_timer();
+	
 	vp.running = true;
 }
 
@@ -18,13 +23,13 @@ deinit_window :: () {
 	deinit_rendering();
 	deinit_widgets();
 	destroy_window();
-	
+
 	timeEndPeriod(1);
 }
 
 destroy_window :: () {
 	DestroyWindow(vp.window);
-	
+
 	t := to_c_string(TITLE_NAME,, temp);
 	UnregisterClassA(t, null);
 }
@@ -46,6 +51,12 @@ get_monitor_size :: () -> (w: s32, h: s32) {
 	return w, h;
 }
 
+read_os_timer :: () -> s64 {
+	timer: s64;
+	QueryPerformanceCounter(*timer);
+	return timer;
+}
+
 lock_frame_rate :: () {
     target_s: f32 = 1.0 / settings.platform.fps_lock;
     seconds_elapsed_for_frame: f32 = (cast(f32)(read_os_timer() - vp.last_counter)) / vp.perf_count_frequency;
@@ -64,10 +75,11 @@ lock_frame_rate :: () {
     vp.last_counter = end_counter;
 }
 
-read_os_timer :: () -> s64 {
-	timer: s64;
-	QueryPerformanceCounter(*timer);
-	return timer;
+ms_since_init :: () -> s64 {
+	time := read_os_timer();
+	delta := time - vp.init_time;
+	
+	return delta * 1000 / vp.perf_count_frequency;
 }
 
 create_window :: (width: s32, height: s32) -> *void {
@@ -143,25 +155,33 @@ events_manager :: (hwnd: *void, msg: u32, wparam: u64, lparam: s64) -> s64 #c_ca
 		case WM_KEYFIRST;
 			if wparam <= 0xFF {
 				key := cast,no_check(u8)wparam;
-				input_keyboard_states[key] = true;
-				last_down_char      = key;
-				pressed_char        = key;
+				input_keyboard_states[key] = .DOWN;
+				if lparam & 0x40000000 then input_keyboard_states[key] |= .REPEATED;
+				else                        input_keyboard_states[key] |= .PRESSED;
 			}
 		case WM_SYSKEYUP; #through;
 		case WM_KEYUP;
 			if wparam <= 0xFF {
-				key := cast,no_check(u8)wparam;
-				input_keyboard_states[key] = false;
+				key := cast,no_check(u8, wparam);
+				input_keyboard_states[key] = .UP | .RELEASED;
+			}
+		case WM_CHAR;
+			if wparam >= 32 && wparam <= 0xFF {
+				key := cast,no_check(u8, wparam);
+				pressed_char   = key;
+				last_down_char = key;
 			}
 		case WM_MOUSEMOVE;
 			mouse_x =  lparam        & 0xFFFF;
 			mouse_y = (lparam >> 16) & 0xFFFF;
-		case WM_LBUTTONDOWN; input_button_states[0] = true;
-		case WM_LBUTTONUP;   input_button_states[0] = false;
-		case WM_RBUTTONDOWN; input_button_states[1] = true;
-		case WM_RBUTTONUP;   input_button_states[1] = false;
-		case WM_MBUTTONDOWN; input_button_states[2] = true;
-		case WM_MBUTTONUP;   input_button_states[2] = false;
+
+		case WM_LBUTTONDOWN; input_button_states[0] = .DOWN | .PRESSED;
+		case WM_RBUTTONDOWN; input_button_states[1] = .DOWN | .PRESSED;
+		case WM_MBUTTONDOWN; input_button_states[2] = .DOWN | .PRESSED;
+		case WM_LBUTTONUP;   input_button_states[0] = .UP   | .RELEASED;
+		case WM_RBUTTONUP;   input_button_states[1] = .UP   | .RELEASED;
+		case WM_MBUTTONUP;   input_button_states[2] = .UP   | .RELEASED;
+
 		case WM_MOUSEWHEEL;  mouse_dz = cast,trunc(s16)(wparam >> 16) / 120;
 		case WM_DROPFILES;
 			_shell32 :: #system_library "Shell32";
@@ -206,7 +226,7 @@ handle_viewport_movement :: () {
 		GetCursorPos(*pos);
 
 		delta := Vec2.{xx (pos.x - r.left), xx (pos.y - r.top)} - vp.pressed_pos;
-		
+
 		set_window_pos(xx (r.left + delta.x), xx (r.top + delta.y));
 	}
 	if is_mouse_released(0) {
@@ -216,7 +236,7 @@ handle_viewport_movement :: () {
 
 handle_viewport_resize :: () {
 	s :: 15;
-	
+
 	if is_mouse_pressed(0) {
 		if is_mouse_inside_rect(.{xx (vp.width - s), xx (vp.height - s)}, .{s, s}) {
 			r: RECT;
@@ -259,15 +279,17 @@ Viewport :: struct {
 	running: bool;
 	reduced: bool;
 	maximized: bool;
-	
+
 	sleep_is_granular: bool;
 	dt: f32;
-	
+
 	perf_count_frequency: s64;
 	last_counter: s64;
-	
+
 	window_style :: WS_POPUP;
-	
+
+	init_time: s64;
+
 	// used when moving / resizing the window
 	pressed_pos: Vec2;
 	pressed_size: Vec2;
@@ -277,6 +299,3 @@ Viewport :: struct {
 
 _user32 :: #system_library "User32";
 MoveWindow :: (hWnd: *void, x: s32, y: s32, nWidth: s32, nHeight: s32, bRepaint: s32) #foreign _user32;
-
-vp: Viewport;
-engine: Emulator;

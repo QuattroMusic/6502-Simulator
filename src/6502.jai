@@ -127,27 +127,32 @@ Color_Tokens :: enum u8 {
 	TEXT;
 }
 
-Code_Viewer :: struct {
-	pos: Vec2;
+Code_Editor :: struct {
+	pos:  Vec2;
 	size: Vec2;
-
 	scrollbar_pos: Vec2;
-	longest_line: u32;
-	row_digits: u32;
 
-	file_modtime: Apollo_Time;
-
-	content:     [..] u8;
+	file_path: string;
+	file_name: string;  // view
+	
+	content:     [..]  u8;
 	rows_length: [..] u32;
-	file_path:   string;
-	file_name:   string;  // this is a view
-
+	
+	longest_line: u32;
+	row_digits:   u32;
+	
+	caret_row:  u32 = 0;
+	caret_col:  u32 = 0;
+	caret_time: s64 = 0;
+	
 	// coloring, stored as SoA
 	text_index:  [..] u32;
 	text_length: [..] u32;
 	text_line:   [..] u32;
 	text_column: [..] u32;
 	text_color:  [..] Color_Tokens;
+	
+	focused: bool;
 }
 
 Status_Flags :: struct {
@@ -182,10 +187,6 @@ Emulator :: struct {
 	debug: bool;
 	thread_running: bool;  // could be `true` when 6502 is paused
 }
-
-ui: General_UI;
-settings: Settings = ---;
-viewer: Code_Viewer;
 
 Hz  :: (f: type_of(engine.metrics.update_rate)) -> type_of(engine.metrics.update_rate) { return f; }
 kHz :: (f: type_of(engine.metrics.update_rate)) -> type_of(engine.metrics.update_rate) { return f * 1_000; }
@@ -350,12 +351,12 @@ compile_program :: () {
 		return;
 	}
 
-	if !viewer.file_path {
+	if !editor.file_path {
 		display_error_panel(.NO_INPUT_FILE_GIVEN, "no input file");
 		return;
 	}
 
-	path := get_absolute_path(viewer.file_path,, temp);
+	path := get_absolute_path(editor.file_path,, temp);
 	
 	fmt := tprint("% -Fbin -o \"%\" -dotdir \"%\"", compiler_path, out_path, path);
 

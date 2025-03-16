@@ -71,8 +71,8 @@ write_options_content :: (file: *File) {
 	
 	file_write(file, *settings.platform.at_startup, size_of(type_of(settings.platform.at_startup)));
 	if(settings.platform.at_startup == .OPEN_LAST_FILE) {
-		file_write(file, *viewer.file_path.count, size_of(type_of(viewer.file_path.count)));
-		file_write(file, viewer.file_path.data, viewer.file_path.count);
+		file_write(file, *editor.file_path.count, size_of(type_of(editor.file_path.count)));
+		file_write(file, editor.file_path.data, editor.file_path.count);
 	}
 	
 	file_write(file, *settings.platform.fps_lock,                 size_of(type_of(settings.platform.fps_lock)));
@@ -173,10 +173,10 @@ parse_settings_version_2 :: (file: *File) {
 		m, M := enum_range(At_Startup);
 		at_startup = xx read_u8_in_range(file, xx m, xx M);
 		if at_startup == .OPEN_LAST_FILE {
-			file_size: type_of(viewer.file_path.count);
-			file_read(file, *file_size, size_of(type_of(viewer.file_path.count)));
+			file_size: type_of(editor.file_path.count);
+			file_read(file, *file_size, size_of(type_of(editor.file_path.count)));
 			
-			total_size := size_of(type_of(viewer.file_path.count)) + file_size + 10;
+			total_size := size_of(type_of(editor.file_path.count)) + file_size + 10;
 			assert(size == total_size, "Unable to read settings file, corrupted");
 			
 			str: string;
@@ -186,7 +186,7 @@ parse_settings_version_2 :: (file: *File) {
 			file_read(file, str.data, str.count);
 			
 			if file_exists(str) {
-				init_code_viewer(str);
+				init_code_editor(str);
 			}
 		} else {
 			assert(size == 10, "Unable to read settings file, corrupted");

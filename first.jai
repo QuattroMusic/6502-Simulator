@@ -5,9 +5,11 @@ update_6502 :: () {
 
 	handle_displayed_file();
 
+	handle_code_editor_events();
+
 	draw_header();
 	draw_buttons_controls();
-	draw_code_viewer();
+	draw_code_editor();
 	draw_program_memory();
 	draw_program_registers();
 	draw_program_debug();
@@ -59,17 +61,18 @@ setup_windows :: () {
 }
 
 main :: () {
-	#if !DEBUG {
-		WR :: #import "Windows_Resources";
-		#run WR.disable_runtime_console();
-	}
+	// Todo - Quattro - change the font size from 1 and 2 to 8.0 and 16.0
+	// #if !DEBUG {
+		// WR :: #import "Windows_Resources";
+		// #run WR.disable_runtime_console();
+	// }
 
 	cpu_init();
 	init_window(MIN_SCREEN_WIDTH, MIN_SCREEN_HEIGHT);
 
 	init_settings();
 
-	// init_code_viewer("examples\\paint.s");
+	// init_code_editor("examples\\paint.s");
 
 	setup_windows();
 
@@ -79,14 +82,19 @@ main :: () {
 
 		// if is_mouse_pressed(2) then report_memory_leaks();
 		
-		
-		
 		draw_one_frame();
 	}
 	deinit_window();
 	
 	// run_all_tests();
 }
+
+ui: General_UI;
+settings: Settings = ---;
+editor: Code_Editor;
+
+vp: Viewport;
+engine: Emulator;
 
 ROM_SIZE      :: 0x8000;
 RAM_SIZE      :: 0x8000;
@@ -161,8 +169,9 @@ Col :: struct {
 #load "src/engine/rendering.jai";
 #load "src/engine/widgets.jai";
 
-#load "src/code_viewer/drawing.jai";
-#load "src/code_viewer/code_viewer.jai";
+#load "src/code_editor/editor.jai";
+#load "src/code_editor/coloring.jai";
+#load "src/code_editor/events.jai";
 
 #load "src/6502.jai";
 #load "src/memory.jai";

@@ -145,12 +145,12 @@ init:
 - [x] options panel + save configurations to file
 
 ### Version 3.0
-- [ ] panel for the 6502 instruction set
-- [ ] use an internal 6502 compiler
+- [ ] code editor instead of code viewer
+- [ ] error handling
 
 ### Version 4.0
-- [ ] error handling
-- [ ] code editor instead of code viewer
+- [ ] panel for the 6502 instruction set
+- [ ] use an internal 6502 compiler
 
 
 # License

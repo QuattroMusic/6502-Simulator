@@ -76,28 +76,38 @@ draw_buttons_controls :: () {
 	}
 }
 
-draw_code_viewer :: () {
+draw_code_editor :: () {
 	offset :: Vec2.{10, 74};
 
-	viewer.pos = offset;
-	viewer.size = .{vp.width - MIN_SCREEN_WIDTH / 2.0 + 20, vp.height - 84.0};
+	editor.pos = offset;
+	editor.size = .{vp.width - MIN_SCREEN_WIDTH / 2.0 + 20, vp.height - 84.0};
 
-	draw_rect(viewer.pos, viewer.size, 0, settings.themes.platform_background);
+	draw_rect(editor.pos, editor.size, 0, settings.themes.platform_background);
 
-	char_per_lines := round_down(viewer.size.x / 16) - 2;
+	char_per_lines := round_down(editor.size.x / 16) - 2;
 
-	max_value := Vec2.{(viewer.longest_line) * 16.0, viewer.rows_length.count * 16.0};
-	scroll_size := viewer.size + max_value;
+	max_value := Vec2.{(editor.longest_line) * 16.0, editor.rows_length.count * 16.0};
+	scroll_size := editor.size + max_value;
 	min_size := Vec2.{30 * 16.0, 1 * 16.0};
 
-	draw_scrollbar(viewer.pos, viewer.size, z = 3, *viewer.scrollbar_pos, scroll_size, min_size, max_value, settings.platform.code_cursor_speed_slow, settings.platform.code_cursor_speed_fast);
-
+	draw_scrollbar(editor.pos, editor.size, z = 3, *editor.scrollbar_pos, scroll_size, min_size, max_value, settings.platform.code_cursor_speed_slow, settings.platform.code_cursor_speed_fast);
 	
-	x_visible := min_size.x + viewer.size.x < scroll_size.x;
+	x_visible := min_size.x + editor.size.x < scroll_size.x;
 	draw_colored_text(x_visible);
 	draw_line_count_bar(x_visible);
 	
-	draw_panel(viewer.file_name, viewer.pos, viewer.size, 3);
+	if editor.file_path && editor.focused {
+		time := (ms_since_init() - editor.caret_time) % 1000;
+		
+		if time < 500 {
+			// Todo - Quattro - 3 and 5 is padding, make it more robust
+			x := editor.pos.x + editor.caret_col * 16.0 + 3 + get_width_of_line_count_bar() - editor.scrollbar_pos.x;
+			y := editor.pos.y + editor.caret_row * 16.0 + 5                                 - editor.scrollbar_pos.y;
+			draw_rect(.{x, y}, .{1, 16}, z = 2, .{255, 255, 255, 255});
+		}
+	}
+	
+	draw_panel(editor.file_name, editor.pos, editor.size, 3);
 }
 
 draw_RAM_content :: (offset: Vec2, start: int, end: int, pos_y: f32, height: f32) {
@@ -109,15 +119,14 @@ draw_RAM_content :: (offset: Vec2, start: int, end: int, pos_y: f32, height: f32
 	for y: start..end {
 		// draw address
 		value := y * 16;
-		v0 := (value      ) & 0xF;
 		v1 := (value >>  4) & 0xF;
 		v2 := (value >>  8) & 0xF;
 		v3 := (value >> 12) & 0xF;
 		
-		draw_character(chars[v0], offset + .{5     , 9.0 + y * 16}, 2, 1, settings.themes.platform_text_normal);
-		draw_character(chars[v1], offset + .{5 +  8, 9.0 + y * 16}, 2, 1, settings.themes.platform_text_normal);
-		draw_character(chars[v2], offset + .{5 + 16, 9.0 + y * 16}, 2, 1, settings.themes.platform_text_normal);
-		draw_character(chars[v3], offset + .{5 + 24, 9.0 + y * 16}, 2, 1, settings.themes.platform_text_normal);
+		draw_character(chars[v3], offset + .{5     , 9.0 + y * 16}, 2, 1, settings.themes.platform_text_normal);
+		draw_character(chars[v2], offset + .{5 +  8, 9.0 + y * 16}, 2, 1, settings.themes.platform_text_normal);
+		draw_character(chars[v1], offset + .{5 + 16, 9.0 + y * 16}, 2, 1, settings.themes.platform_text_normal);
+		draw_character(#char "0", offset + .{5 + 24, 9.0 + y * 16}, 2, 1, settings.themes.platform_text_normal);
 		draw_character(#char ":", offset + .{5 + 32, 9.0 + y * 16}, 2, 1, settings.themes.platform_text_normal);
 		
 		// draw values
