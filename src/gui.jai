@@ -80,7 +80,7 @@ draw_code_editor :: () {
 	offset :: Vec2.{10, 74};
 
 	editor.pos = offset;
-	editor.size = .{vp.width - MIN_SCREEN_WIDTH / 2.0 + 20, vp.height - 84.0};
+	editor.size = .{vp.width - START_SCREEN_WIDTH / 2.0 + 20, vp.height - 84.0};
 
 	draw_rect(editor.pos, editor.size, 0, settings.themes.platform_background);
 
@@ -165,8 +165,8 @@ draw_RAM_content :: (offset: Vec2, start: int, end: int, pos_y: f32, height: f32
 }
 
 draw_program_memory :: () {
-	pos:  Vec2 = .{vp.width + 40.0 - MIN_SCREEN_WIDTH / 2, 74};
-	size: Vec2 = .{MIN_SCREEN_WIDTH / 2 - 50.0, vp.height - MIN_SCREEN_HEIGHT / 2.0 + 10};
+	pos:  Vec2 = .{vp.width + 40.0 - START_SCREEN_WIDTH / 2, 74};
+	size: Vec2 = .{START_SCREEN_WIDTH / 2 - 50.0, vp.height - START_SCREEN_HEIGHT / 2.0 + 10};
 
 	draw_rect(pos, size, 0, settings.themes.platform_background);
 	draw_rect(pos, .{48, size.y}, 1, settings.themes.platform_widget_bg_normal);
@@ -203,9 +203,9 @@ draw_program_registers :: () {
 	}
 
 	layer :: 1;
-	offset := Vec2.{vp.width + 40.0 - MIN_SCREEN_WIDTH / 2, vp.height + 95.0 - MIN_SCREEN_HEIGHT / 2};
+	offset := Vec2.{vp.width + 40.0 - START_SCREEN_WIDTH / 2, vp.height + 95.0 - START_SCREEN_HEIGHT / 2};
 
-	draw_panel("Registers", offset, .{MIN_SCREEN_WIDTH / 2 - 50, MIN_SCREEN_HEIGHT / 4 - 10}, layer);
+	draw_panel("Registers", offset, .{START_SCREEN_WIDTH / 2 - 50, START_SCREEN_HEIGHT / 4 - 10}, layer);
 
 	panel_internal("A", engine.A, offset, .{ 10, 15}, .{176, 76}, layer);
 	panel_internal("X", engine.X, offset, .{196, 15}, .{176, 76}, layer);
@@ -242,9 +242,9 @@ draw_program_registers :: () {
 }
 
 draw_program_debug :: () {
-	offset := Vec2.{vp.width + 40.0 - MIN_SCREEN_WIDTH / 2, vp.height - MIN_SCREEN_HEIGHT / 4 + 95.0};
+	offset := Vec2.{vp.width + 40.0 - START_SCREEN_WIDTH / 2, vp.height - START_SCREEN_HEIGHT / 4 + 95.0};
 
-	draw_panel("Debug", offset, .{190, MIN_SCREEN_HEIGHT / 4 - 105.0}, 1);
+	draw_panel("Debug", offset, .{190, START_SCREEN_HEIGHT / 4 - 105.0}, 1);
 
 	checkbox("debugger", offset + .{15, 15}, .{20, 20}, 1, *engine.debug);
 	if engine.debug && engine.thread_running {
@@ -263,7 +263,7 @@ draw_program_debug :: () {
 }
 
 draw_current_instruction :: () {
-	offset := Vec2.{vp.width - MIN_SCREEN_WIDTH / 2 + 240.0, vp.height - MIN_SCREEN_HEIGHT / 4 + 95.0};
+	offset := Vec2.{vp.width - START_SCREEN_WIDTH / 2 + 240.0, vp.height - START_SCREEN_HEIGHT / 4 + 95.0};
 	draw_panel("Executing", offset, .{vp.width - 220.0 - offset.x, 40}, 1);
 
 	intrins := intrinsic_to_string(engine.current_instruction);
@@ -272,7 +272,7 @@ draw_current_instruction :: () {
 }
 
 draw_input :: () {
-	offset := Vec2.{vp.width - MIN_SCREEN_WIDTH / 2 + 240.0, vp.height - MIN_SCREEN_HEIGHT / 4 + 150.0};
+	offset := Vec2.{vp.width - START_SCREEN_WIDTH / 2 + 240.0, vp.height - START_SCREEN_HEIGHT / 4 + 150.0};
 	draw_panel("Input", offset, .{vp.width - 220.0 - offset.x, 40}, 1);
 
 	data := engine.RAM[MEMORY_INPUT_ADDRESS];
@@ -293,8 +293,8 @@ draw_input :: () {
 }
 
 draw_program_frequency :: () {
-	offset := Vec2.{vp.width - 210.0, vp.height - MIN_SCREEN_HEIGHT / 4 + 95.0};
-	draw_panel("Frequency", offset, .{200, MIN_SCREEN_HEIGHT / 4 - 105.0}, 1);
+	offset := Vec2.{vp.width - 210.0, vp.height - START_SCREEN_HEIGHT / 4 + 95.0};
+	draw_panel("Frequency", offset, .{200, START_SCREEN_HEIGHT / 4 - 105.0}, 1);
 
 	checkbox("free", offset + .{10, 15}, .{20, 20}, 1, *engine.metrics.unlock);
 

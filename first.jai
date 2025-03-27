@@ -1,8 +1,4 @@
 update_6502 :: () {
-	// those two should be put before the drawing, see `EventsManager` - `WM_SIZE`
-	handle_viewport_movement();
-	handle_viewport_resize();
-
 	handle_displayed_file();
 
 	handle_code_editor_events();
@@ -30,6 +26,10 @@ draw_one_frame :: () {
 		clear_background(settings.themes.platform_deep_background);
 		
 		update_6502();
+		// draw_rect(.{0, 0}, .{xx vp.width, 1}, 1, .{255, 0, 0, 255});
+		// draw_rect(.{0, 0}, .{1, xx vp.height}, 1, .{255, 0, 0, 255});
+		// draw_rect(.{xx (vp.width - 1), 0}, .{1, xx vp.height}, 1, .{255, 0, 0, 255});
+		// draw_rect(.{0, xx (vp.height - 1)}, .{xx vp.width, 1}, 1, .{255, 0, 0, 255});
 		
 		finalize_widgets();
 		finalize_drawing();
@@ -68,7 +68,7 @@ main :: () {
 	// }
 
 	cpu_init();
-	init_window(MIN_SCREEN_WIDTH, MIN_SCREEN_HEIGHT);
+	init_window();
 
 	init_settings();
 
@@ -80,8 +80,6 @@ main :: () {
 		lock_frame_rate();
 		fetch_window_inputs();
 
-		// if is_mouse_pressed(2) then report_memory_leaks();
-		
 		draw_one_frame();
 	}
 	deinit_window();
@@ -109,11 +107,14 @@ MEMORY_MINUTE_ADDRESS      :: 0x2786;
 MEMORY_SECOND_ADDRESS      :: 0x2787;
 MEMORY_MILLISECOND_ADDRESS :: 0x2788;  // 2 bytes
 
-MIN_SCREEN_WIDTH  :: 1400;
-MIN_SCREEN_HEIGHT :: 800;
+MIN_SCREEN_WIDTH  :: 940;
+MIN_SCREEN_HEIGHT :: 470;
 
-DISPLAY_WIDTH  :: 120;
-DISPLAY_HEIGHT :: 80;
+START_SCREEN_WIDTH  :: 1400;
+START_SCREEN_HEIGHT :: 800;
+
+DISPLAY_WIDTH  :: 120;  // in rects, whose size are 8x8
+DISPLAY_HEIGHT :: 80;   // so it's a [960 x 640] screen (without padding)
 
 MODAL_WIDTH  :: 800;
 MODAL_HEIGHT :: 600;
@@ -159,7 +160,9 @@ Col :: struct {
 #import "dxgi";
 
 #if OS == {
-	case .WINDOWS; #import "Windows";
+	case .WINDOWS;
+		#import "Windows";
+		#import "Windows_Utf8";
 	case; #assert(false);
 }
 

@@ -19,12 +19,15 @@ fetch_window_inputs :: () {
 		TranslateMessage(*msg);
 		DispatchMessageA(*msg);
 	}
+	
+	pos: POINT;
+	GetCursorPos(*pos);
+	ScreenToClient(vp.window, *pos);
+	mouse_x = pos.x;
+	mouse_y = pos.y;
 }
 
 reset_input :: () {
-	vp.enable_movement = false;
-	vp.enable_resizing = false;
-	
 	mouse_dz = 0;
 	
 	memset(input_keyboard_states.data, xx Button_State.UP, size_of(type_of(input_keyboard_states)));
