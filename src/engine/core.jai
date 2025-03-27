@@ -100,10 +100,10 @@ create_window :: () -> *void {
 	return win;
 }
 
-window_maximized :: (hwnd: *void) -> bool {
+window_maximized :: () -> bool {
 	placement: WINDOWPLACEMENT;
 	placement.length = size_of(WINDOWPLACEMENT);
-	if GetWindowPlacement(hwnd, *placement) {
+	if GetWindowPlacement(vp.window, *placement) {
 		return placement.showCmd == SW_SHOWMAXIMIZED;
 	}
 	return false;
@@ -126,6 +126,8 @@ events_manager :: (hwnd: *void, msg: u32, wparam: u64, lparam: s64) -> s64 #c_ca
 			if vp.running {
 				resize_viewport();
 				draw_one_frame();
+				reset_input();
+				focused_uuid = 0;
 			}
 		case WM_SYSKEYDOWN; #through;
 		case WM_KEYFIRST;
@@ -183,7 +185,7 @@ events_manager :: (hwnd: *void, msg: u32, wparam: u64, lparam: s64) -> s64 #c_ca
 			requested_client_rect.*.right  -= frame_x + padding;
 			requested_client_rect.*.left   += frame_x + padding;
 			requested_client_rect.*.bottom -= frame_y + padding;
-			if window_maximized(hwnd) requested_client_rect.*.top += frame_y + padding;
+			if window_maximized() requested_client_rect.*.top += frame_y + padding;
 			
 			return 0;
 		case WM_CREATE;
@@ -213,7 +215,7 @@ events_manager :: (hwnd: *void, msg: u32, wparam: u64, lparam: s64) -> s64 #c_ca
 			ScreenToClient(hwnd, *cursor);
 			
 			if cursor.y < (frame_y + padding) {
-				if window_maximized(hwnd) {
+				if window_maximized() {
 					if cursor.y > 0 then return HTTOP;
 				} else {
 					if cursor.y >= 0 then return HTTOP;
@@ -237,7 +239,7 @@ Viewport :: struct {
 	width, height: s32;
 	running: bool;
 	reduced: bool;
-	maximized: bool;
+	// maximized: bool;
 
 	sleep_is_granular: bool;
 	dt: f32;

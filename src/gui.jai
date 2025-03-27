@@ -14,12 +14,10 @@ draw_header :: () {
 		vp.reduced = !vp.reduced;
 	}
 
-	icon: Icon = ifx vp.maximized then .MINIMIZE else .MAXIMIZE;
+	icon: Icon = ifx window_maximized() then .MINIMIZE else .MAXIMIZE;
 	if button(icon, .{cast(f32)vp.width - h * 2, 0}, .{h, h}, 1, 2) {
-		if !vp.maximized then ShowWindow(vp.window, SW_MAXIMIZE);
-		else                  ShowWindow(vp.window, SW_RESTORE);
-
-		vp.maximized = !vp.maximized;
+		if !window_maximized() then ShowWindow(vp.window, SW_MAXIMIZE);
+		else                        ShowWindow(vp.window, SW_RESTORE);
 	}
 	if button(.CLOSE, .{cast(f32)vp.width - h, 0}, .{h, h}, 1, 2) {
 		vp.running = false;
