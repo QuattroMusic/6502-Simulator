@@ -147,11 +147,15 @@ draw_step_hslider :: (pos: Vec2, size: Vec2, z: f32, amt: s32, value: *int, disa
 	return edited;
 }
 
-draw_scrollbar :: (pos: Vec2, size: Vec2, z: f32, scroll_pos: *Vec2, scroll_size: Vec2, min_size: Vec2, max_value: Vec2, speed_slow: int, speed_fast: int, it: int = 0, loc := #caller_location) {
-	x_visible := min_size.x + size.x < scroll_size.x;
-	y_visible := min_size.y + size.y < scroll_size.y;
+draw_scrollbar :: (pos: Vec2, size: Vec2, z: f32, scroll_pos: *Vec2, scroll_size: Vec2, min_size: Vec2, max_value: Vec2, speed_slow: int, speed_fast: int, it: int = 0, loc := #caller_location) -> Vec2 {
+	x_visible := (min_size.x + size.x) < scroll_size.x;
+	y_visible := (min_size.y + size.y) < scroll_size.y;
+	
+	true_size := size;
 
 	if y_visible {
+		true_size.x -= WIDGET_SCROLLBAR_SIZE;
+	
 		scroll_pos_x := pos.x + size.x - WIDGET_SCROLLBAR_SIZE;
 		scroll_pos_y := pos.y;
 		off := ifx x_visible then cast(f32)WIDGET_SCROLLBAR_SIZE;
@@ -181,6 +185,8 @@ draw_scrollbar :: (pos: Vec2, size: Vec2, z: f32, scroll_pos: *Vec2, scroll_size
 	}
 
 	if x_visible {
+		true_size.y -= WIDGET_SCROLLBAR_SIZE;
+		
 		scroll_pos_x := pos.x;
 		scroll_pos_y := pos.y + size.y - WIDGET_SCROLLBAR_SIZE;
 		off := ifx y_visible then cast(f32)WIDGET_SCROLLBAR_SIZE;
@@ -208,6 +214,8 @@ draw_scrollbar :: (pos: Vec2, size: Vec2, z: f32, scroll_pos: *Vec2, scroll_size
 		draw_widget_rect(.{scroll_pos_x, scroll_pos_y}, .{size.x, WIDGET_SCROLLBAR_SIZE}, z, settings.themes.platform_widget_bg_normal);
 		draw_widget_rect(.{scroll_pos_x + aspect_ratio * scroll_pos.*.x, scroll_pos_y}, .{bar_width, WIDGET_SCROLLBAR_SIZE}, z + 1, bar_col);
 	}
+	
+	return true_size;
 }
 
 tab_bar :: (pos: Vec2, width: f32, z: f32, $tabs: []string, focused_tab: *int, it_: int = 0, loc := #caller_location) {

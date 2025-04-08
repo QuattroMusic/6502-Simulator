@@ -171,7 +171,7 @@ events_manager :: (hwnd: *void, msg: u32, wparam: u64, lparam: s64) -> s64 #c_ca
 			len := string_length(buff.data);
 			handle_dropped_file(string.{len, buff.data});
 		case WM_NCCALCSIZE;
-			if !wparam then return DefWindowProcA(hwnd, msg, wparam, lparam);
+			if !wparam then return DefWindowProcW(hwnd, msg, wparam, lparam);
 			
 			dpi := GetDpiForWindow(hwnd);
 			
@@ -222,7 +222,7 @@ events_manager :: (hwnd: *void, msg: u32, wparam: u64, lparam: s64) -> s64 #c_ca
 				}
 			}
 			
-			if mouse_y < HEADER_HEIGHT && mouse_x < vp.width - HEADER_HEIGHT * 3 then return HTCAPTION;
+			if cursor.y < HEADER_HEIGHT && cursor.x < vp.width - HEADER_HEIGHT * 3 then return HTCAPTION;
 			
 			return HTCLIENT;
 		case WM_GETMINMAXINFO;

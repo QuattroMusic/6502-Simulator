@@ -128,9 +128,10 @@ Color_Tokens :: enum u8 {
 }
 
 Code_Editor :: struct {
-	pos:  Vec2;
-	size: Vec2;
-	scrollbar_pos: Vec2;
+	pos:                 Vec2;
+	size:                Vec2;
+	scrollbar_pos:       Vec2;
+	editor_content_size: Vec2;
 
 	file_path: string;
 	file_name: string;  // view
@@ -474,8 +475,9 @@ compact_absolute_Y_address :: (func: (u16)) {
 
 intrinsic_to_string :: (code: Opcode) -> string {
 	info :: type_info(Opcode);
-	c := cast(u8)code;
-	s: string;
+	
+	c := cast(u8, code);
+	s: string = ---;
 
 	for info.values if it == c then s = info.names[it_index];
 
@@ -496,7 +498,7 @@ intrinsic_to_string :: (code: Opcode) -> string {
 			case "INX"; return tprint("% (n, X)", s);
 			case "INY"; return tprint("% (n), Y", s);
 			case "ACC"; return tprint("% A",      s);
-			case; return "";
+			case;       return "";
 		}
 	}
 }

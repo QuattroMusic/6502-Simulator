@@ -26,10 +26,6 @@ draw_one_frame :: () {
 		clear_background(settings.themes.platform_deep_background);
 		
 		update_6502();
-		// draw_rect(.{0, 0}, .{xx vp.width, 1}, 1, .{255, 0, 0, 255});
-		// draw_rect(.{0, 0}, .{1, xx vp.height}, 1, .{255, 0, 0, 255});
-		// draw_rect(.{xx (vp.width - 1), 0}, .{1, xx vp.height}, 1, .{255, 0, 0, 255});
-		// draw_rect(.{0, xx (vp.height - 1)}, .{xx vp.width, 1}, 1, .{255, 0, 0, 255});
 		
 		finalize_widgets();
 		finalize_drawing();

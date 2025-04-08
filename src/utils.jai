@@ -18,6 +18,13 @@ print :: (v: Any) {
 	print("%\n", v);
 }
 
+printv :: (v: ..Any) {
+	for v {
+		print("% ", it);
+	}
+	print("");
+}
+
 round_number_power_of_2 :: (n: type_of(Resizable_Array.count)) -> type_of(Resizable_Array.count) {
 	out: type_of(Resizable_Array.count);
 	out = 32;  // min size

@@ -86,15 +86,18 @@ draw_code_editor :: () {
 
 	max_value := Vec2.{(editor.longest_line) * 16.0, editor.rows_length.count * 16.0};
 	scroll_size := editor.size + max_value;
-	// Todo - Quattro - make this '4' more robust (maybe in settings?)
+	// Todo - Quattro - make this '4' more robust (maybe in settings?).
+	// It means how many empty characters for the scroll x before the scrollbar appears
 	min_size := Vec2.{(char_per_lines - 4) * 16.0, 1 * 16.0};
 	
-	draw_scrollbar(editor.pos, editor.size, z = 3, *editor.scrollbar_pos, scroll_size, min_size, max_value, settings.platform.code_cursor_speed_slow, settings.platform.code_cursor_speed_fast);
+	true_size := draw_scrollbar(editor.pos, editor.size, z = 3, *editor.scrollbar_pos, scroll_size, min_size, max_value, settings.platform.code_cursor_speed_slow, settings.platform.code_cursor_speed_fast);
+	editor.editor_content_size = true_size;
 	
 	x_visible := min_size.x + editor.size.x < scroll_size.x;
 	draw_colored_text(x_visible);
 	draw_line_count_bar(x_visible);
 	
+	// caret
 	if editor.file_path && editor.focused {
 		time := (ms_since_init() - editor.caret_time) % 1000;
 		
@@ -102,7 +105,11 @@ draw_code_editor :: () {
 			// Todo - Quattro - 3 and 5 is padding, make it more robust
 			x := editor.pos.x + editor.caret_col * 16.0 + 3 + get_width_of_line_count_bar() - editor.scrollbar_pos.x;
 			y := editor.pos.y + editor.caret_row * 16.0 + 5                                 - editor.scrollbar_pos.y;
-			draw_rect(.{x, y}, .{1, 16}, z = 2, .{255, 255, 255, 255});
+			
+			w := get_width_of_line_count_bar();
+			if x > (editor.pos.x + w) && x < (editor.pos.x + editor.size.x) && y > editor.pos.y && y < (editor.pos.y + editor.size.y - 16) {
+				draw_rect(.{x, y}, .{1, 16}, z = 2, .{255, 255, 255, 255});
+			}
 		}
 	}
 	
@@ -153,7 +160,7 @@ draw_RAM_content :: (offset: Vec2, start: int, end: int, pos_y: f32, height: f32
 		}
 	}
 
-	pos := offset.y + 276 + (cast(f32)(engine.S / 16)) * 16;
+	pos := offset.y + 279 + (cast(f32)(engine.S / 16)) * 16;
 	if (pos_y + 20) <= pos && pos < (pos_y + height) {
 		x := 53 + (cast(f32)(engine.S % 16)) * (32 + 4);
 		y := 260 + (cast(f32)(engine.S / 16)) * (16);

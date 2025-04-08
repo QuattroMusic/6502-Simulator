@@ -123,20 +123,27 @@ event_char :: () {
 event_mouse :: () {
 	using editor;
 	
-	x := cast(s32, mouse_x - pos.x + 8 + editor.scrollbar_pos.x);
-	y := cast(s32, mouse_y - pos.y     + editor.scrollbar_pos.y);
+	x := cast(s32, mouse_x - pos.x);
+	y := cast(s32, mouse_y - pos.y);
 	
-	// Todo - Quattro - handle WIDGET_SCROLLBAR_SIZE only if shown
-	if x < 0 || x > cast(s32, size.x) || y < 0 || y > cast(s32, size.y) then return;
+	size_x, size_y := editor_content_size.x, editor_content_size.y;
+	
+	// if the mouse is inside the area
+	if x < 0 || x > cast(s32, size_x) || y < 0 || y > cast(s32, size_y) then return;
+	
+	// get the current char with "rounding"
+	x = cast(s32, mouse_x - pos.x + 8);
+	
+	x += cast(s32, editor.scrollbar_pos.x);
+	y += cast(s32, editor.scrollbar_pos.y);
 	
 	// Todo - Quattro - 3 and 5 is because of padding, make it more robust
-	x = x - 3 - cast(s32, get_width_of_line_count_bar());
-	y = y - 5;
+	x -= 3 + cast(s32, get_width_of_line_count_bar());
+	y -= 5;
 	
 	x /= 16;
 	y /= 16;
 	
-	// if y >= rows_length.count then return;
 	if y >= rows_length.count {
 		caret_row = xx (rows_length.count - 1);
 	} else {

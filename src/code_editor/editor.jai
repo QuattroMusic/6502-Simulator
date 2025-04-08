@@ -1,26 +1,24 @@
 init_code_editor :: (path: string) {
 	data, success := read_entire_file(path);
-	
+
 	if !success {
 		editor.content.count = 0;
 		editor.file_name = "";
 		display_error_panel(.ERROR_OPENING_FILE, "error opening file");
 		return;
 	}
-	
+
 	editor.file_path = copy_string(path);
 	editor.file_name = split_from_right(editor.file_path, #char "\\");
-	
-	// Todo - Quattro - alloc with a multiple of 2
-	// Todo - Quattro - file_read :: (f: File, vdata: *void, bytes_to_read: s64) -> (success: bool, total_read: s64)
+
 	editor.content.data      = data.data;
 	editor.content.count     = data.count;
 	editor.content.allocated = data.count;
-	
+
 	calculate_rows_length();
-	
+
 	editor.row_digits = count_digits(xx editor.rows_length.count);
-	
+
 	init_code_editor_coloring();
 }
 
@@ -34,14 +32,14 @@ deinit_code_editor :: () {
 handle_displayed_file :: () {
 	// Todo - Quattro - change from polling to File_Wiewer
 	// if !viewer.file_path then return;
-	
+
 	// modtime := file_modtime_and_size(viewer.file_path);
-	
+
 	// if compare_apollo_times(modtime, viewer.file_modtime) {
 		// viewer.file_modtime = modtime;
-		
+
 		// init := seconds_since_init();
-		
+
 		// while true {
 			// file, success := file_open(viewer.file_path);
 			// if success {
@@ -54,7 +52,7 @@ handle_displayed_file :: () {
 				// return;
 			// }
 		// }
-		
+
 		// t := copy_string(viewer.file_path,, allocator = temp);
 		// deinit_code_viewer();
 		// init_code_viewer(t);
@@ -68,7 +66,7 @@ get_width_of_line_count_bar :: () -> f32 {
 calculate_rows_length :: () {
 	len: u32 = 0;
 	longest_line: u32 = 0;
-	
+
 	for editor.content {
 		if it == #char "\n" {
 			array_add(*editor.rows_length, len);
@@ -78,7 +76,7 @@ calculate_rows_length :: () {
 		}
 		len += 1;
 	}
-	
+
 	array_add(*editor.rows_length, len);
 	editor.longest_line = longest_line;
 }
@@ -92,8 +90,8 @@ handle_dropped_file :: (file: string) {
 
 	deinit_code_editor();
 	init_code_editor(file);
-	
+
 	if settings.platform.at_startup == .OPEN_LAST_FILE {
-		save_options_file();  // save in memory the name of the lastly opened file
+		save_options_file();  // just to save the name of the file
 	}
 }
