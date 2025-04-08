@@ -164,70 +164,79 @@ is_an_instruction :: (buff: *u8) -> bool {
 		return false;
 	}
 
-	// Todo - Quattro - make `make_u24` accepts a string instead of three characters
-	make_u24 :: (c1: u32, c2: u32, c3: u32) -> u32 {
+	make_u24 :: ($$s: string) -> u32 {
+		#if is_constant(s) {
+			c1 :: cast(u32, s[0]);
+			c2 :: cast(u32, s[1]);
+			c3 :: cast(u32, s[2]);
+		} else {
+			c1 := cast(u32, s[0]);
+			c2 := cast(u32, s[1]);
+			c3 := cast(u32, s[2]);
+		}
+		
 		return c1 | (c2 << 8) | (c3 << 16);
 	}
 
-	value := make_u24(buff[0], buff[1], buff[2]);
+	value := make_u24(string.{3, buff});
 
 	if value == {
-		case #run make_u24(#char "a", #char "d", #char "c"); return true;
-		case #run make_u24(#char "a", #char "n", #char "d"); return true;
-		case #run make_u24(#char "a", #char "s", #char "l"); return true;
-		case #run make_u24(#char "b", #char "c", #char "c"); return true;
-		case #run make_u24(#char "b", #char "c", #char "s"); return true;
-		case #run make_u24(#char "b", #char "e", #char "q"); return true;
-		case #run make_u24(#char "b", #char "n", #char "e"); return true;
-		case #run make_u24(#char "b", #char "m", #char "i"); return true;
-		case #run make_u24(#char "b", #char "p", #char "l"); return true;
-		case #run make_u24(#char "b", #char "v", #char "c"); return true;
-		case #run make_u24(#char "b", #char "v", #char "s"); return true;
-		case #run make_u24(#char "b", #char "i", #char "t"); return true;
-		case #run make_u24(#char "b", #char "r", #char "k"); return true;
-		case #run make_u24(#char "c", #char "l", #char "c"); return true;
-		case #run make_u24(#char "c", #char "l", #char "d"); return true;
-		case #run make_u24(#char "c", #char "l", #char "i"); return true;
-		case #run make_u24(#char "c", #char "l", #char "v"); return true;
-		case #run make_u24(#char "c", #char "m", #char "p"); return true;
-		case #run make_u24(#char "c", #char "p", #char "x"); return true;
-		case #run make_u24(#char "c", #char "p", #char "y"); return true;
-		case #run make_u24(#char "d", #char "e", #char "c"); return true;
-		case #run make_u24(#char "d", #char "e", #char "x"); return true;
-		case #run make_u24(#char "d", #char "e", #char "y"); return true;
-		case #run make_u24(#char "e", #char "o", #char "r"); return true;
-		case #run make_u24(#char "i", #char "n", #char "c"); return true;
-		case #run make_u24(#char "i", #char "n", #char "x"); return true;
-		case #run make_u24(#char "i", #char "n", #char "y"); return true;
-		case #run make_u24(#char "j", #char "m", #char "p"); return true;
-		case #run make_u24(#char "j", #char "s", #char "r"); return true;
-		case #run make_u24(#char "l", #char "d", #char "a"); return true;
-		case #run make_u24(#char "l", #char "d", #char "x"); return true;
-		case #run make_u24(#char "l", #char "d", #char "y"); return true;
-		case #run make_u24(#char "l", #char "s", #char "r"); return true;
-		case #run make_u24(#char "n", #char "o", #char "p"); return true;
-		case #run make_u24(#char "o", #char "r", #char "a"); return true;
-		case #run make_u24(#char "p", #char "h", #char "a"); return true;
-		case #run make_u24(#char "p", #char "h", #char "p"); return true;
-		case #run make_u24(#char "p", #char "l", #char "a"); return true;
-		case #run make_u24(#char "p", #char "l", #char "p"); return true;
-		case #run make_u24(#char "r", #char "o", #char "l"); return true;
-		case #run make_u24(#char "r", #char "o", #char "r"); return true;
-		case #run make_u24(#char "r", #char "t", #char "i"); return true;
-		case #run make_u24(#char "r", #char "t", #char "s"); return true;
-		case #run make_u24(#char "s", #char "b", #char "c"); return true;
-		case #run make_u24(#char "s", #char "e", #char "c"); return true;
-		case #run make_u24(#char "s", #char "e", #char "d"); return true;
-		case #run make_u24(#char "s", #char "e", #char "i"); return true;
-		case #run make_u24(#char "s", #char "t", #char "a"); return true;
-		case #run make_u24(#char "s", #char "t", #char "x"); return true;
-		case #run make_u24(#char "s", #char "t", #char "y"); return true;
-		case #run make_u24(#char "t", #char "a", #char "x"); return true;
-		case #run make_u24(#char "t", #char "a", #char "y"); return true;
-		case #run make_u24(#char "t", #char "s", #char "x"); return true;
-		case #run make_u24(#char "t", #char "x", #char "a"); return true;
-		case #run make_u24(#char "t", #char "x", #char "s"); return true;
-		case #run make_u24(#char "t", #char "y", #char "a"); return true;
+		case #run make_u24("adc"); return true;
+		case #run make_u24("and"); return true;
+		case #run make_u24("asl"); return true;
+		case #run make_u24("bcc"); return true;
+		case #run make_u24("bcs"); return true;
+		case #run make_u24("beq"); return true;
+		case #run make_u24("bne"); return true;
+		case #run make_u24("bmi"); return true;
+		case #run make_u24("bpl"); return true;
+		case #run make_u24("bvc"); return true;
+		case #run make_u24("bvs"); return true;
+		case #run make_u24("bit"); return true;
+		case #run make_u24("brk"); return true;
+		case #run make_u24("clc"); return true;
+		case #run make_u24("cld"); return true;
+		case #run make_u24("cli"); return true;
+		case #run make_u24("clv"); return true;
+		case #run make_u24("cmp"); return true;
+		case #run make_u24("cpx"); return true;
+		case #run make_u24("cpy"); return true;
+		case #run make_u24("dec"); return true;
+		case #run make_u24("dex"); return true;
+		case #run make_u24("dey"); return true;
+		case #run make_u24("eor"); return true;
+		case #run make_u24("inc"); return true;
+		case #run make_u24("inx"); return true;
+		case #run make_u24("iny"); return true;
+		case #run make_u24("jmp"); return true;
+		case #run make_u24("jsr"); return true;
+		case #run make_u24("lda"); return true;
+		case #run make_u24("ldx"); return true;
+		case #run make_u24("ldy"); return true;
+		case #run make_u24("lsr"); return true;
+		case #run make_u24("nop"); return true;
+		case #run make_u24("ora"); return true;
+		case #run make_u24("pha"); return true;
+		case #run make_u24("php"); return true;
+		case #run make_u24("pla"); return true;
+		case #run make_u24("plp"); return true;
+		case #run make_u24("rol"); return true;
+		case #run make_u24("ror"); return true;
+		case #run make_u24("rti"); return true;
+		case #run make_u24("rts"); return true;
+		case #run make_u24("sbc"); return true;
+		case #run make_u24("sec"); return true;
+		case #run make_u24("sed"); return true;
+		case #run make_u24("sei"); return true;
+		case #run make_u24("sta"); return true;
+		case #run make_u24("stx"); return true;
+		case #run make_u24("sty"); return true;
+		case #run make_u24("tax"); return true;
+		case #run make_u24("tay"); return true;
+		case #run make_u24("tsx"); return true;
+		case #run make_u24("txa"); return true;
+		case #run make_u24("txs"); return true;
+		case #run make_u24("tya"); return true;
 	}
 	return false;
 }
