@@ -86,8 +86,9 @@ draw_code_editor :: () {
 
 	max_value := Vec2.{(editor.longest_line) * 16.0, editor.rows_length.count * 16.0};
 	scroll_size := editor.size + max_value;
-	min_size := Vec2.{30 * 16.0, 1 * 16.0};
-
+	// Todo - Quattro - make this '4' more robust (maybe in settings?)
+	min_size := Vec2.{(char_per_lines - 4) * 16.0, 1 * 16.0};
+	
 	draw_scrollbar(editor.pos, editor.size, z = 3, *editor.scrollbar_pos, scroll_size, min_size, max_value, settings.platform.code_cursor_speed_slow, settings.platform.code_cursor_speed_fast);
 	
 	x_visible := min_size.x + editor.size.x < scroll_size.x;
