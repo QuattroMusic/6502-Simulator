@@ -218,7 +218,10 @@ draw_scrollbar :: (pos: Vec2, size: Vec2, z: f32, scroll_pos: *Vec2, scroll_size
 	return true_size;
 }
 
-tab_bar :: (pos: Vec2, width: f32, z: f32, $tabs: []string, focused_tab: *int, it_: int = 0, loc := #caller_location) {
+tab_bar :: (pos: Vec2, width: f32, z: f32, focused_tab: *$T, it_: int = 0, loc := #caller_location) #modify {
+	v := cast(*Type_Info, T);
+	return v.type == .ENUM, "tab type should be of type enum";
+} {
 	draw_selected_rect :: (pos: Vec2, size: Vec2, z: f32) {
 		draw_widget_rect(pos, .{1, size.y}, z, settings.themes.platform_line);
 		draw_widget_rect(pos, .{size.x, 1}, z, settings.themes.platform_line);
@@ -226,13 +229,18 @@ tab_bar :: (pos: Vec2, width: f32, z: f32, $tabs: []string, focused_tab: *int, i
 	}
 
 	s :: 24;
+	
+	// Todo - Quattro - probably i should replace "_" with " ", check the combo box
+	tabs :: #run cast(*Type_Info_Enum, T).names;
+
+	focus := cast(int, focused_tab.*);
 
 	x: f32;
 	for tabs {
 		d := measure_text(it, 2);
 		_, fire := create_selectable_region(.TAB, loc, it_ + it_index, pos + .{4 + x, 0}, .{d.x + 8, s}, z);
 
-		if fire then focused_tab.* = it_index;
+		if fire then focused_tab.* = cast(T, it_index);
 
 		x += d.x + 16;
 	}
@@ -244,7 +252,7 @@ tab_bar :: (pos: Vec2, width: f32, z: f32, $tabs: []string, focused_tab: *int, i
 		d := measure_text(it, 2);
 
 		text_col: Col = ---;
-		if it_index == focused_tab.* {
+		if it_index == focus {
 			text_col = settings.themes.platform_text_normal;
 			draw_selected_rect(pos + .{4 + x, 0}, .{d.x + 8, s}, z);
 			draw_widget_rect(pos + .{0, s - 1}, .{w, 1}, z, settings.themes.platform_line);
@@ -274,7 +282,18 @@ h_separator :: ($name: string, pos: Vec2, width: f32, z: f32) {
 	draw_widget_rect(pos + .{p + 8 + s.x, 0}, .{width - p - 8 - s.x, 1}, z, settings.themes.platform_line);
 }
 
-combo_box :: (pos: Vec2, size: Vec2, z: f32, items: []string, selected: *int, it_: int = 0, loc := #caller_location) -> bool {
+combo_box :: (pos: Vec2, size: Vec2, z: f32, sel: *$T, it_: int = 0, loc := #caller_location) -> bool #modify {
+	v := cast(*Type_Info, T);
+	return v.type == .ENUM;
+} {
+	selected := cast(int)sel.*;
+	
+	items :: #run -> []string {
+		n := cast(*Type_Info_Enum, T).names;
+		for s, idx_s: n for s if it == #char "_" n[idx_s][it_index] = #char " ";
+		return n;
+	}
+	
 	state, fire, uuid := create_selectable_region(.COMBO, loc, it_, pos, size, z);
 
 	widget := *table_find_pointer(*widgets, uuid).combo_box;
@@ -282,7 +301,7 @@ combo_box :: (pos: Vec2, size: Vec2, z: f32, items: []string, selected: *int, it
 	_, border_col, text_col := fetch_colors(state);
 
 	draw_widget_rect_lines(pos, size, z, border_col);
-	draw_widget_text( items[selected.*], pos + .{2, 1}, z, 2, text_col);
+	draw_widget_text( items[selected], pos + .{2, 1}, z, 2, text_col);
 
 	if fire then widget.*.opened = !widget.*.opened;
 
@@ -294,7 +313,7 @@ combo_box :: (pos: Vec2, size: Vec2, z: f32, items: []string, selected: *int, it
 	fire_internal: bool;
 
 	if state == .HOVER && mouse_dz {
-		selected.* = clamp(selected.* - mouse_dz, 0, items.count - 1);
+		selected = clamp(selected - mouse_dz, 0, items.count - 1);
 		fire_internal = true;
 	}
 
@@ -316,7 +335,7 @@ combo_box :: (pos: Vec2, size: Vec2, z: f32, items: []string, selected: *int, it
 			draw_widget_text(it, .{rel_x + 2, rel_y + 1}, z + 2, 2, text_col);
 
 			if fire_internal {
-				selected.* = it_index;
+				selected = it_index;
 				widget.*.opened = false;
 				break;
 			}
@@ -325,6 +344,8 @@ combo_box :: (pos: Vec2, size: Vec2, z: f32, items: []string, selected: *int, it
 		draw_widget_icon(.ARROW_LEFT, pos + .{size.x - 18, 2}, z + 1, 2, text_col);
 		draw_widget_rect_lines(pos + .{size.x - 20, 0}, .{20, 20}, z + 1, border_col);
 	}
+
+	sel.* = cast(T, selected);
 
 	return fire_internal;
 }
@@ -716,6 +737,7 @@ widget_interaction :: (uuid: ID) -> (Interaction_State, fire: bool) {
 	if can_interact_with_widget(uuid, widget.pos, widget.size, widget.z, p) {
 		state = .HOVER;
 
+		// Todo - Quattro - change to fire on release
 		if is_mouse_pressed(0) {
 			ifx !focused_uuid then focused_uuid = uuid;
 			fire = true;

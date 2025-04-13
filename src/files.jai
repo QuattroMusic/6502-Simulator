@@ -25,6 +25,10 @@ get_asset_path :: (file: string) -> string {
 	return tprint("%/%", DATA_FOLDER_NAME, file);
 }
 
+save_editor_file :: () {
+	write_entire_file(editor.file_path, editor.content.data, editor.content.count);
+}
+
 #scope_file
 init_options :: () {
 	success := file_exists(get_asset_path(SETTINGS_FILE_NAME));

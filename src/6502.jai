@@ -73,16 +73,31 @@ Platform_Settings :: struct {
 	memory_cursor_speed_fast: u8 = 8;
 }
 
+When_To_Save_Editor :: enum {
+	MANUALLY;
+	EVERY_EDITS;
+	WHEN_COMPILING;
+	EVERY_MS;
+}
+
+Editor_Settings :: struct {
+	when_to_save: When_To_Save_Editor = .WHEN_COMPILING;
+	save_interval_in_ms: int;
+}
+
 Settings :: struct {
 	platform: Platform_Settings;
 	
 	themes: Theming;
 	themes_saved_state: Theming;
+	
+	editor: Editor_Settings;
 }
 
 Settings_Focused_Tab :: enum {
 	PLATFORM;
 	THEMING;
+	EDITOR;
 }
 
 General_UI :: struct {
@@ -358,6 +373,8 @@ compile_program :: () {
 	}
 
 	path := get_absolute_path(editor.file_path,, temp);
+	
+	if settings.editor.when_to_save == .WHEN_COMPILING then save_editor_file();
 	
 	fmt := tprint("% -Fbin -o \"%\" -dotdir \"%\"", compiler_path, out_path, path);
 

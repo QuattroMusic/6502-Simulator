@@ -89,30 +89,30 @@ draw_code_editor :: () {
 	// Todo - Quattro - make this '4' more robust (maybe in settings?).
 	// It means how many empty characters for the scroll x before the scrollbar appears
 	min_size := Vec2.{(char_per_lines - 4) * 16.0, 1 * 16.0};
-	
+
 	true_size := draw_scrollbar(editor.pos, editor.size, z = 3, *editor.scrollbar_pos, scroll_size, min_size, max_value, settings.platform.code_cursor_speed_slow, settings.platform.code_cursor_speed_fast);
 	editor.editor_content_size = true_size;
-	
+
 	x_visible := min_size.x + editor.size.x < scroll_size.x;
 	draw_colored_text(x_visible);
 	draw_line_count_bar(x_visible);
-	
+
 	// caret
 	if editor.file_path && editor.focused {
 		time := (ms_since_init() - editor.caret_time) % 1000;
-		
+
 		if time < 500 {
 			// Todo - Quattro - 3 and 5 is padding, make it more robust
 			x := editor.pos.x + editor.caret_col * 16.0 + 3 + get_width_of_line_count_bar() - editor.scrollbar_pos.x;
 			y := editor.pos.y + editor.caret_row * 16.0 + 5                                 - editor.scrollbar_pos.y;
-			
+
 			w := get_width_of_line_count_bar();
 			if x > (editor.pos.x + w) && x < (editor.pos.x + editor.size.x) && y > editor.pos.y && y < (editor.pos.y + editor.size.y - 16) {
 				draw_rect(.{x, y}, .{1, 16}, z = 2, .{255, 255, 255, 255});
 			}
 		}
 	}
-	
+
 	draw_panel(editor.file_name, editor.pos, editor.size, 3);
 }
 
@@ -121,24 +121,24 @@ draw_RAM_content :: (offset: Vec2, start: int, end: int, pos_y: f32, height: f32
 		#char "0", #char "1", #char "2", #char "3", #char "4", #char "5", #char "6", #char "7",
 		#char "8", #char "9", #char "A", #char "B", #char "C", #char "D", #char "E", #char "F"
 	];
-	
+
 	for y: start..end {
 		// draw address
 		value := y * 16;
 		v1 := (value >>  4) & 0xF;
 		v2 := (value >>  8) & 0xF;
 		v3 := (value >> 12) & 0xF;
-		
+
 		draw_character(chars[v3], offset + .{5     , 9.0 + y * 16}, 2, 1, settings.themes.platform_text_normal);
 		draw_character(chars[v2], offset + .{5 +  8, 9.0 + y * 16}, 2, 1, settings.themes.platform_text_normal);
 		draw_character(chars[v1], offset + .{5 + 16, 9.0 + y * 16}, 2, 1, settings.themes.platform_text_normal);
 		draw_character(#char "0", offset + .{5 + 24, 9.0 + y * 16}, 2, 1, settings.themes.platform_text_normal);
 		draw_character(#char ":", offset + .{5 + 32, 9.0 + y * 16}, 2, 1, settings.themes.platform_text_normal);
-		
+
 		// draw values
 		for x: 0..15 {
 			data := engine.RAM[y * 16 + x];
-			
+
 			col: Col = ---;
 			if 16 <= y && y < 32 {
 				col = ifx data then settings.themes.memory_stack_used else settings.themes.memory_stack_empty;
@@ -154,7 +154,7 @@ draw_RAM_content :: (offset: Vec2, start: int, end: int, pos_y: f32, height: f32
 
 			lo := (data     ) & 0xF;
 			hi := (data >> 4) & 0xF;
-			
+
 			draw_character(chars[lo], offset + .{55.0 + x * (32 + 4), 4.0 + y * 16}, 2, 2, col);
 			draw_character(chars[hi], offset + .{71.0 + x * (32 + 4), 4.0 + y * 16}, 2, 2, col);
 		}
@@ -176,7 +176,7 @@ draw_program_memory :: () {
 
 	draw_rect(pos, size, 0, settings.themes.platform_background);
 	draw_rect(pos, .{48, size.y}, 1, settings.themes.platform_widget_bg_normal);
-	
+
 	child_begin("memory", pos, size, 3);  child_end();
 
 	rows_on_screen := round_down((size.y - 8) / 16);
@@ -390,78 +390,73 @@ draw_modal :: () {
 		case .UNABLE_TO_FIND_COMPILER;
 			draw_widget_text("Unable to find 'vasm6502_oldstyle.exe', aborting", .{10, 10}, 1, 2, settings.themes.general_text);
 	}
-	
+
 	engine.compilation_successful = false;
 }
 
 draw_settings :: () {
-	tab: int = xx ui.settings_focused_tab;
-	tab_bar(.{10, 10}, SETTINGS_WIDTH - 20, 0, .["platform", "theming"], *tab);
-	ui.settings_focused_tab = xx tab;
-	
-	if ui.settings_focused_tab == {
+	tab_bar(.{10, 10}, SETTINGS_WIDTH - 20, 0, *ui.settings_focused_tab);
+
+	if #complete ui.settings_focused_tab == {
 		case .PLATFORM;
-			draw_widget_text("at startup, open:", .{20, 50}, 1, 2, settings.themes.platform_text_normal);
-			w :: #run measure_text("at startup, open", 2).x;
-			
-			{
-				value := cast(int)settings.platform.at_startup;
-				edit := combo_box(.{40 + w, 50 - 2}, .{190, 20}, 1, .["empty file", "last file"], *value);
-				settings.platform.at_startup = xx value;
-				if edit then save_options_file();
-			}
-			
+			t :: "at startup:";
+			draw_widget_text(t, .{20, 50}, 1, 2, settings.themes.platform_text_normal);
+			w :: #run measure_text(t, 2).x;
+
+			edit := combo_box(.{40 + w, 50 - 2}, .{265, 20}, 1, *settings.platform.at_startup);
+			if edit then save_options_file();
+
 			{
 				draw_widget_text("fps lock:", .{20, 70}, 1, 2, settings.themes.platform_text_normal);
 				value := cast(int)ui.settings_platform_view_fps_lock;
 				changed_value := input_int(.{165, 70}, 1, 2, *value, 1, 3000);
 				ui.settings_platform_view_fps_lock = xx value;
-				
+
 				if changed_value {
 					settings.platform.fps_lock = ui.settings_platform_view_fps_lock;
 					save_options_file();
 				}
 			}
-			
+
 			internal_scroll :: ($text: string, var: *u8, y: f32) {
 				draw_widget_text(text, .{20, y}, 1, 2, settings.themes.platform_text_normal);
 				w :: #run measure_text(text, 2).x;
-				
+
 				slider_val := cast(int)var.*;
 				edit := input_int(.{40 + w, y}, 1, s = 2, *slider_val, min_value = 1, max_value = 255, it = xx y);
 				var.* = cast,trunc(u8)slider_val;
-				
+
 				if edit then save_options_file();
 			}
-			
+
 			h_separator("scrollbars", .{10, 110}, SETTINGS_WIDTH - 20, 1);
 
-			internal_scroll("code viewer scroll slow speed", *settings.platform.code_cursor_speed_slow, 130);
-			internal_scroll("code viewer scroll fast speed", *settings.platform.code_cursor_speed_fast, 155);
+			internal_scroll("code editor scroll slow speed", *settings.platform.code_cursor_speed_slow, 130);
+			internal_scroll("code editor scroll fast speed", *settings.platform.code_cursor_speed_fast, 155);
 			internal_scroll("memory viewer scroll slow speed", *settings.platform.memory_cursor_speed_slow, 185);
 			internal_scroll("memory viewer scroll fast speed", *settings.platform.memory_cursor_speed_fast, 210);
 		case .THEMING;
 			internal_selectable :: ($text: string, x: f32, y: *f32, col: *Col, loc := #caller_location) {
 				defer y.* += 16;
-				
+
 				y_off := y.*;
 				y_off -= ui.settings_theming_scroll_pos.y;
 				if y_off < 40 || y_off > SETTINGS_HEIGHT - 50 then return;
 				s :: #run measure_text(text, 2);
-				
+
 				box_pos := Vec2.{x, y_off + 2};
 				box_size :: Vec2.{14, 14};
-				
+
 				state, _, _ := create_selectable_region(.TEXT, loc, 0, .{10, y_off}, s, 2);
 				state       |= create_selectable_region(.BUTTON, loc, 1, box_pos, box_size, 2);
 
 				_, border_col, text_col := fetch_colors(state);
-				
+
 				draw_widget_text(text, .{10, y_off}, 1, 2, text_col);
-				
+
 				draw_widget_rect(box_pos, box_size, 1, col.*);
 				draw_widget_rect_lines(box_pos, box_size, 2, border_col);
-				
+
 				if state != .NORMAL && (is_mouse_inside_widget_rect(box_pos, box_size) || is_mouse_inside_widget_rect(.{10, y_off}, .{s.x, 16})) {
 					if is_mouse_pressed(0) {
 						ui.internal_selected = col;
@@ -474,34 +469,34 @@ draw_settings :: () {
 						#if DEBUG then assert(!(offset >> 63), "Offset strangely become negative, how so?");
 						new_pos := cast(*Col)((cast(*u8)*settings.themes_saved_state) + offset);
 						memcpy(col, new_pos, size_of(Col));
-						
+
 						ui.internal_selected = col;
-						
+
 						save_theme_file();
 					}
 				}
 			}
-			
+
 			internal_separator :: ($text: string, y: *f32) {
 				y.* += 20;
 				defer y.* += 5;
-				
+
 				y_off := y.*;
 				y_off -= ui.settings_theming_scroll_pos.y;
 				if y_off < 40 || y_off > SETTINGS_HEIGHT - 45 then return;
-				
+
 				h_separator(text, .{10, y_off}, SETTINGS_WIDTH - 280, 1);
 			}
-			
+
 			draw_widget_rect(.{SETTINGS_WIDTH - 240, 40}, .{1, SETTINGS_HEIGHT - 70}, 1, settings.themes.platform_line);
-			
+
 			{
 				draw_scrollbar(.{10, 40}, .{SETTINGS_WIDTH - 260, SETTINGS_HEIGHT - 81}, z = 1, *ui.settings_theming_scroll_pos, .{0, 16 * 56}, .{0, 0}, .{0, 16 * (65 - 32)}, 1, 1);
 				draw_widget_rect_lines(.{SETTINGS_WIDTH - 250 - WIDGET_SCROLLBAR_SIZE, 40}, .{WIDGET_SCROLLBAR_SIZE, SETTINGS_HEIGHT - 80}, 3, settings.themes.platform_line);
 
 				using settings.themes;
 				y: f32 = 25;
-				
+
 				internal_separator("general",                  *y);
 				internal_selectable("text",              300,  *y, *general_text);
 				internal_selectable("flag off",          300,  *y, *general_flag_off);
@@ -524,7 +519,7 @@ draw_settings :: () {
 				internal_selectable("deep background",          410, *y, *platform_deep_background);
 				internal_selectable("line",                     410, *y, *platform_line);
 				internal_selectable("disabled",                 410, *y, *platform_disabled);
-				
+
 				internal_separator("code viewer",       *y);
 				internal_selectable("text",        210, *y, *viewer_text);
 				internal_selectable("number",      210, *y, *viewer_number);
@@ -533,7 +528,7 @@ draw_settings :: () {
 				internal_selectable("label",       210, *y, *viewer_label);
 				internal_selectable("instruction", 210, *y, *viewer_instruction);
 				internal_selectable("string",      210, *y, *viewer_string);
-				
+
 				internal_separator("memory",              *y);
 				internal_selectable("normal empty",  230, *y, *memory_normal_empty);
 				internal_selectable("normal used",   230, *y, *memory_normal_used);
@@ -542,7 +537,7 @@ draw_settings :: () {
 				internal_selectable("display empty", 230, *y, *memory_display_empty);
 				internal_selectable("display used",  230, *y, *memory_display_used);
 				internal_selectable("input",         230, *y, *memory_input);
-				
+
 				internal_separator("display",      *y);
 				internal_selectable("col 1",  130, *y, *display_col0);
 				internal_selectable("col 2",  130, *y, *display_col1);
@@ -565,7 +560,7 @@ draw_settings :: () {
 			{
 				pos := Vec2.{SETTINGS_WIDTH - 233, 275};
 				h_separator("info", .{SETTINGS_WIDTH - 233, 275}, 225, 1);
-				
+
 				draw_widget_text("- left click the colored box", pos + .{0,  20}, 1, 1, settings.themes.platform_text_normal);
 				draw_widget_text("  or the text to select",      pos + .{0,  30}, 1, 1, settings.themes.platform_text_normal);
 				draw_widget_text("  the color",                  pos + .{0,  40}, 1, 1, settings.themes.platform_text_normal);
@@ -573,16 +568,27 @@ draw_settings :: () {
 				draw_widget_text("  default value",              pos + .{0,  70}, 1, 1, settings.themes.platform_text_normal);
 				draw_widget_text("- to revert everything,",      pos + .{0,  90}, 1, 1, settings.themes.platform_text_normal);
 				draw_widget_text("  simply delete the file",     pos + .{0, 100}, 1, 1, settings.themes.platform_text_normal);
-				draw_widget_text("- enjoy!",                     pos + .{0, 120}, 1, 1, settings.themes.platform_text_normal);
+				draw_widget_text("  'data/theme'",               pos + .{0, 110}, 1, 1, settings.themes.platform_text_normal);
+				draw_widget_text("- enjoy!",                     pos + .{0, 130}, 1, 1, settings.themes.platform_text_normal);
 			}
-			
+
 			if(color_picker(.{SETTINGS_WIDTH - 225, 45}, 1, ui.internal_selected)) {
 				ui.settings_theming_color_edited = true;
 			}
-			
+
 			if(ui.settings_theming_color_edited && is_mouse_released(0)) {
 				ui.settings_theming_color_edited = false;
 				save_theme_file();
+			}
+		case .EDITOR;
+			t :: "Save";
+			draw_widget_text(t, .{20, 50}, 1, 2, settings.themes.platform_text_normal);
+			w :: #run measure_text(t, 2).x;
+
+			// Todo - Quattro - save data to file
+			combo_box(.{40 + w, 50 - 2}, .{250, 20}, 1, *settings.editor.when_to_save);
+			if settings.editor.when_to_save == .EVERY_MS {
+				input_int(.{40 + w + 260, 50 - 2}, 1, s = 2, *settings.editor.save_interval_in_ms, min_value = 1, max_value = 10000);
 			}
 	}
 }
