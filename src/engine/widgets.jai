@@ -687,6 +687,14 @@ set_panel_name :: (uuid: ID, name: string) {
 	p.*.name = name;
 }
 
+get_panel :: (uuid: ID) -> *Panel {
+	p := table_find_pointer(*panels, uuid);
+	
+	#if DEBUG then assert(p != null);
+	
+	return p;
+}
+
 fetch_parent :: () -> Panel {
 	if parent_panels.count {
 		return parent_panels[parent_panels.count - 1];
@@ -843,6 +851,7 @@ modal_visible: bool;
 fade_value: f32;
 
 #scope_export
+
 Interaction_State :: enum {
 	NORMAL;
 	HOVER;

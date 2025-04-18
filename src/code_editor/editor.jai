@@ -15,6 +15,8 @@ init_code_editor :: (path: string) {
 	editor.content.count     = data.count;
 	editor.content.allocated = data.count;
 
+	remove_bad_characters();
+
 	calculate_rows_length();
 
 	editor.row_digits = count_digits(xx editor.rows_length.count);
@@ -73,16 +75,7 @@ calculate_rows_length :: () {
 		it := editor.content[it_index];
 		defer it_index += 1;
 		
-		if it == #char "\r" {  // Todo - Quattro - check performance
-			// remove '\r' because we hate '\r'.
-			if it_index + 1 < editor.content.count {
-				c := editor.content[it_index + 1];
-				if c == #char "\n" {
-					array_ordered_remove_by_index(*editor.content, it_index + 1);
-					editor.content[it_index] = #char "\n";
-				}
-			}
-			
+		if it == #char "\n" {
 			array_add(*editor.rows_length, len);
 			longest_line = max(longest_line, len);
 			len = 0;
@@ -94,6 +87,19 @@ calculate_rows_length :: () {
 
 	array_add(*editor.rows_length, len);
 	editor.longest_line = longest_line;
+}
+
+remove_bad_characters :: () {
+	it_index := 0;
+	
+	while it_index < editor.content.count {
+		it := editor.content[it_index];
+		defer it_index += 1;
+		
+		if it == #char "\r" {
+			array_ordered_remove_by_index(*editor.content, it_index);
+		}
+	}
 }
 
 handle_dropped_file :: (file: string) {

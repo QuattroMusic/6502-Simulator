@@ -123,6 +123,12 @@ event_char :: () {
 event_mouse :: () {
 	using editor;
 	
+	p := get_panel(ui.display_panel);
+	if p.visible && is_inside_rect(.{cast(f32, mouse_x), cast(f32, mouse_y)}, p.pos, p.size) then return;
+	
+	p = get_panel(ui.settings_panel);
+	if p.visible && is_inside_rect(.{cast(f32, mouse_x), cast(f32, mouse_y)}, p.pos, p.size) then return;
+	
 	x := cast(s32, mouse_x - pos.x);
 	y := cast(s32, mouse_y - pos.y);
 	
@@ -130,6 +136,7 @@ event_mouse :: () {
 	
 	// if the mouse is inside the area
 	if x < 0 || x > cast(s32, size_x) || y < 0 || y > cast(s32, size_y) then return;
+	
 	
 	// get the current char with "rounding"
 	x = cast(s32, mouse_x - pos.x + 8);
@@ -164,8 +171,8 @@ handle_code_editor_events :: () {
 	if is_mouse_inside_rect(editor.pos, editor.size) then editor.focused = true;
 	else                                                  editor.focused = false;
 
-	if is_panel_visible(ui.modal_panel) || is_panel_visible(ui.settings_panel) then editor.focused = false;
-	else                                                                            editor.focused = true;
+	if is_panel_visible(ui.modal_panel) then editor.focused = false;
+	else                                     editor.focused = true;
 
 	if !editor.focused then return;
 

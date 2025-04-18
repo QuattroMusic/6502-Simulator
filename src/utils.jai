@@ -150,8 +150,12 @@ operator == :: (a: Col, b: Col) -> bool {
 	return a.data == b.data;
 }
 
-is_mouse_inside_rect :: (pos: Vec2, size: Vec2) -> bool {
-	return (xx pos.x <= mouse_x) && (mouse_x < xx (pos.x + size.x)) && (xx pos.y <= mouse_y) && (mouse_y < xx (pos.y + size.y));
+is_inside_rect :: (p: Vec2, pos: Vec2, size: Vec2) -> bool {
+	return (pos.x <= p.x) && (p.x < (pos.x + size.x)) && (pos.y <= p.y) && (p.y < (pos.y + size.y));
+}
+
+is_mouse_inside_rect :: inline (pos: Vec2, size: Vec2) -> bool {
+	return is_inside_rect(.{cast(f32, mouse_x), cast(f32, mouse_y)}, pos, size);
 }
 
 _profile_ident: int;

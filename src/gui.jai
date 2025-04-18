@@ -155,8 +155,8 @@ draw_RAM_content :: (offset: Vec2, start: int, end: int, pos_y: f32, height: f32
 			lo := (data     ) & 0xF;
 			hi := (data >> 4) & 0xF;
 
-			draw_character(chars[lo], offset + .{55.0 + x * (32 + 4), 4.0 + y * 16}, 2, 2, col);
-			draw_character(chars[hi], offset + .{71.0 + x * (32 + 4), 4.0 + y * 16}, 2, 2, col);
+			draw_character(chars[hi], offset + .{55.0 + x * (32 + 4), 4.0 + y * 16}, 2, 2, col);
+			draw_character(chars[lo], offset + .{71.0 + x * (32 + 4), 4.0 + y * 16}, 2, 2, col);
 		}
 	}
 

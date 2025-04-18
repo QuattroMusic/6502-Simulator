@@ -209,9 +209,9 @@ events_manager :: (hwnd: *void, msg: u32, wparam: u64, lparam: s64) -> s64 #c_ca
 			padding := GetSystemMetricsForDpi(SM_CXPADDEDBORDER, dpi);
 			
 			cursor: POINT;
-			cursor.x = cast(s32, (lparam      ) & 0xFFFF);
-			cursor.y = cast(s32, (lparam >> 16) & 0xFFFF);
-
+			cursor.x = cast,no_check(s16, (lparam      ) & 0xFFFF);
+			cursor.y = cast,no_check(s16, (lparam >> 16) & 0xFFFF);
+			
 			ScreenToClient(hwnd, *cursor);
 			
 			if cursor.y < (frame_y + padding) {
