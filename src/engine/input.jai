@@ -54,11 +54,8 @@ mouse_dz: int;
 last_down_char: u8;
 pressed_char:   u8;
 
-input_button_states:     [3] Button_State;
-input_button_states_old: [3] Button_State;
-
-input_keyboard_states:     [0xFF] Button_State;
-input_keyboard_states_old: [0xFF] Button_State;
+input_button_states:   [3]   Button_State;
+input_keyboard_states: [256] Button_State;
 
 Button_State :: enum_flags u8 {
 	UP;

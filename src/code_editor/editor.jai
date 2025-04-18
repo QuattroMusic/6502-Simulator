@@ -67,13 +67,28 @@ calculate_rows_length :: () {
 	len: u32 = 0;
 	longest_line: u32 = 0;
 
-	for editor.content {
-		if it == #char "\n" {
+	it_index := 0;
+	
+	while it_index < editor.content.count {
+		it := editor.content[it_index];
+		defer it_index += 1;
+		
+		if it == #char "\r" {  // Todo - Quattro - check performance
+			// remove '\r' because we hate '\r'.
+			if it_index + 1 < editor.content.count {
+				c := editor.content[it_index + 1];
+				if c == #char "\n" {
+					array_ordered_remove_by_index(*editor.content, it_index + 1);
+					editor.content[it_index] = #char "\n";
+				}
+			}
+			
 			array_add(*editor.rows_length, len);
 			longest_line = max(longest_line, len);
 			len = 0;
 			continue;
 		}
+		
 		len += 1;
 	}
 

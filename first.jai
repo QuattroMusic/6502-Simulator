@@ -22,11 +22,11 @@ draw_one_frame :: () {
 	if !vp.reduced {  // Todo - I should find a way to entirely disable this until it's not reduced anymore
 		begin_widgets();
 		begin_drawing();
-		
+
 		clear_background(settings.themes.platform_deep_background);
-		
+
 		update_6502();
-		
+
 		finalize_widgets();
 		finalize_drawing();
 	}
@@ -52,7 +52,7 @@ setup_windows :: () {
 	ui.modal_panel = create_new_panel(draw_modal, "", .{800, 600}, on_close = modal_on_close, modal = true);
 
 	ui.settings_panel = create_new_panel(draw_settings, "settings", .{SETTINGS_WIDTH, SETTINGS_HEIGHT});
-	
+
 	ui.internal_selected = *settings.themes.general_text;
 }
 
@@ -79,7 +79,7 @@ main :: () {
 		draw_one_frame();
 	}
 	deinit_window();
-	
+
 	// run_all_tests();
 }
 
