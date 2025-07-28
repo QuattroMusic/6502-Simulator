@@ -1,7 +1,7 @@
 init_rendering :: () {
 	init_d3d();
-	init_shaders();
 	init_font();
+	init_shaders();
 	init_graphics();
 }
 
@@ -18,8 +18,6 @@ deinit_rendering :: () {
 	safe_release(transparency);
 	safe_release(rasterizer);
 
-	safe_release(flex_buffer.elements_buffer);
-	safe_release(spec_buffer.elements_buffer);
 	safe_release(font_buffer.elements_buffer);
 
 	safe_release(camera_buffer);
@@ -28,14 +26,8 @@ deinit_rendering :: () {
 	safe_release(texture_resource_view);
 	safe_release(texture);
 
-	release_buffer(flex_buffer);
-	release_buffer(spec_buffer);
 	release_buffer(font_buffer);
 
-	safe_release(depth_stencil_view);
-	safe_release(depth_stencil_state);
-	safe_release(depth_stencil_buffer);
-	
 	safe_release(back_buffer);
 	
 	safe_release(swapchain);
@@ -49,7 +41,6 @@ init_d3d :: () {
 	create_dx11_swapchain();
 	set_render_target();
 	set_viewport();
-	create_depth_stencil();
 }
 
 create_dx11_swapchain :: () {
@@ -119,56 +110,6 @@ create_dx11_swapchain :: () {
 	IUnknown_Release(dxgi_factory);
 }
 
-create_depth_stencil :: () {
-	hr: HRESULT;
-
-	depth_buffer_desc: D3D11_TEXTURE2D_DESC;
-	depth_buffer_desc.Width            = xx vp.width;
-	depth_buffer_desc.Height           = xx vp.height;
-	depth_buffer_desc.MipLevels        = 1;
-	depth_buffer_desc.ArraySize        = 1;
-	depth_buffer_desc.Format           = .D32_FLOAT_S8X24_UINT;
-	depth_buffer_desc.SampleDesc.Count = 1;
-	depth_buffer_desc.Usage            = .DEFAULT;
-	depth_buffer_desc.BindFlags        = .DEPTH_STENCIL;
-
-	if depth_stencil_buffer then IUnknown_Release(depth_stencil_buffer);
-	hr = ID3D11Device_CreateTexture2D(dev, *depth_buffer_desc, null, *depth_stencil_buffer);
-	assert(SUCCEEDED(hr));
-
-	depth_stencil_desc: D3D11_DEPTH_STENCIL_DESC;
-	depth_stencil_desc.DepthEnable                  =  xx true;
-	depth_stencil_desc.DepthWriteMask               = .ALL;
-	depth_stencil_desc.DepthFunc                    = .LESS_EQUAL;
-	depth_stencil_desc.StencilEnable                =  xx true;
-	depth_stencil_desc.StencilReadMask              =  0xFF;
-	depth_stencil_desc.StencilWriteMask             =  0xFF;
-	depth_stencil_desc.FrontFace.StencilFailOp      = .KEEP;
-	depth_stencil_desc.FrontFace.StencilDepthFailOp = .INCR;
-	depth_stencil_desc.FrontFace.StencilPassOp      = .KEEP;
-	depth_stencil_desc.FrontFace.StencilFunc        = .ALWAYS;
-	depth_stencil_desc.BackFace.StencilFailOp       = .KEEP;
-	depth_stencil_desc.BackFace.StencilDepthFailOp  = .DECR;
-	depth_stencil_desc.BackFace.StencilPassOp       = .KEEP;
-	depth_stencil_desc.BackFace.StencilFunc         = .ALWAYS;
-
-	if depth_stencil_state then IUnknown_Release(depth_stencil_state);
-	hr = ID3D11Device_CreateDepthStencilState(dev, *depth_stencil_desc, *depth_stencil_state);
-	assert(SUCCEEDED(hr));
-
-	ID3D11DeviceContext_OMSetDepthStencilState(devcon, depth_stencil_state, 0xFFFFFFFF);
-
-	dsvDesc: D3D11_DEPTH_STENCIL_VIEW_DESC;
-	dsvDesc.Format        = .DXGI_FORMAT_D32_FLOAT_S8X24_UINT;
-	dsvDesc.ViewDimension = .D3D11_DSV_DIMENSION_TEXTURE2DMS;
-
-	if depth_stencil_view then IUnknown_Release(depth_stencil_view);
-	hr = ID3D11Device_CreateDepthStencilView(dev, depth_stencil_buffer, *dsvDesc, *depth_stencil_view);
-	assert(SUCCEEDED(hr));
-
-	ID3D11DeviceContext_OMSetRenderTargets(devcon, 1, *back_buffer, depth_stencil_view);
-}
-
 init_shaders :: () {
 	compile_shader :: ($name: string) -> (V: string, G: string, P: string) #compile_time {
 		path := tprint("src/engine/shaders/%.hlsl", name);
@@ -198,40 +139,21 @@ init_shaders :: () {
 
 		return Vbytecode, Gbytecode, Pbytecode;
 	}
-	create_input_layout :: ($name: string, $ied: []D3D11_INPUT_ELEMENT_DESC, buff: Buffer_Data) {
-		V, G, P :: #run compile_shader(name);
 
-		ID3D11Device_CreateVertexShader(  dev, V.data, xx V.count, null, *buff.VS);
-		ID3D11Device_CreateGeometryShader(dev, G.data, xx G.count, null, *buff.GS);
-		ID3D11Device_CreatePixelShader(   dev, P.data, xx P.count, null, *buff.PS);
-
-		ID3D11Device_CreateInputLayout(dev, ied.data, xx ied.count, V.data, xx V.count, *buff.layout);
-	}
-
-	ied1 :: D3D11_INPUT_ELEMENT_DESC.[
-		.{"POS",  0, .R32G32B32_FLOAT, 0,  0, .VERTEX_DATA, 0},
-		.{"SIZE", 0, .R32G32_FLOAT,    0, 12, .VERTEX_DATA, 0},
-		.{"COL",  0, .R32_UINT,        0, 20, .VERTEX_DATA, 0},
-		.{"UVX",  0, .R32_FLOAT,       0, 24, .VERTEX_DATA, 0},
+	ied :: D3D11_INPUT_ELEMENT_DESC.[
+		.{"POS",  0, .R32G32_FLOAT, 0,  0, .VERTEX_DATA, 0},
+		.{"SIZE", 0, .R32G32_FLOAT, 0,  8, .VERTEX_DATA, 0},
+		.{"COL",  0, .R32_UINT,     0, 16, .VERTEX_DATA, 0},
+		.{"UVX",  0, .R32_FLOAT,    0, 20, .VERTEX_DATA, 0},
 	];
-	create_input_layout("font", ied1, font_buffer);
+	
+	V, G, P :: #run compile_shader("font");
 
-	ied2 :: D3D11_INPUT_ELEMENT_DESC.[
-		.{"POSITION", 0, .R32G32B32_FLOAT, 0,  0, .VERTEX_DATA, 0},
-		.{"SIZE",     0, .R32G32_FLOAT,    0, 12, .VERTEX_DATA, 0},
-		.{"COLOR",    0, .R32_FLOAT,       0, 20, .VERTEX_DATA, 0}
-	];
-	create_input_layout("spec", ied2, spec_buffer);
+	ID3D11Device_CreateVertexShader(  dev, V.data, xx V.count, null, *font_buffer.VS);
+	ID3D11Device_CreateGeometryShader(dev, G.data, xx G.count, null, *font_buffer.GS);
+	ID3D11Device_CreatePixelShader(   dev, P.data, xx P.count, null, *font_buffer.PS);
 
-	ied3 :: D3D11_INPUT_ELEMENT_DESC.[
-		.{"POSITION", 0, .R32G32B32_FLOAT, 0,  0, .VERTEX_DATA, 0},
-		.{"SIZE",     0, .R32G32_FLOAT,    0, 12, .VERTEX_DATA, 0},
-		.{"TL_COL",   0, .R32_UINT,        0, 20, .VERTEX_DATA, 0},
-		.{"TR_COL",   0, .R32_UINT,        0, 24, .VERTEX_DATA, 0},
-		.{"BL_COL",   0, .R32_UINT,        0, 28, .VERTEX_DATA, 0},
-		.{"BR_COL",   0, .R32_UINT,        0, 32, .VERTEX_DATA, 0}
-	];
-	create_input_layout("flex", ied3, flex_buffer);
+	ID3D11Device_CreateInputLayout(dev, ied.data, xx ied.count, V.data, xx V.count, *font_buffer.layout);
 }
 
 init_font :: () {
@@ -284,16 +206,12 @@ init_graphics :: () {
 	assert(SUCCEEDED(hr));
 
 	font_buffer.elements_view.data = font_elements.data;
-	spec_buffer.elements_view.data = spec_elements.data;
-	flex_buffer.elements_view.data = flex_elements.data;
 
 	create_vertices_buffer_dx11(*font_buffer, font_elements.count);
-	create_vertices_buffer_dx11(*spec_buffer, spec_elements.count);
-	create_vertices_buffer_dx11(*flex_buffer, flex_elements.count);
 
 	rasterizer_desc: D3D11_RASTERIZER_DESC;
 	rasterizer_desc.FillMode = .SOLID;
-	rasterizer_desc.CullMode = .FRONT;
+	rasterizer_desc.CullMode = .NONE;
 	hr = ID3D11Device_CreateRasterizerState(dev, *rasterizer_desc, *rasterizer);
 	assert(SUCCEEDED(hr));
 
@@ -322,6 +240,17 @@ init_graphics :: () {
 	update_camera();
 
 	ID3D11DeviceContext_IASetPrimitiveTopology(devcon, .POINTLIST);
+	
+	ID3D11DeviceContext_VSSetShader(devcon, font_buffer.VS, null, 0);
+	ID3D11DeviceContext_GSSetShader(devcon, font_buffer.GS, null, 0);
+	ID3D11DeviceContext_PSSetShader(devcon, font_buffer.PS, null, 0);
+
+	ID3D11DeviceContext_IASetInputLayout(devcon, font_buffer.layout);
+
+	stride: u32 = size_of(font_buffer.vertex_type);
+	offset: u32 = 0;
+
+	ID3D11DeviceContext_IASetVertexBuffers(devcon, 0, 1, *font_buffer.elements_buffer, *stride, *offset);
 }
 
 set_render_target :: () {
@@ -351,26 +280,12 @@ set_viewport :: () {
 }
 
 begin_drawing :: () {
-	flags: u32 = xx (D3D11_CLEAR_FLAG.DEPTH | D3D11_CLEAR_FLAG.STENCIL);
-	ID3D11DeviceContext_ClearDepthStencilView(devcon, depth_stencil_view, flags, 1, 0);
+	// flags: u32 = xx (D3D11_CLEAR_FLAG.DEPTH | D3D11_CLEAR_FLAG.STENCIL);
+	// ID3D11DeviceContext_ClearDepthStencilView(devcon, null, flags, 1, 0);
 }
 
 flush_buffer :: (data: *Buffer_Data) {
 	if data.elements_view.count == 0 then return;
-
-	if(data.vertex_type != last_flushed_buffer) {
-		ID3D11DeviceContext_VSSetShader(devcon, data.VS, null, 0);
-		ID3D11DeviceContext_GSSetShader(devcon, data.GS, null, 0);
-		ID3D11DeviceContext_PSSetShader(devcon, data.PS, null, 0);
-
-		ID3D11DeviceContext_IASetInputLayout(devcon, data.layout);
-		last_flushed_buffer = data.vertex_type;
-
-		stride: u32 = size_of(data.vertex_type);
-		offset: u32 = 0;
-
-		ID3D11DeviceContext_IASetVertexBuffers(devcon, 0, 1, *data.elements_buffer, *stride, *offset);
-	}
 
 	ms: D3D11_MAPPED_SUBRESOURCE;
 	ID3D11DeviceContext_Map(devcon, data.elements_buffer, 0, .WRITE_DISCARD, 0, *ms);
@@ -383,14 +298,12 @@ flush_buffer :: (data: *Buffer_Data) {
 }
 
 finalize_drawing :: () {
-	flush_buffer(*spec_buffer);
-	flush_buffer(*flex_buffer);
 	flush_buffer(*font_buffer);
 
 	pp: DXGI_PRESENT_PARAMETERS;
 	IDXGISwapChain1_Present1(swapchain1, 0, 0, *pp);
 
-	ID3D11DeviceContext_OMSetRenderTargets(devcon, 1, *back_buffer, depth_stencil_view);
+	ID3D11DeviceContext_OMSetRenderTargets(devcon, 1, *back_buffer, null);
 }
 
 element_add :: (using buff: *Buffer_Data, val: buff.vertex_type) {
@@ -429,8 +342,6 @@ clear_background :: (col: Col) {
 }
 
 resize_viewport :: () {
-	if vp.width == 0 && vp.height == 0 then return;
-	
 	hr: HRESULT;
 
 	ID3D11DeviceContext_OMSetRenderTargets(devcon, 0, null, null);
@@ -443,7 +354,6 @@ resize_viewport :: () {
 	set_render_target();
 	set_viewport();
 	update_camera();
-	create_depth_stencil();
 }
 
 Buffer_Data :: struct (vertex_type: Type) {
@@ -461,32 +371,14 @@ Buffer_Data :: struct (vertex_type: Type) {
 BUFFER_MAX_SIZE :: 0x800;
 
 font_elements: [BUFFER_MAX_SIZE] Font_Vertex;
-spec_elements: [BUFFER_MAX_SIZE] Spec_Vertex;
-flex_elements: [BUFFER_MAX_SIZE] Flex_Vertex;
 
 font_buffer: Buffer_Data(Font_Vertex);
-spec_buffer: Buffer_Data(Spec_Vertex);
-flex_buffer: Buffer_Data(Flex_Vertex);
-
-last_flushed_buffer: Type;
 
 Font_Vertex :: struct {
-	x, y, z: f32;
+	x, y: f32;
 	w, h: f32;
 	col: u32;
 	uvx: f32;
-}
-
-Spec_Vertex :: struct {
-	x, y, z: f32;
-	w, h: f32;
-	value: f32;
-}
-
-Flex_Vertex :: struct {
-	x, y, z: f32;
-	w, h: f32;
-	c1, c2, c3, c4: u32;
 }
 
 camera: Matrix4;
@@ -508,10 +400,6 @@ texture_resource_view: *ID3D11ShaderResourceView;
 tex_sampler_state: *ID3D11SamplerState;
 
 transparency: *ID3D11BlendState;
-
-depth_stencil_view:   *ID3D11DepthStencilView;
-depth_stencil_buffer: *ID3D11Texture2D;
-depth_stencil_state:  *ID3D11DepthStencilState;
 
 texture_data, texture_width, texture_height :: #run -> ([]u8, int, int) {
 	// The font is stored internally as lines of bits. If a bit is 1, there's the pixel, and if not, it's empty

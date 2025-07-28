@@ -71,7 +71,7 @@ draw_line_count_bar :: (x_visible: bool) {
 	w := get_width_of_line_count_bar();
 	off := editor.pos;
 
-	draw_rect(off, .{w, editor.size.y}, 1, settings.themes.platform_widget_bg_normal);
+	draw_rect(off, .{w, editor.size.y}, settings.themes.platform_widget_bg_normal);
 
 	start: int = xx editor.scrollbar_pos.y / 16;
 	end: int = xx (editor.scrollbar_pos.y + editor.size.y - 8) / 16;
@@ -82,7 +82,7 @@ draw_line_count_bar :: (x_visible: bool) {
 		y := off.y + 10 + it * 16 - editor.scrollbar_pos.y;
 		fmt := formatInt(it + 1, minimum_digits = editor.row_digits, padding = #char " ");
 		// Todo - Quattro - benchmark this?
-		draw_text(tprint("%", fmt), .{off.x + 8, y}, 2, 1, settings.themes.platform_text_normal);
+		draw_text(tprint("%", fmt), .{off.x + 8, y}, 1, settings.themes.platform_text_normal);
 	}
 }
 
@@ -113,7 +113,7 @@ draw_colored_text :: (x_visible: bool) {
 				p := x + it_index * 16.0;
 				if (p <= editor.pos.x + w) || (p >= editor.pos.x + editor.size.x - 16) then continue;
 
-				draw_character(it, .{x + it_index * 16.0, y}, layer = 1, scale = 2, color);
+				draw_character(it, .{x + it_index * 16.0, y}, scale = 2, color);
 			}
 		}
 	}

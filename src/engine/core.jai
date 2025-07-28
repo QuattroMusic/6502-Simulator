@@ -46,7 +46,7 @@ lock_frame_rate :: () {
     seconds_elapsed_for_frame: f32 = (cast(f32)(read_os_timer() - vp.last_counter)) / vp.perf_count_frequency;
     if seconds_elapsed_for_frame < target_s {
         if vp.sleep_is_granular {
-            sleep_ms := cast(s32)(1000.0 * (target_s - seconds_elapsed_for_frame));
+            sleep_ms := cast(s32)(1000.0 * (target_s - seconds_elapsed_for_frame) - 1);
             if sleep_ms > 0 then Sleep(sleep_ms);
         }
         while seconds_elapsed_for_frame < target_s {
@@ -85,8 +85,7 @@ create_window :: () -> *void {
 
 	RegisterClassExW(*info);
 
-	monitor_width  := GetSystemMetrics(0);
-	monitor_height := GetSystemMetrics(1);
+	monitor_width, monitor_height := get_monitor_size();
 	x := (monitor_width  - w) / 2;
 	y := (monitor_height - h) / 2;
 
@@ -110,8 +109,7 @@ window_maximized :: () -> bool {
 }
 
 events_manager :: (hwnd: *void, msg: u32, wparam: u64, lparam: s64) -> s64 #c_call {
-	ctx: #Context;
-	push_context,defer_pop ctx;
+	push_context,defer_pop;
 
 	if msg == {
 		case WM_CLOSE; #through;
@@ -130,12 +128,13 @@ events_manager :: (hwnd: *void, msg: u32, wparam: u64, lparam: s64) -> s64 #c_ca
 				focused_uuid = 0;
 			}
 		case WM_SYSKEYDOWN; #through;
-		case WM_KEYFIRST;
+		case WM_KEYDOWN;
 			if wparam <= 0xFF {
 				key := cast,no_check(u8)wparam;
 				input_keyboard_states[key] = .DOWN;
 				if lparam & 0x40000000 then input_keyboard_states[key] |= .REPEATED;
 				else                        input_keyboard_states[key] |= .PRESSED;
+				last_down_key = key;
 			}
 		case WM_SYSKEYUP; #through;
 		case WM_KEYUP;
@@ -146,8 +145,7 @@ events_manager :: (hwnd: *void, msg: u32, wparam: u64, lparam: s64) -> s64 #c_ca
 		case WM_CHAR;
 			if wparam >= 32 && wparam <= 0xFF {
 				key := cast,no_check(u8, wparam);
-				pressed_char   = key;
-				last_down_char = key;
+				pressed_char = key;
 			}
 		case WM_LBUTTONDOWN; input_button_states[0] = .DOWN | .PRESSED;
 		case WM_RBUTTONDOWN; input_button_states[1] = .DOWN | .PRESSED;
@@ -155,7 +153,9 @@ events_manager :: (hwnd: *void, msg: u32, wparam: u64, lparam: s64) -> s64 #c_ca
 		case WM_LBUTTONUP;   input_button_states[0] = .UP   | .RELEASED;
 		case WM_RBUTTONUP;   input_button_states[1] = .UP   | .RELEASED;
 		case WM_MBUTTONUP;   input_button_states[2] = .UP   | .RELEASED;
-
+		case WM_MOUSEMOVE;
+			mouse_x = cast(s64, (lparam      ) & 0xFFFF);
+			mouse_y = cast(s64, (lparam >> 16) & 0xFFFF);
 		case WM_MOUSEWHEEL;  mouse_dz = cast,trunc(s16)(wparam >> 16) / 120;
 		case WM_DROPFILES;
 			data := cast(HDROP)wparam;
@@ -168,7 +168,7 @@ events_manager :: (hwnd: *void, msg: u32, wparam: u64, lparam: s64) -> s64 #c_ca
 
 			buff: [MAX_PATH]u8;
 			DragQueryFileA(data, 0, buff.data, buff.count);
-			len := string_length(buff.data);
+			len := c_style_strlen(buff.data);
 			handle_dropped_file(string.{len, buff.data});
 		case WM_NCCALCSIZE;
 			if !wparam then return DefWindowProcW(hwnd, msg, wparam, lparam);

@@ -19,12 +19,6 @@ fetch_window_inputs :: () {
 		TranslateMessage(*msg);
 		DispatchMessageA(*msg);
 	}
-	
-	pos: POINT;
-	GetCursorPos(*pos);
-	ScreenToClient(vp.window, *pos);
-	mouse_x = pos.x;
-	mouse_y = pos.y;
 }
 
 reset_input :: () {
@@ -51,8 +45,8 @@ mouse_x:  int;
 mouse_y:  int;
 mouse_dz: int;
 
-last_down_char: u8;
-pressed_char:   u8;
+last_down_key: u8;
+pressed_char:  u8;
 
 input_button_states:   [3]   Button_State;
 input_keyboard_states: [256] Button_State;

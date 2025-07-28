@@ -112,7 +112,7 @@ handle_dropped_file :: (file: string) {
 	deinit_code_editor();
 	init_code_editor(file);
 
-	if settings.platform.at_startup == .OPEN_LAST_FILE {
+	if settings.platform.at_startup == .LAST_FILE {
 		save_options_file();  // just to save the name of the file
 	}
 }

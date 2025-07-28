@@ -74,7 +74,7 @@ write_options_content :: (file: *File) {
 	setup_file_header(file);
 	
 	file_write(file, *settings.platform.at_startup, size_of(type_of(settings.platform.at_startup)));
-	if(settings.platform.at_startup == .OPEN_LAST_FILE) {
+	if(settings.platform.at_startup == .LAST_FILE) {
 		file_write(file, *editor.file_path.count, size_of(type_of(editor.file_path.count)));
 		file_write(file, editor.file_path.data, editor.file_path.count);
 	}
@@ -93,6 +93,8 @@ write_theme_content :: (file: *File) {
 	for info.*.members {
 		write_color_to_file(file, cast(*Col)(cast(*u8)(*settings.themes) + it.offset_in_bytes));
 	}
+	
+	memcpy(*settings.themes_saved_state, *settings.themes, size_of(Theming));
 }
 
 create_options_file :: () {
@@ -176,7 +178,7 @@ parse_settings_version_2 :: (file: *File) {
 	{
 		m, M := enum_range(At_Startup);
 		at_startup = xx read_u8_in_range(file, xx m, xx M);
-		if at_startup == .OPEN_LAST_FILE {
+		if at_startup == .LAST_FILE {
 			file_size: type_of(editor.file_path.count);
 			file_read(file, *file_size, size_of(type_of(editor.file_path.count)));
 			

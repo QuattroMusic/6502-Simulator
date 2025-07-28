@@ -2,6 +2,8 @@ update_6502 :: () {
 	handle_displayed_file();
 
 	handle_code_editor_events();
+	
+	handle_input_and_time();
 
 	draw_header();
 	draw_buttons_controls();
@@ -14,31 +16,23 @@ update_6502 :: () {
 	draw_input();
 
 	if is_key_pressed(KEY_ESC) then toggle_panel(ui.settings_panel, centered = true);
-
-	widgets_draw_panels();
 }
 
 draw_one_frame :: () {
 	if !vp.reduced {  // Todo - I should find a way to entirely disable this until it's not reduced anymore
-		begin_widgets();
 		begin_drawing();
 
 		clear_background(settings.themes.platform_deep_background);
 
 		update_6502();
 
-		finalize_widgets();
+		draw_panels();
 		finalize_drawing();
 	}
 	reset_temporary_storage();
 }
 
 setup_windows :: () {
-	padding :: 4;
-	w :: DISPLAY_WIDTH  * 8 + padding * 2;
-	h :: DISPLAY_HEIGHT * 8 + padding * 2 + 24;
-	ui.display_panel = create_new_panel(draw_display, "display", .{w, h});
-
 	modal_on_close :: () {  // Todo - Temporary!
 		// there's a silly bug about this that I cannot explain
 		// the Basic()(MEMORY_DEBUGGER = true) sometimes shows an allocation and sometimes it doesn't
@@ -48,20 +42,25 @@ setup_windows :: () {
 		// ~ Quattro 2024 / 10 / 11
 		if ui.modal_error_type == .FAILED_COMPILATION then free(ui.modal_error_message);
 	}
-
-	ui.modal_panel = create_new_panel(draw_modal, "", .{800, 600}, on_close = modal_on_close, modal = true);
+	ui.modal_panel = create_new_panel(draw_modal, "", .{800, 600}, on_close = modal_on_close);
+	
+	padding :: 4;
+	w :: DISPLAY_WIDTH  * 8 + padding * 2;
+	h :: DISPLAY_HEIGHT * 8 + padding * 2 + 24;
+	ui.display_panel = create_new_panel(draw_display, "display", .{w, h});
 
 	ui.settings_panel = create_new_panel(draw_settings, "settings", .{SETTINGS_WIDTH, SETTINGS_HEIGHT});
 
-	ui.internal_selected = *settings.themes.general_text;
+	ui.internal_selected             = *settings.themes.general_text;
+	ui.internal_selected_saved_state = *settings.themes_saved_state.general_text;
 }
 
 main :: () {
 	// Todo - Quattro - change the font size from 1 and 2 to 8.0 and 16.0
-	// #if !DEBUG {
-		// WR :: #import "Windows_Resources";
-		// #run WR.disable_runtime_console();
-	// }
+	#if !DEBUG {
+		WR :: #import "Windows_Resources";
+		#run WR.disable_runtime_console();
+	}
 
 	cpu_init();
 	init_window();
@@ -75,7 +74,7 @@ main :: () {
 	while vp.running {
 		lock_frame_rate();
 		fetch_window_inputs();
-
+		
 		draw_one_frame();
 	}
 	deinit_window();
@@ -92,7 +91,7 @@ engine: Emulator;
 
 ROM_SIZE      :: 0x8000;
 RAM_SIZE      :: 0x8000;
-HEADER_HEIGHT :: 35;
+HEADER_HEIGHT :: 35;  // Todo - Quattro - consider using 30
 
 MEMORY_INPUT_ADDRESS       :: 0x2780;
 MEMORY_YEAR_ADDRESS        :: 0x2781;  // 2 bytes
@@ -149,7 +148,6 @@ Col :: struct {
 #import "Process";
 #import "Hash";
 #import "Hash_Table";
-#import "Sort";
 
 #import "DX11";
 #import "d3d_compiler";

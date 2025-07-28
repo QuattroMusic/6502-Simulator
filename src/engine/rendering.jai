@@ -1,44 +1,16 @@
-draw_rect :: inline (pos: Vec2, size: Vec2, z: f32, col: Col) {
-	element_add(*font_buffer, .{round_down(pos.x), round_down(pos.y), z, round_down(size.x), round_down(size.y), col.data, 8.0 * 8 / texture_width});
+draw_rect :: inline (pos: Vec2, size: Vec2, col: Col) {
+	uv :: #run 8.0 * 8 / texture_width;
+	element_add(*font_buffer, .{pos.x, pos.y, size.x, size.y, col.data, uv});
 }
 
-draw_color_picker_rect :: inline (pos: Vec2, size: Vec2, z: f32, v: f32) {
-	element_add(*spec_buffer, .{round_down(pos.x), round_down(pos.y), z, round_down(size.x), round_down(size.x), v});
+draw_rect_lines :: (pos: Vec2, size: Vec2, col: Col, t: f32 = 1) {
+	draw_rect(pos, .{size.x, t}, col);
+	draw_rect(pos, .{t, size.y}, col);
+	draw_rect(pos + .{size.x - t, 0}, .{t, size.y}, col);
+	draw_rect(pos + .{0, size.y - t}, .{size.x, t}, col);
 }
 
-draw_rect :: inline (pos: Vec2, size: Vec2, z: f32, c1: Col, c2: Col, c3: Col, c4: Col) {
-	element_add(*flex_buffer, .{round_down(pos.x), round_down(pos.y), z, round_down(size.x), round_down(size.y), c1.data, c2.data, c3.data, c4.data});
-}
-
-draw_panel :: ($$text: string, pos: Vec2, size: Vec2, layer: f32) {
-	p :: 4;
-	
-	s :: 1;
-	m: Vec2 = ---;
-	m = measure_text(text, s);
-	
-	if text.count != 0 {
-		draw_rect(pos, .{p, 1}, layer, settings.themes.platform_line);
-		draw_rect(pos + .{p + 8 + m.x, 0}, .{size.x - p - 8 - m.x, 1}, layer, settings.themes.platform_line);
-	} else {
-		draw_rect(pos, .{size.x, 1}, layer, settings.themes.platform_line);
-	}
-	
-	draw_rect(pos, .{1, size.y}, layer, settings.themes.platform_line);
-	draw_rect(pos + .{0, size.y - 1}, .{size.x, 1}, layer, settings.themes.platform_line);
-	draw_rect(pos + .{size.x - 1, 0}, .{1, size.y}, layer, settings.themes.platform_line);
-
-	draw_text(text, pos + .{p + 4, -m.y / 2}, layer, s, settings.themes.platform_line);
-}
-
-draw_rect_lines :: (pos: Vec2, size: Vec2, layer: f32, col: Col, t: f32 = 1) {
-	draw_rect(pos, .{size.x, t}, layer, col);
-	draw_rect(pos, .{t, size.y}, layer, col);
-	draw_rect(pos + .{size.x - t, 0}, .{t, size.y}, layer, col);
-	draw_rect(pos + .{0, size.y - t}, .{size.x, t}, layer, col);
-}
-
-draw_character :: ($$c: u8, pos: Vec2, layer: f32, scale: f32, col: Col) {
+draw_character :: ($$c: u8, pos: Vec2, scale: f32, col: Col) {
 	#if is_constant(c) { #if c == #char " " || c == #char "\t" || c == #char "\r" then return; }
 	else               {  if c == #char " " || c == #char "\t" || c == #char "\r" then return; }
 	
@@ -50,22 +22,22 @@ draw_character :: ($$c: u8, pos: Vec2, layer: f32, scale: f32, col: Col) {
 
 	s := scale * 8;
 	
-	element_add(*font_buffer, .{round_down(pos.x), round_down(pos.y), layer, xx s, xx s, col.data, uv});
+	element_add(*font_buffer, .{pos.x, pos.y, s, s, col.data, uv});
 }
 
-draw_text :: (text: string, pos: Vec2, layer: f32, scale: f32, color: Col, $wrap: f32 = 0) {
+draw_text :: (text: string, pos: Vec2, scale: f32, color: Col, $wrap: f32 = 0) {
 	x_pos: f32;
 	y_pos: f32;
 
 	s := 8.0 * scale;
 
-	for cast([]u8) text {
+	for text {
 		if it == #char "\n" {
 			x_pos = 0;
 			y_pos += s;
 			continue;
 		} else {
-			draw_character(cast,trunc(u8)it, pos + .{x_pos, y_pos}, layer, scale, color);
+			draw_character(cast,trunc(u8)it, pos + .{x_pos, y_pos}, scale, color);
 		}
 		
 		x_pos += s;
@@ -76,12 +48,12 @@ draw_text :: (text: string, pos: Vec2, layer: f32, scale: f32, color: Col, $wrap
 	}
 }
 
-draw_icon :: (icon: Icon, pos: Vec2, layer: f32, $scale: f32, col: Col) {
+draw_icon :: (icon: Icon, pos: Vec2, $scale: f32, col: Col) {
 	uv := get_icon_mapping(icon);
 
 	s :: 8.0 * scale;
 
-	element_add(*font_buffer, .{round_down(pos.x), round_down(pos.y), layer, xx s, xx s, col.data, uv});
+	element_add(*font_buffer, .{pos.x, pos.y, s, s, col.data, uv});
 }
 
 get_icon_mapping :: (icon: Icon) -> uvx: f32 {
@@ -94,9 +66,9 @@ get_icon_mapping :: (icon: Icon) -> uvx: f32 {
 		case .ARROW_DOWN;  return #run 40.0 / texture_width;
 	}
 }
-
 get_char_mapping :: inline ($$c: u8) -> uvx: f32 {
 	// since the font is monospace, there's no need to return the size
+	// Todo - Quattro - check for unrecognized characters
 	char := clamp(c, 32, 127);
 	return 8.0 * char / texture_width;
 }

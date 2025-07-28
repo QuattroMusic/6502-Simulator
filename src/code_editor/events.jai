@@ -123,11 +123,8 @@ event_char :: () {
 event_mouse :: () {
 	using editor;
 	
-	p := get_panel(ui.display_panel);
-	if p.visible && is_inside_rect(.{cast(f32, mouse_x), cast(f32, mouse_y)}, p.pos, p.size) then return;
-	
-	p = get_panel(ui.settings_panel);
-	if p.visible && is_inside_rect(.{cast(f32, mouse_x), cast(f32, mouse_y)}, p.pos, p.size) then return;
+	if ui.display_panel.visible  && is_mouse_inside_rect(ui.display_panel.pos,  ui.display_panel.size)  then return;
+	if ui.settings_panel.visible && is_mouse_inside_rect(ui.settings_panel.pos, ui.settings_panel.size) then return;
 	
 	x := cast(s32, mouse_x - pos.x);
 	y := cast(s32, mouse_y - pos.y);
@@ -170,9 +167,6 @@ handle_code_editor_events :: () {
 	// focus
 	if is_mouse_inside_rect(editor.pos, editor.size) then editor.focused = true;
 	else                                                  editor.focused = false;
-
-	if is_panel_visible(ui.modal_panel) then editor.focused = false;
-	else                                     editor.focused = true;
 
 	if !editor.focused then return;
 

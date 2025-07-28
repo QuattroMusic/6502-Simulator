@@ -58,12 +58,12 @@ Theming :: struct {
 }
 
 At_Startup :: enum u8 {
-	OPEN_EMPTY_FILE;
-	OPEN_LAST_FILE;
+	EMPTY_FILE;
+	LAST_FILE;
 }
 
 Platform_Settings :: struct {
-	at_startup: At_Startup = .OPEN_EMPTY_FILE;
+	at_startup: At_Startup = .EMPTY_FILE;
 	
 	fps_lock: u16 = 60;
 	
@@ -108,17 +108,19 @@ General_UI :: struct {
 
 	settings_focused_tab: Settings_Focused_Tab;
 
-	settings_theming_color_edited: bool;
 	settings_platform_scrollbar_edited: bool;
 	settings_theming_scroll_pos: Vec2;
 	
 	settings_platform_view_fps_lock: u16;
 	
+	// color picker stuff
 	internal_selected: *Col;
+	internal_selected_saved_state: *Col;
+	color_picker_edited: bool;
 
-	display_panel:  ID;
-	modal_panel:    ID;
-	settings_panel: ID;
+	display_panel:  *Panel;
+	modal_panel:    *Panel;
+	settings_panel: *Panel;
 }
 
 Error_Type :: enum {
@@ -377,7 +379,7 @@ compile_program :: () {
 	if settings.editor.when_to_save == .WHEN_COMPILING then save_editor_file();
 	
 	fmt := tprint("% -Fbin -o \"%\" -dotdir \"%\"", compiler_path, out_path, path);
-
+	
 	out := break_command_into_strings(fmt);
 	res, output_string, error_string := run_command(..out, capture_and_return_output = true,, allocator = temp);
 
@@ -504,6 +506,7 @@ intrinsic_to_string :: (code: Opcode) -> string {
 		t.data += 4;
 		t.count -= 4;
 		s.count = 3;
+		// Todo - Quattro - check performance with `make_u24`
 		if t == {
 			case "IMM"; return tprint("% #n",     s);
 			case "ZPG"; return tprint("% n",      s);
