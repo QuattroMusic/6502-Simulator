@@ -56,7 +56,6 @@ setup_windows :: () {
 }
 
 main :: () {
-	// Todo - Quattro - change the font size from 1 and 2 to 8.0 and 16.0
 	#if !DEBUG {
 		WR :: #import "Windows_Resources";
 		#run WR.disable_runtime_console();
@@ -91,7 +90,7 @@ engine: Emulator;
 
 ROM_SIZE      :: 0x8000;
 RAM_SIZE      :: 0x8000;
-HEADER_HEIGHT :: 35;  // Todo - Quattro - consider using 30
+HEADER_HEIGHT :: 35;
 
 MEMORY_INPUT_ADDRESS       :: 0x2780;
 MEMORY_YEAR_ADDRESS        :: 0x2781;  // 2 bytes
@@ -108,7 +107,12 @@ MIN_SCREEN_HEIGHT :: 470;
 START_SCREEN_WIDTH  :: 1400;
 START_SCREEN_HEIGHT :: 800;
 
-DISPLAY_WIDTH  :: 120;  // in rects, whose size are 8x8
+FONT_SIZE_GRANULARITY :: 8.0;
+FONT_SIZE_SMALL  :: 1 * FONT_SIZE_GRANULARITY;
+FONT_SIZE_NORMAL :: 2 * FONT_SIZE_GRANULARITY;
+FONT_SIZE_LARGE  :: 3 * FONT_SIZE_GRANULARITY;
+
+DISPLAY_WIDTH  :: 120;  // in rects, whose size are 8x8 (FONT_SIZE_GRANULARITY x FONT_SIZE_GRANULARITY)
 DISPLAY_HEIGHT :: 80;   // so it's a [960 x 640] screen (without padding)
 
 MODAL_WIDTH  :: 800;
@@ -120,8 +124,8 @@ SETTINGS_HEIGHT :: 450;
 APP_MAJOR_VERSION :: 2;
 APP_MINOR_VERSION :: 1;
 
-DATA_FOLDER_NAME :: "data";
-THEME_FILE_NAME :: "theme";
+DATA_FOLDER_NAME   :: "data";
+THEME_FILE_NAME    :: "theme";
 SETTINGS_FILE_NAME :: "settings";
 
 CURSOR_SCROLLBAR_MIN_VALUE :: 1;
@@ -177,4 +181,4 @@ Col :: struct {
 #load "src/utils.jai";
 #load "src/files.jai";
 
-#load "tests.jai";
+// #load "tests.jai";

@@ -20,40 +20,38 @@ draw_character :: ($$c: u8, pos: Vec2, scale: f32, col: Col) {
 		uv := get_char_mapping(c);
 	}
 
-	s := scale * 8;
-	
-	element_add(*font_buffer, .{pos.x, pos.y, s, s, col.data, uv});
+	element_add(*font_buffer, .{pos.x, pos.y, scale, scale, col.data, uv});
 }
 
 draw_text :: (text: string, pos: Vec2, scale: f32, color: Col, $wrap: f32 = 0) {
 	x_pos: f32;
 	y_pos: f32;
 
-	s := 8.0 * scale;
-
 	for text {
 		if it == #char "\n" {
 			x_pos = 0;
-			y_pos += s;
+			y_pos += scale;
 			continue;
 		} else {
 			draw_character(cast,trunc(u8)it, pos + .{x_pos, y_pos}, scale, color);
 		}
 		
-		x_pos += s;
-		#if wrap if x_pos + s > wrap {
+		x_pos += scale;
+		#if wrap if x_pos + scale > wrap {
 			x_pos = 0;
-			y_pos += s;
+			y_pos += scale;
 		}
 	}
 }
 
-draw_icon :: (icon: Icon, pos: Vec2, $scale: f32, col: Col) {
-	uv := get_icon_mapping(icon);
-
-	s :: 8.0 * scale;
-
-	element_add(*font_buffer, .{pos.x, pos.y, s, s, col.data, uv});
+draw_icon :: ($$icon: Icon, pos: Vec2, $scale: f32, col: Col) {
+	#if is_constant(icon) {
+		uv :: #run get_icon_mapping(icon);
+	} else {
+		uv := get_icon_mapping(icon);
+	}
+	
+	element_add(*font_buffer, .{pos.x, pos.y, scale, scale, col.data, uv});
 }
 
 get_icon_mapping :: (icon: Icon) -> uvx: f32 {
@@ -70,23 +68,25 @@ get_char_mapping :: inline ($$c: u8) -> uvx: f32 {
 	// since the font is monospace, there's no need to return the size
 	// Todo - Quattro - check for unrecognized characters
 	char := clamp(c, 32, 127);
-	return 8.0 * char / texture_width;
+	return cast(f32, FONT_SIZE_GRANULARITY) * char / texture_width;
 }
 
 measure_text :: ($$text: string, $scale: f32) -> Vec2 {
 	_internal :: (t: string, s: f32) -> Vec2 {
 		w: f32;
 		max_w: f32;
-		h: f32 = 8.0 * s;
-		for cast([]u8) t {
+		h: f32 = s;
+		
+		for t {
 			if it == #char "\n" {
 				max_w = max(w, max_w);
 				w = 0;
-				h += 8.0 * s;
+				h += s;
 			} else {
-				w += 8.0 * s;
+				w += s;
 			}
 		}
+		
 		return .{max(w, max_w), h};
 	}
 

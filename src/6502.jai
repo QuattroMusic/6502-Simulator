@@ -75,14 +75,14 @@ Platform_Settings :: struct {
 
 When_To_Save_Editor :: enum {
 	MANUALLY;
-	EVERY_EDITS;
+	EACH_EDIT;
 	WHEN_COMPILING;
 	EVERY_MS;
 }
 
 Editor_Settings :: struct {
 	when_to_save: When_To_Save_Editor = .WHEN_COMPILING;
-	save_interval_in_ms: int;
+	save_interval_in_ms: s64;
 }
 
 Settings :: struct {
@@ -178,7 +178,7 @@ Status_Flags :: struct {
 }
 
 Metrics :: struct {
-	update_rate: int = 1_000;
+	update_rate: s64 = 1_000;
 	last_counter: s64;
 
 	unlock: bool;
@@ -211,7 +211,7 @@ kHz :: (f: type_of(engine.metrics.update_rate)) -> type_of(engine.metrics.update
 MHz :: (f: type_of(engine.metrics.update_rate)) -> type_of(engine.metrics.update_rate) { return f * 1_000_000; }
 GHz :: (f: type_of(engine.metrics.update_rate)) -> type_of(engine.metrics.update_rate) { return f * 1_000_000_000; }
 
-bit :: (n: int, i: int) -> u8 { return cast(u8)((n >> i) & 1); }
+bit :: (n: s64, i: s64) -> u8 { return cast(u8)((n >> i) & 1); }
 
 set_overflow :: (n1: u8, n2: u8, res: u16) { engine.flags.V = (bit(n1, 7) == bit(n2, 7)) && (bit(n2, 7) != bit(res, 7)); }
 

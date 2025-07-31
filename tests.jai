@@ -1,6 +1,6 @@
 #scope_file
-passed_tests: int;
-tests_cumulative: int;
+passed_tests: s64;
+tests_cumulative: s64;
 
 print_data :: () {
 	using engine;

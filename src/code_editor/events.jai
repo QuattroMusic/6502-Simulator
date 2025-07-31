@@ -161,13 +161,26 @@ event_mouse :: () {
 	}
 }
 
-handle_code_editor_events :: () {
-	if !editor.file_path then return;
+handle_code_editor_events :: (loc := #caller_location) {
+	if ui.settings_panel.visible {
+		editor.focused = false;
+		return;
+	} else {
+		editor.focused = true;
+	}
 	
-	// focus
-	if is_mouse_inside_rect(editor.pos, editor.size) then editor.focused = true;
-	else                                                  editor.focused = false;
-
+	if !editor.file_path {
+		editor.focused = false;
+		return;
+	} else {
+		editor.focused = true;
+	}
+	
+	state := create_selectable_region(.SCROLLBAR, loc, 0, editor.pos, editor.size, disable_interactions = true);
+	if is_mouse_pressed(0) {
+		editor.focused = (state == .PRESSED);
+	}
+	
 	if !editor.focused then return;
 
 	// interaction
@@ -213,6 +226,7 @@ handle_code_editor_events :: () {
 	if moved {
 		editor.caret_time = ms_since_init();
 	}
+	
 	if edited {
 		// Todo - Quattro - This is updating everything, maybe we could update where needed.
 		update_code_editor_coloring();

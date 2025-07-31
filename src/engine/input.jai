@@ -41,9 +41,9 @@ is_key_pressed_or_repeated :: (key: u8) -> bool {
 	return cast(bool, input_keyboard_states[key] & .PRESSED || input_keyboard_states[key] & .REPEATED);
 }
 
-mouse_x:  int;
-mouse_y:  int;
-mouse_dz: int;
+mouse_x:  s64;
+mouse_y:  s64;
+mouse_dz: s64;
 
 last_down_key: u8;
 pressed_char:  u8;

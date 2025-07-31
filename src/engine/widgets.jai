@@ -1,4 +1,4 @@
-button :: ($$text: string, pos: Vec2, size: Vec2, $t: f32 = 1, disabled := false, it: int = 0, loc := #caller_location) -> bool {
+button :: ($$text: string, pos: Vec2, size: Vec2, $t: f32 = FONT_SIZE_SMALL, disabled := false, it: s64 = 0, loc := #caller_location) -> bool {
 	state := create_selectable_region(.BUTTON, loc, it, pos, size);
 
 	bg_col:     Col = ---;
@@ -31,15 +31,19 @@ button :: ($$text: string, pos: Vec2, size: Vec2, $t: f32 = 1, disabled := false
 	}
 
 	draw_rect(pos, size, bg_col);
-	draw_rect_lines(pos, size, border_col, t);
+	draw_rect_lines(pos, size, border_col, #run t / FONT_SIZE_GRANULARITY);
 
-	s := measure_text(text, t);
+	#if is_constant(text) {
+		s :: #run measure_text(text, t);
+	} else {
+		s := measure_text(text, t);
+	}
 	draw_text(text, pos + size / 2 - s / 2, t, text_col);
 
 	return state == .RELEASE;
 }
 
-button :: (icon: Icon, pos: Vec2, size: Vec2, $t: f32 = 1, it: int = 0, loc := #caller_location) -> bool {
+button :: ($$icon: Icon, pos: Vec2, size: Vec2, $t: f32 = FONT_SIZE_SMALL, it: s64 = 0, loc := #caller_location) -> bool {
 	state := create_selectable_region(.BUTTON, loc, it, pos, size);
 
 	bg_col:     Col = ---;
@@ -65,16 +69,20 @@ button :: (icon: Icon, pos: Vec2, size: Vec2, $t: f32 = 1, it: int = 0, loc := #
 	}
 
 	draw_rect(pos, size, bg_col);
-	draw_rect_lines(pos, size, border_col, t);
+	draw_rect_lines(pos, size, border_col, #run t / FONT_SIZE_GRANULARITY);
 
-	s :: Vec2.{8.0 * t, 8.0 * t};
+	s :: Vec2.{t, t};
 	draw_icon(icon, pos + size / 2 - s / 2, t, text_col);
 
 	return state == .RELEASE;
 }
 
-checkbox :: ($$text: string, pos: Vec2, size: Vec2, value: *bool, it: int = 0, loc := #caller_location) {
-	s := measure_text(text, 1);
+checkbox :: ($$text: string, pos: Vec2, size: Vec2, value: *bool, it: s64 = 0, loc := #caller_location) {
+	#if is_constant(text) {
+		s :: #run measure_text(text, FONT_SIZE_SMALL);
+	} else {
+		s := measure_text(text, FONT_SIZE_SMALL);
+	}
 
 	state := create_selectable_region(.CHECKBOX, loc, it, pos, size + .{s.x + 12, 0});
 
@@ -100,10 +108,10 @@ checkbox :: ($$text: string, pos: Vec2, size: Vec2, value: *bool, it: int = 0, l
 
 	if value.* || state == .PRESSED || state == .HOLD then draw_rect(pos + .{4, 4}, size - .{8, 8}, bg_col);
 	draw_rect_lines(pos, size, settings.themes.platform_line);
-	draw_text(text, pos + .{size.x + 8, (size.y - s.y) / 2}, 1, text_col);
+	draw_text(text, pos + .{size.x + 8, (size.y - s.y) / 2}, FONT_SIZE_SMALL, text_col);
 }
 
-draw_step_hslider :: (pos: Vec2, size: Vec2, amt: s32, value: *int, disabled: bool = false, it: int = 0, loc := #caller_location) {
+draw_step_hslider :: (pos: Vec2, size: Vec2, amt: s32, value: *s64, disabled: bool = false, it: s64 = 0, loc := #caller_location) {
 	draw_rect(pos + .{0, size.y / 2 - 1}, .{size.x, 2}, ifx disabled then settings.themes.platform_disabled else settings.themes.platform_line);
 
 	col_main: Col = ---;
@@ -148,7 +156,7 @@ draw_step_hslider :: (pos: Vec2, size: Vec2, amt: s32, value: *int, disabled: bo
 	draw_rect(main_step_bar_pos, .{8, size.y}, col_main);
 }
 
-draw_scrollbar :: (pos: Vec2, size: Vec2, scroll_pos: *Vec2, scroll_size: Vec2, min_size: Vec2, max_value: Vec2, speed_slow: int, speed_fast: int, it: int = 0, loc := #caller_location) -> Vec2 {
+draw_scrollbar :: (pos: Vec2, size: Vec2, scroll_pos: *Vec2, scroll_size: Vec2, min_size: Vec2, max_value: Vec2, speed_slow: s64, speed_fast: s64, it: s64 = 0, loc := #caller_location) -> Vec2 {
 	y_visible := (min_size.y + size.y) < scroll_size.y;
 	x_visible := (min_size.x + size.x) < scroll_size.x;
 
@@ -159,6 +167,7 @@ draw_scrollbar :: (pos: Vec2, size: Vec2, scroll_pos: *Vec2, scroll_size: Vec2, 
 	if x_visible then content_size_without_scrollbar.y -= WIDGET_SCROLLBAR_SIZE;
 	if y_visible then content_size_without_scrollbar.x -= WIDGET_SCROLLBAR_SIZE;
 
+	// Todo - Quattro - Check again and document this use case of disable_interactions = true
 	content_state := create_selectable_region(.SCROLLBAR, loc, it, pos, content_size_without_scrollbar, disable_interactions = true);
 
 	if y_visible {
@@ -172,7 +181,7 @@ draw_scrollbar :: (pos: Vec2, size: Vec2, scroll_pos: *Vec2, scroll_size: Vec2, 
 
 		if mouse_dz && !is_key_down(KEY_SHIFT) && content_state == .HOVER {
 			true_speed := ifx is_key_down(KEY_CTRL) then speed_fast else speed_slow;
-			amt := mouse_dz * 16 * true_speed;
+			amt := mouse_dz * FONT_SIZE_NORMAL * true_speed;
 			scroll_pos.*.y -= amt;
 		}
 
@@ -185,7 +194,7 @@ draw_scrollbar :: (pos: Vec2, size: Vec2, scroll_pos: *Vec2, scroll_size: Vec2, 
 
 		bar_col := ifx state == .NORMAL then settings.themes.platform_widget_border_normal else settings.themes.platform_widget_bg_press;
 
-		val := round_up(scroll_pos.y, 16);
+		val := round_up(scroll_pos.y, FONT_SIZE_NORMAL);
 		scroll_pos.*.y = clamp(val, 0, max_value.y - min_size.y);
 
 		scrollbar_pos := Vec2.{scroll_pos_x, scroll_pos_y + aspect_ratio * scroll_pos.*.y};
@@ -206,7 +215,7 @@ draw_scrollbar :: (pos: Vec2, size: Vec2, scroll_pos: *Vec2, scroll_size: Vec2, 
 
 		if mouse_dz && is_key_down(KEY_SHIFT) && content_state == .HOVER {
 			true_speed := ifx is_key_down(KEY_CTRL) then speed_fast else speed_slow;
-			amt := mouse_dz * 16 * true_speed;
+			amt := mouse_dz * FONT_SIZE_NORMAL * true_speed;
 			scroll_pos.*.x -= amt;
 		}
 
@@ -219,7 +228,7 @@ draw_scrollbar :: (pos: Vec2, size: Vec2, scroll_pos: *Vec2, scroll_size: Vec2, 
 
 		bar_col := ifx state == .NORMAL then settings.themes.platform_widget_border_normal else settings.themes.platform_widget_bg_press;
 
-		val := round_up(scroll_pos.x, 16);
+		val := round_up(scroll_pos.x, FONT_SIZE_NORMAL);
 		scroll_pos.*.x = clamp(val, 0, max_value.x - min_size.x);
 
 		draw_rect(.{scroll_pos_x, scroll_pos_y}, .{size.x, WIDGET_SCROLLBAR_SIZE}, settings.themes.platform_widget_bg_normal);
@@ -229,7 +238,7 @@ draw_scrollbar :: (pos: Vec2, size: Vec2, scroll_pos: *Vec2, scroll_size: Vec2, 
 	return true_size;
 }
 
-tab_bar :: (pos: Vec2, width: f32, focused_tab: *$T, it_: int = 0, loc := #caller_location) #modify {
+tab_bar :: (pos: Vec2, width: f32, focused_tab: *$T, it_: s64 = 0, loc := #caller_location) #modify {
 	v := cast(*Type_Info, T);
 	return v.type == .ENUM, "tab type should be of type enum";
 } {
@@ -241,26 +250,25 @@ tab_bar :: (pos: Vec2, width: f32, focused_tab: *$T, it_: int = 0, loc := #calle
 
 	tab_height :: 24;
 
-	// Todo - Quattro - probably i should replace "_" with " ", check the combo box
 	tabs :: #run cast(*Type_Info_Enum, T).names;
 
-	focus := cast(int, focused_tab.*);
+	focus := cast(s64, focused_tab.*);
 
 	x: f32;
 	for tabs {
-		d := measure_text(it, 2);
+		d := measure_text(it, FONT_SIZE_NORMAL);
 		state := create_selectable_region(.TAB, loc, it_ + it_index, pos + .{4 + x, 0}, .{d.x + 8, tab_height});
 
 		if state == .RELEASE then focused_tab.* = cast(T, it_index);
 
-		x += d.x + 16;
+		x += d.x + FONT_SIZE_NORMAL;
 	}
 
 	x = 0;
 	w: f32 = 4;
 	w_continue: f32;
 	for tabs {
-		d := measure_text(it, 2);
+		d := measure_text(it, FONT_SIZE_NORMAL);
 
 		text_col: Col = ---;
 		if it_index == focus {
@@ -271,12 +279,12 @@ tab_bar :: (pos: Vec2, width: f32, focused_tab: *$T, it_: int = 0, loc := #calle
 		} else {
 			text_col = settings.themes.platform_disabled;
 			draw_selected_rect(.{4 + pos.x + x, pos.y}, .{d.x + 8, tab_height});
-			w += d.x + 16;
+			w += d.x + FONT_SIZE_NORMAL;
 		}
 
-		draw_text(it, .{8 + pos.x + x, pos.y + 4}, 2, text_col);
+		draw_text(it, .{8 + pos.x + x, pos.y + 4}, FONT_SIZE_NORMAL, text_col);
 
-		x += d.x + 16;
+		x += d.x + FONT_SIZE_NORMAL;
 	}
 
 	draw_rect(pos + .{w_continue, tab_height - 1}, .{width - w_continue, 1}, settings.themes.platform_line);
@@ -287,17 +295,17 @@ h_separator :: ($name: string, pos: Vec2, width: f32) {
 
 	draw_rect(pos, .{p, 1}, settings.themes.platform_line);
 
-	draw_text(name, pos + .{p + 4, -5}, 1, settings.themes.platform_text_normal);
-	s :: #run measure_text(name, 1);
+	draw_text(name, pos + .{p + 4, -5}, FONT_SIZE_SMALL, settings.themes.platform_text_normal);
+	s :: #run measure_text(name, FONT_SIZE_SMALL);
 
 	draw_rect(pos + .{p + 8 + s.x, 0}, .{width - p - 8 - s.x, 1}, settings.themes.platform_line);
 }
 
-combo_box :: (pos: Vec2, size: Vec2, sel: *$T, it_: int = 0, loc := #caller_location) -> bool #modify {
+combo_box :: (pos: Vec2, size: Vec2, sel: *$T, it_: s64 = 0, loc := #caller_location) -> bool #modify {
 	v := cast(*Type_Info, T);
 	return v.type == .ENUM;
 } {
-	selected := cast(int)sel.*;
+	selected := cast(s64)sel.*;
 
 	items :: #run -> []string {
 		n := cast(*Type_Info_Enum, T).names;
@@ -329,7 +337,7 @@ combo_box :: (pos: Vec2, size: Vec2, sel: *$T, it_: int = 0, loc := #caller_loca
 	}
 
 	draw_rect_lines(pos, size, border_col);
-	draw_text( items[selected], pos + .{2, 1}, 2, text_col);
+	draw_text( items[selected], pos + .{2, 1}, FONT_SIZE_NORMAL, text_col);
 
 	if state == .RELEASE then widget.*.open = !widget.*.open;
 
@@ -346,7 +354,7 @@ combo_box :: (pos: Vec2, size: Vec2, sel: *$T, it_: int = 0, loc := #caller_loca
 	}
 
 	if widget.open {
-		draw_icon(.ARROW_DOWN, pos + .{size.x - 18, 2}, 2, text_col);
+		draw_icon(.ARROW_DOWN, pos + .{size.x - 18, 2}, FONT_SIZE_NORMAL, text_col);
 		draw_rect_lines(pos + .{size.x - 20, 0}, .{20, 20}, border_col);
 
 		draw_rect(pos + .{0, 20}, .{size.x, h}, settings.themes.platform_widget_bg_normal);
@@ -379,7 +387,7 @@ combo_box :: (pos: Vec2, size: Vec2, sel: *$T, it_: int = 0, loc := #caller_loca
 			rel_y := pos.y + 20.0 * (it_index + 1);
 
 			draw_rect_lines(.{rel_x, rel_y}, .{size.x, 20.0}, border_col);
-			draw_text(it, .{rel_x + 2, rel_y + 1}, 2, text_col);
+			draw_text(it, .{rel_x + 2, rel_y + 1}, FONT_SIZE_NORMAL, text_col);
 
 			if fire_internal {
 				selected = it_index;
@@ -388,7 +396,7 @@ combo_box :: (pos: Vec2, size: Vec2, sel: *$T, it_: int = 0, loc := #caller_loca
 			}
 		}
 	} else {
-		draw_icon(.ARROW_LEFT, pos + .{size.x - 18, 2}, 2, text_col);
+		draw_icon(.ARROW_LEFT, pos + .{size.x - 18, 2}, FONT_SIZE_NORMAL, text_col);
 		draw_rect_lines(pos + .{size.x - 20, 0}, .{20, 20}, border_col);
 	}
 
@@ -397,13 +405,13 @@ combo_box :: (pos: Vec2, size: Vec2, sel: *$T, it_: int = 0, loc := #caller_loca
 	return fire_internal;
 }
 
-input_int :: (pos: Vec2, $s: f32, value: *$T, $$min_value: T, $$max_value: T, it: int = 0, $draw_border_when_focused := false, $update_on_change := false, loc := #caller_location) -> bool #modify {
+input_int :: (pos: Vec2, $s: f32, value: *$T, $$min_value: T, $$max_value: T, it: s64 = 0, $draw_border_when_focused := false, $update_on_change := false, loc := #caller_location) -> bool #modify {
 	info := cast(*Type_Info, T);
 	return info.type == .INTEGER;
 	} {
 	// Todo - Quattro - use `#modify` and polymorphism
 	digits :: #run count_digits(max_value);
-	size   :: #run Vec2.{digits * 8.0 * s + 8.0, s * 8.0 + 4};
+	size   :: #run Vec2.{digits * s + 8.0, s + 4.0};
 
 	uuid := hash_widget(loc, it);
 	state := create_selectable_region(.INPUT, uuid, pos, size);
@@ -489,7 +497,7 @@ input_int :: (pos: Vec2, $s: f32, value: *$T, $$min_value: T, $$max_value: T, it
 	return false;
 }
 
-color_picker :: (pos: Vec2, rgb: *Col, external_update: bool, it: int = 0, loc := #caller_location) -> bool {
+color_picker :: (pos: Vec2, rgb: *Col, external_update: bool, it: s64 = 0, loc := #caller_location) -> bool {
 	// the external_update is kind of sloppy, though it's used to compensate
 	// other problems, like drifting
 
@@ -564,27 +572,27 @@ color_picker :: (pos: Vec2, rgb: *Col, external_update: bool, it: int = 0, loc :
 		text_pos :: Vec2.{13, 162};
 		fmt :: #bake_arguments formatInt(minimum_digits = 3, padding = #char " ");
 
-		draw_text("R:", pos + text_pos + .{  0, 20}, 1, settings.themes.platform_text_normal);
-		draw_text("G:", pos + text_pos + .{ 62, 20}, 1, settings.themes.platform_text_normal);
-		draw_text("B:", pos + text_pos + .{124, 20}, 1, settings.themes.platform_text_normal);
-		draw_text("H:", pos + text_pos + .{  0, 36}, 1, settings.themes.platform_text_normal);
-		draw_text("S:", pos + text_pos + .{ 62, 36}, 1, settings.themes.platform_text_normal);
-		draw_text("V:", pos + text_pos + .{124, 36}, 1, settings.themes.platform_text_normal);
+		draw_text("R:", pos + text_pos + .{  0, 20}, FONT_SIZE_SMALL, settings.themes.platform_text_normal);
+		draw_text("G:", pos + text_pos + .{ 62, 20}, FONT_SIZE_SMALL, settings.themes.platform_text_normal);
+		draw_text("B:", pos + text_pos + .{124, 20}, FONT_SIZE_SMALL, settings.themes.platform_text_normal);
+		draw_text("H:", pos + text_pos + .{  0, 36}, FONT_SIZE_SMALL, settings.themes.platform_text_normal);
+		draw_text("S:", pos + text_pos + .{ 62, 36}, FONT_SIZE_SMALL, settings.themes.platform_text_normal);
+		draw_text("V:", pos + text_pos + .{124, 36}, FONT_SIZE_SMALL, settings.themes.platform_text_normal);
 		
 		// using `rgb_edited` to edit the internal hsv value
 		rgb_edited := false;
-		rgb_edited |= input_int(pos + text_pos + .{ 24, 20}, 1, *widget.stored_pointer.r, 0, 255, uuid, draw_border_when_focused = true, update_on_change = true);
-		rgb_edited |= input_int(pos + text_pos + .{ 86, 20}, 1, *widget.stored_pointer.g, 0, 255, uuid, draw_border_when_focused = true, update_on_change = true);
-		rgb_edited |= input_int(pos + text_pos + .{148, 20}, 1, *widget.stored_pointer.b, 0, 255, uuid, draw_border_when_focused = true, update_on_change = true);
+		rgb_edited |= input_int(pos + text_pos + .{ 24, 20}, FONT_SIZE_SMALL, *widget.stored_pointer.r, 0, 255, uuid, draw_border_when_focused = true, update_on_change = true);
+		rgb_edited |= input_int(pos + text_pos + .{ 86, 20}, FONT_SIZE_SMALL, *widget.stored_pointer.g, 0, 255, uuid, draw_border_when_focused = true, update_on_change = true);
+		rgb_edited |= input_int(pos + text_pos + .{148, 20}, FONT_SIZE_SMALL, *widget.stored_pointer.b, 0, 255, uuid, draw_border_when_focused = true, update_on_change = true);
 
 		h := cast(s64, round_ignoring_negative(widget.hsv.x * 360));
 		s := cast(s64, round_ignoring_negative(widget.hsv.y * 100));
 		v := cast(s64, round_ignoring_negative(widget.hsv.z * 100));
 		
 		hsv_edited := false;
-		hsv_edited |= input_int(pos + text_pos + .{ 24, 36}, 1, *h, 0, 360, uuid, draw_border_when_focused = true, update_on_change = true);
-		hsv_edited |= input_int(pos + text_pos + .{ 86, 36}, 1, *s, 0, 100, uuid, draw_border_when_focused = true, update_on_change = true);
-		hsv_edited |= input_int(pos + text_pos + .{148, 36}, 1, *v, 0, 100, uuid, draw_border_when_focused = true, update_on_change = true);
+		hsv_edited |= input_int(pos + text_pos + .{ 24, 36}, FONT_SIZE_SMALL, *h, 0, 360, uuid, draw_border_when_focused = true, update_on_change = true);
+		hsv_edited |= input_int(pos + text_pos + .{ 86, 36}, FONT_SIZE_SMALL, *s, 0, 100, uuid, draw_border_when_focused = true, update_on_change = true);
+		hsv_edited |= input_int(pos + text_pos + .{148, 36}, FONT_SIZE_SMALL, *v, 0, 100, uuid, draw_border_when_focused = true, update_on_change = true);
 		widget.hsv.x = h / 360.0;
 		widget.hsv.y = s / 100.0;
 		widget.hsv.z = v / 100.0;
@@ -662,7 +670,7 @@ color_picker :: (pos: Vec2, rgb: *Col, external_update: bool, it: int = 0, loc :
 draw_panel :: ($$text: string, pos: Vec2, size: Vec2) {
 	p :: 4;
 
-	s :: 1;
+	s :: FONT_SIZE_SMALL;
 	m: Vec2 = ---;
 	m = measure_text(text, s);
 
@@ -683,7 +691,7 @@ draw_panel :: ($$text: string, pos: Vec2, size: Vec2) {
 window :: (p: *Panel) -> want_a_rise: bool {
 	draw_rect(p.pos, p.size, settings.themes.platform_widget_bg_normal);
 	draw_rect_lines(p.pos, p.size, settings.themes.platform_widget_border_normal);
-	if p.name then draw_text(p.name, p.pos + .{9, 8}, 1, settings.themes.platform_text_normal);
+	if p.name then draw_text(p.name, p.pos + .{9, 8}, FONT_SIZE_SMALL, settings.themes.platform_text_normal);
 
 	array_add(*stack, p.pos + .{0, WIDGET_HEADER_HEIGHT});
 
@@ -730,7 +738,7 @@ window :: (p: *Panel) -> want_a_rise: bool {
 	return want_a_rise;
 }
 
-create_new_panel :: (draw: (*Panel) -> (), name: string, size: Vec2, on_close: () -> () = null, it: int = 0, loc := #caller_location) -> *Panel {
+create_new_panel :: (draw: (*Panel) -> (), name: string, size: Vec2, on_close: () -> () = null, it: s64 = 0, loc := #caller_location) -> *Panel {
 	uuid := hash_widget(loc, it);
 
 	#if DEBUG {
@@ -783,11 +791,11 @@ make_panel_topmost_by_index :: (idx: s64) {
 	panels_order[0] = panel;
 }
 
-make_panel_topmost_by_value :: (p: *Panel) {
+make_panel_topmost_by_value :: inline (p: *Panel) {
 	idx := -1;
 	for panels_order if it == p then idx = it_index;
-
 	#if DEBUG then assert(idx != -1);
+
 	make_panel_topmost_by_index(idx);
 }
 
@@ -811,7 +819,7 @@ fetch_parent :: inline () -> Vec2 {
 	if stack.count then return stack[stack.count - 1]; else return .{0, 0};
 }
 
-create_selectable_region :: inline (type: Widget_Type, loc: Source_Code_Location, it: int, pos: Vec2, size: Vec2, $disable_interactions := false) -> Interaction_State {
+create_selectable_region :: inline (type: Widget_Type, loc: Source_Code_Location, it: s64, pos: Vec2, size: Vec2, $disable_interactions := false) -> Interaction_State {
 	uuid := hash_widget(loc, it);
 	return create_selectable_region(type, uuid, pos, size, disable_interactions);
 }
@@ -861,7 +869,7 @@ create_selectable_region :: (type: Widget_Type, uuid: ID, pos: Vec2, size: Vec2,
 }
 
 #scope_file
-hash_widget :: (loc: Source_Code_Location, it: int) -> ID {
+hash_widget :: (loc: Source_Code_Location, it: s64) -> ID {
 	h1 := fnv1a_hash(loc.fully_pathed_filename.data, loc.fully_pathed_filename.count);
 	h2 := knuth_hash(cast,no_check(u64)loc.line_number);
 	h3 := knuth_hash(cast,no_check(u64)it);

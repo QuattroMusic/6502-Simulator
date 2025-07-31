@@ -401,7 +401,7 @@ tex_sampler_state: *ID3D11SamplerState;
 
 transparency: *ID3D11BlendState;
 
-texture_data, texture_width, texture_height :: #run -> ([]u8, int, int) {
+texture_data, texture_width, texture_height :: #run -> ([]u8, s64, s64) {
 	// The font is stored internally as lines of bits. If a bit is 1, there's the pixel, and if not, it's empty
 	// so, we should convert the packed data to the format for DX11
 	texture_data :: u64.[
@@ -419,7 +419,7 @@ texture_data, texture_width, texture_height :: #run -> ([]u8, int, int) {
 	texture_width    :: texture_data.count * 8;
 	mem: [texture_width * texture_height]u8;
 
-	off: int;
+	off: s64;
 	for texture_data {
 		v := it;
 		for 0..63 {

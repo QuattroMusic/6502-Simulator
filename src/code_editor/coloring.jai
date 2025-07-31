@@ -73,16 +73,16 @@ draw_line_count_bar :: (x_visible: bool) {
 
 	draw_rect(off, .{w, editor.size.y}, settings.themes.platform_widget_bg_normal);
 
-	start: int = xx editor.scrollbar_pos.y / 16;
-	end: int = xx (editor.scrollbar_pos.y + editor.size.y - 8) / 16;
+	start: s64 = xx (editor.scrollbar_pos.y / FONT_SIZE_NORMAL);
+	end:   s64 = xx ((editor.scrollbar_pos.y + editor.size.y - 8) / FONT_SIZE_NORMAL);
 
 	for start..end - 1 {
 		if it == editor.rows_length.count then return;
 
-		y := off.y + 10 + it * 16 - editor.scrollbar_pos.y;
+		y := off.y + 10 + it * FONT_SIZE_NORMAL - editor.scrollbar_pos.y;
 		fmt := formatInt(it + 1, minimum_digits = editor.row_digits, padding = #char " ");
 		// Todo - Quattro - benchmark this?
-		draw_text(tprint("%", fmt), .{off.x + 8, y}, 1, settings.themes.platform_text_normal);
+		draw_text(tprint("%", fmt), .{off.x + 8, y}, FONT_SIZE_SMALL, settings.themes.platform_text_normal);
 	}
 }
 
@@ -91,8 +91,8 @@ draw_colored_text :: (x_visible: bool) {
 	off.x += get_width_of_line_count_bar() + 4 - editor.scrollbar_pos.x;
 	off.y += 5 - editor.scrollbar_pos.y;
 
-	start: int = xx editor.scrollbar_pos.y / 16;
-	end: int = xx (editor.scrollbar_pos.y + editor.size.y - 8) / 16;
+	start: s64 = xx (editor.scrollbar_pos.y / FONT_SIZE_NORMAL);
+	end:   s64 = xx ((editor.scrollbar_pos.y + editor.size.y - 8) / FONT_SIZE_NORMAL);
 
 	w := get_width_of_line_count_bar();
 
@@ -105,15 +105,15 @@ draw_colored_text :: (x_visible: bool) {
 			column := editor.text_column[it_index];
 			color  := parse_token(editor.text_color[it_index]);
 
-			y := off.y + it * 16;
-			x := off.x + column * 16;
+			y := off.y + it * FONT_SIZE_NORMAL;
+			x := off.x + column * FONT_SIZE_NORMAL;
 			str := string.{length, editor.content.data + index};
 
 			for cast([]u8)str {
-				p := x + it_index * 16.0;
-				if (p <= editor.pos.x + w) || (p >= editor.pos.x + editor.size.x - 16) then continue;
+				p := x + it_index * FONT_SIZE_NORMAL;
+				if (p <= editor.pos.x + w) || (p >= editor.pos.x + editor.size.x - FONT_SIZE_NORMAL) then continue;
 
-				draw_character(it, .{x + it_index * 16.0, y}, scale = 2, color);
+				draw_character(it, .{x + it_index * FONT_SIZE_NORMAL, y}, FONT_SIZE_NORMAL, color);
 			}
 		}
 	}

@@ -5,7 +5,7 @@ round_up :: (n: f32, $base: f32) -> f32 {
 		sign := ifx n > 0 then 1 else -1;
 		n *= sign;
 		n /= base;
-		n = (cast(int)ceil(n)) * base;
+		n = (cast(s64)ceil(n)) * base;
 		n *= sign;
 	}
 	return n;
@@ -162,7 +162,7 @@ frac :: (v: Vec3) -> Vec3 {
 	return .{frac(v.x), frac(v.y), frac(v.z)};
 }
 
-_profile_ident: int;
+_profile_ident: s64;
 
 profile_block :: () #expand {
 	`_start := current_time_monotonic();

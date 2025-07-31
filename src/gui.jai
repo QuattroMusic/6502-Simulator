@@ -5,9 +5,9 @@ draw_header :: () {
 	draw_rect_lines(.{0, 0}, .{xx vp.width, xx vp.height}, settings.themes.platform_line);
 	draw_rect(.{0, h - 1}, .{xx vp.width, 1}, settings.themes.platform_line);
 
-	draw_text(TITLE_NAME, .{10, 4}, 3, settings.themes.general_text);
+	draw_text(TITLE_NAME, .{10, 4}, FONT_SIZE_LARGE, settings.themes.general_text);
 
-	if button(.REDUCE, .{cast(f32)vp.width - h * 3, 0}, .{h, h}, 2) {
+	if button(.REDUCE, .{cast(f32)vp.width - h * 3, 0}, .{h, h}, FONT_SIZE_NORMAL) {
 		if !vp.reduced {
 			ShowWindow(vp.window, SW_MINIMIZE);
 		}
@@ -15,18 +15,18 @@ draw_header :: () {
 	}
 
 	icon: Icon = ifx window_maximized() then .MINIMIZE else .MAXIMIZE;
-	if button(icon, .{cast(f32)vp.width - h * 2, 0}, .{h, h}, 2) {
+	if button(icon, .{cast(f32)vp.width - h * 2, 0}, .{h, h}, FONT_SIZE_NORMAL) {
 		if !window_maximized() then ShowWindow(vp.window, SW_MAXIMIZE);
 		else                        ShowWindow(vp.window, SW_RESTORE);
 	}
-	if button(.CLOSE, .{cast(f32)vp.width - h, 0}, .{h, h}, 2) {
+	if button(.CLOSE, .{cast(f32)vp.width - h, 0}, .{h, h}, FONT_SIZE_NORMAL) {
 		vp.running = false;
 	}
 }
 
 draw_buttons_controls :: () {
 	if !engine.thread_running {
-		if button("Compile and run", .{10, 40}, .{170, 25}, 1) {
+		if button("Compile and run", .{10, 40}, .{170, 25}, FONT_SIZE_SMALL) {
 			compile_program();
 			if engine.compilation_successful {
 				read_ROM(get_asset_path("out.bin"));  // Todo - robustness
@@ -34,14 +34,14 @@ draw_buttons_controls :: () {
 				cpu_start();
 			}
 		}
-		if button("Compile", .{190, 40}, .{100, 25}, 1) {
+		if button("Compile", .{190, 40}, .{100, 25}, FONT_SIZE_SMALL) {
 			compile_program();
 			if engine.compilation_successful {
 				read_ROM(get_asset_path("out.bin"));  // Todo - robustness
 				cpu_reset();
 			}
 		}
-		if engine.compilation_successful && button("Run", .{300, 40}, .{60, 25}, 1) {
+		if engine.compilation_successful && button("Run", .{300, 40}, .{60, 25}, FONT_SIZE_SMALL) {
 			cpu_reset();
 			cpu_start();
 		}
@@ -50,26 +50,26 @@ draw_buttons_controls :: () {
 		running := engine.running;
 		if !engine.debug {
 			if engine.running {
-				if button("Pause", .{100, 40}, .{80, 25}, 1) {
+				if button("Pause", .{100, 40}, .{80, 25}, FONT_SIZE_SMALL) {
 					running = false;
 				}
 			} else {
-				if button("Resume", .{100, 40}, .{80, 25}, 1) {
+				if button("Resume", .{100, 40}, .{80, 25}, FONT_SIZE_SMALL) {
 					running = true;
 				}
 			}
 		}
 		engine.running = running;
-		if button("Stop", .{10, 40}, .{80, 25}, 1) {
+		if button("Stop", .{10, 40}, .{80, 25}, FONT_SIZE_SMALL) {
 			cpu_stop();
 		}
 	}
 
-	if button("Reset", .{370, 40}, .{80, 25}, 1) {
+	if button("Reset", .{370, 40}, .{80, 25}, FONT_SIZE_SMALL) {
 		cpu_reset();
 	}
 
-	if button("Display", .{460, 40}, .{80, 25}, 1) {
+	if button("Display", .{460, 40}, .{80, 25}, FONT_SIZE_SMALL) {
 		toggle_panel(ui.display_panel, centered = true);
 	}
 }
@@ -84,11 +84,11 @@ draw_code_editor :: () {
 
 	char_per_lines := round_down(editor.size.x / 16) - 2;
 
-	max_value := Vec2.{(editor.longest_line) * 16.0, editor.rows_length.count * 16.0};
+	max_value := Vec2.{editor.longest_line * FONT_SIZE_NORMAL, editor.rows_length.count * FONT_SIZE_NORMAL};
 	scroll_size := editor.size + max_value;
 	// Todo - Quattro - make this '4' more robust (maybe in settings?).
 	// It means how many empty characters for the scroll x before the scrollbar appears
-	min_size := Vec2.{(char_per_lines - 4) * 16.0, 1 * 16.0};
+	min_size := Vec2.{(char_per_lines - 4) * FONT_SIZE_NORMAL, 1 * FONT_SIZE_NORMAL};
 
 	x_visible := min_size.x + editor.size.x < scroll_size.x;
 	draw_colored_text(x_visible);
@@ -98,7 +98,7 @@ draw_code_editor :: () {
 	editor.editor_content_size = true_size;
 
 	// caret
-	if editor.file_path && editor.focused {
+	if editor.focused {
 		time := (ms_since_init() - editor.caret_time) % 1000;
 
 		if time < 500 {
@@ -116,7 +116,7 @@ draw_code_editor :: () {
 	draw_panel(editor.file_name, editor.pos, editor.size);
 }
 
-draw_RAM_content :: (offset: Vec2, start: int, end: int, pos_y: f32, height: f32) {
+draw_RAM_content :: (offset: Vec2, start: s64, end: s64, pos_y: f32, height: f32) {
 	chars :: u8.[
 		#char "0", #char "1", #char "2", #char "3", #char "4", #char "5", #char "6", #char "7",
 		#char "8", #char "9", #char "A", #char "B", #char "C", #char "D", #char "E", #char "F"
@@ -129,11 +129,11 @@ draw_RAM_content :: (offset: Vec2, start: int, end: int, pos_y: f32, height: f32
 		v2 := (value >>  8) & 0xF;
 		v3 := (value >> 12) & 0xF;
 
-		draw_character(chars[v3], offset + .{5     , 9.0 + y * 16}, 1, settings.themes.platform_text_normal);
-		draw_character(chars[v2], offset + .{5 +  8, 9.0 + y * 16}, 1, settings.themes.platform_text_normal);
-		draw_character(chars[v1], offset + .{5 + 16, 9.0 + y * 16}, 1, settings.themes.platform_text_normal);
-		draw_character(#char "0", offset + .{5 + 24, 9.0 + y * 16}, 1, settings.themes.platform_text_normal);
-		draw_character(#char ":", offset + .{5 + 32, 9.0 + y * 16}, 1, settings.themes.platform_text_normal);
+		draw_character(chars[v3], offset + .{5     , 9.0 + y * 16}, FONT_SIZE_SMALL, settings.themes.platform_text_normal);
+		draw_character(chars[v2], offset + .{5 +  8, 9.0 + y * 16}, FONT_SIZE_SMALL, settings.themes.platform_text_normal);
+		draw_character(chars[v1], offset + .{5 + 16, 9.0 + y * 16}, FONT_SIZE_SMALL, settings.themes.platform_text_normal);
+		draw_character(#char "0", offset + .{5 + 24, 9.0 + y * 16}, FONT_SIZE_SMALL, settings.themes.platform_text_normal);
+		draw_character(#char ":", offset + .{5 + 32, 9.0 + y * 16}, FONT_SIZE_SMALL, settings.themes.platform_text_normal);
 
 		// draw values
 		for x: 0..15 {
@@ -155,8 +155,8 @@ draw_RAM_content :: (offset: Vec2, start: int, end: int, pos_y: f32, height: f32
 			lo := (data     ) & 0xF;
 			hi := (data >> 4) & 0xF;
 
-			draw_character(chars[hi], offset + .{55.0 + x * (32 + 4), 4.0 + y * 16}, 2, col);
-			draw_character(chars[lo], offset + .{71.0 + x * (32 + 4), 4.0 + y * 16}, 2, col);
+			draw_character(chars[hi], offset + .{55.0 + x * (32 + 4), 4.0 + y * 16}, FONT_SIZE_NORMAL, col);
+			draw_character(chars[lo], offset + .{71.0 + x * (32 + 4), 4.0 + y * 16}, FONT_SIZE_NORMAL, col);
 		}
 	}
 
@@ -177,18 +177,18 @@ draw_program_memory :: () {
 	draw_rect(pos, size, settings.themes.platform_background);
 	draw_rect(pos, .{48, size.y}, settings.themes.platform_widget_bg_normal);
 
-	rows_on_screen := round_down((size.y - 8) / 16);
+	rows_on_screen := round_down((size.y - 8) / FONT_SIZE_NORMAL);
 	scroll_pos     := Vec2.{0, ui.memory_scrollbar_pos};
 	min_size       := Vec2.{0, 0};
-	max_value      := Vec2.{0, (2048 - rows_on_screen) * 16};
+	max_value      := Vec2.{0, (2048 - rows_on_screen) * FONT_SIZE_NORMAL};
 
 	draw_scrollbar(pos, size, *scroll_pos, .{0, 2048 * 16}, min_size, max_value, settings.platform.memory_cursor_speed_slow, settings.platform.memory_cursor_speed_fast);
 
 	ui.memory_scrollbar_pos = scroll_pos.y;
 
 	offset := pos + .{2, -ui.memory_scrollbar_pos};
-	start: int = xx ((ui.memory_scrollbar_pos) / 16);
-	end: int = xx ((ui.memory_scrollbar_pos + size.y - 24) / 16);
+	start: s64 = xx ((ui.memory_scrollbar_pos) / FONT_SIZE_NORMAL);
+	end:   s64 = xx ((ui.memory_scrollbar_pos + size.y - 24) / FONT_SIZE_NORMAL);
 	draw_RAM_content(offset, start, end, pos.y, size.y);
 
 	draw_panel("memory", pos, size);
@@ -203,9 +203,9 @@ draw_program_registers :: () {
 		hex := formatInt(val, base = 16, minimum_digits = (#ifx s == 1 then 2 else 4));
 		bin := formatInt(val, base =  2, minimum_digits = (#ifx s == 1 then 8 else 16));
 
-		draw_text(tprint("0x%", hex), offset + pos + .{9,  8}, 2, settings.themes.general_text);
-		draw_text(tprint("0b%", bin), offset + pos + .{9, 30}, 2, settings.themes.general_text);
-		draw_text(tprint("%",   val), offset + pos + .{9, 52}, 2, settings.themes.general_text);
+		draw_text(tprint("0x%", hex), offset + pos + .{9,  8}, FONT_SIZE_NORMAL, settings.themes.general_text);
+		draw_text(tprint("0b%", bin), offset + pos + .{9, 30}, FONT_SIZE_NORMAL, settings.themes.general_text);
+		draw_text(tprint("%",   val), offset + pos + .{9, 52}, FONT_SIZE_NORMAL, settings.themes.general_text);
 	}
 
 	offset := Vec2.{vp.width + 40.0 - START_SCREEN_WIDTH / 2, vp.height + 95.0 - START_SCREEN_HEIGHT / 2};
@@ -217,32 +217,27 @@ draw_program_registers :: () {
 	panel_internal("Y", engine.Y, offset, .{382, 15}, .{176, 76});
 
 	panel_internal("PC", engine.PC, offset, .{ 10, 104}, .{305, 76});
-	panel_internal("S", engine.S, offset,   .{382, 104}, .{175, 76});
+	panel_internal("S",  engine.S,  offset, .{382, 104}, .{175, 76});
 
 	{
 		x :: 570;
 		draw_panel("Flags", offset + .{x, 15}, .{68, 165});
-		draw_text("N:", offset + .{x + 9,  25},      2, settings.themes.general_text);
-		draw_text("V:", offset + .{x + 9,  45 + 2},  2, settings.themes.general_text);
-		draw_text("B:", offset + .{x + 9,  65 + 4},  2, settings.themes.general_text);
-		draw_text("D:", offset + .{x + 9,  85 + 6},  2, settings.themes.general_text);
-		draw_text("I:", offset + .{x + 9, 105 + 8},  2, settings.themes.general_text);
-		draw_text("Z:", offset + .{x + 9, 125 + 10}, 2, settings.themes.general_text);
-		draw_text("C:", offset + .{x + 9, 145 + 12}, 2, settings.themes.general_text);
+		draw_text("N:", offset + .{x + 9,  25},      FONT_SIZE_NORMAL, settings.themes.general_text);
+		draw_text("V:", offset + .{x + 9,  45 + 2},  FONT_SIZE_NORMAL, settings.themes.general_text);
+		draw_text("B:", offset + .{x + 9,  65 + 4},  FONT_SIZE_NORMAL, settings.themes.general_text);
+		draw_text("D:", offset + .{x + 9,  85 + 6},  FONT_SIZE_NORMAL, settings.themes.general_text);
+		draw_text("I:", offset + .{x + 9, 105 + 8},  FONT_SIZE_NORMAL, settings.themes.general_text);
+		draw_text("Z:", offset + .{x + 9, 125 + 10}, FONT_SIZE_NORMAL, settings.themes.general_text);
+		draw_text("C:", offset + .{x + 9, 145 + 12}, FONT_SIZE_NORMAL, settings.themes.general_text);
 		using engine.flags;
 
-		fmtBool :: (v: bool) -> string {
-			str := tprint("%", v);
-			return string.{1, str.data};
-		}
-
-		draw_text(tprint("%", cast(u8)N), offset + .{x + 45, 25      }, 2, ifx N then settings.themes.general_flag_on else settings.themes.general_flag_off);
-		draw_text(tprint("%", cast(u8)V), offset + .{x + 45, 45   + 2}, 2, ifx V then settings.themes.general_flag_on else settings.themes.general_flag_off);
-		draw_text(tprint("%", cast(u8)B), offset + .{x + 45, 65   + 4}, 2, ifx B then settings.themes.general_flag_on else settings.themes.general_flag_off);
-		draw_text(tprint("%", cast(u8)D), offset + .{x + 45, 85   + 6}, 2, ifx D then settings.themes.general_flag_on else settings.themes.general_flag_off);
-		draw_text(tprint("%", cast(u8)I), offset + .{x + 45, 105  + 8}, 2, ifx I then settings.themes.general_flag_on else settings.themes.general_flag_off);
-		draw_text(tprint("%", cast(u8)Z), offset + .{x + 45, 125 + 10}, 2, ifx Z then settings.themes.general_flag_on else settings.themes.general_flag_off);
-		draw_text(tprint("%", cast(u8)C), offset + .{x + 45, 145 + 12}, 2, ifx C then settings.themes.general_flag_on else settings.themes.general_flag_off);
+		draw_text(tprint("%", cast(u8)N), offset + .{x + 45, 25      }, FONT_SIZE_NORMAL, ifx N then settings.themes.general_flag_on else settings.themes.general_flag_off);
+		draw_text(tprint("%", cast(u8)V), offset + .{x + 45, 45   + 2}, FONT_SIZE_NORMAL, ifx V then settings.themes.general_flag_on else settings.themes.general_flag_off);
+		draw_text(tprint("%", cast(u8)B), offset + .{x + 45, 65   + 4}, FONT_SIZE_NORMAL, ifx B then settings.themes.general_flag_on else settings.themes.general_flag_off);
+		draw_text(tprint("%", cast(u8)D), offset + .{x + 45, 85   + 6}, FONT_SIZE_NORMAL, ifx D then settings.themes.general_flag_on else settings.themes.general_flag_off);
+		draw_text(tprint("%", cast(u8)I), offset + .{x + 45, 105  + 8}, FONT_SIZE_NORMAL, ifx I then settings.themes.general_flag_on else settings.themes.general_flag_off);
+		draw_text(tprint("%", cast(u8)Z), offset + .{x + 45, 125 + 10}, FONT_SIZE_NORMAL, ifx Z then settings.themes.general_flag_on else settings.themes.general_flag_off);
+		draw_text(tprint("%", cast(u8)C), offset + .{x + 45, 145 + 12}, FONT_SIZE_NORMAL, ifx C then settings.themes.general_flag_on else settings.themes.general_flag_off);
 	}
 }
 
@@ -253,7 +248,7 @@ draw_program_debug :: () {
 
 	checkbox("debugger", offset + .{15, 15}, .{20, 20}, *engine.debug);
 	if engine.debug && engine.thread_running {
-		if button("Step", offset + .{120, 13}, .{60, 25}, 1) {
+		if button("Step", offset + .{120, 13}, .{60, 25}, FONT_SIZE_SMALL) {
 			next_instruction();
 		}
 	}
@@ -264,7 +259,7 @@ draw_program_debug :: () {
 
 	ff := formatFloat(stack_used * 100, trailing_width = 1, zero_removal = .NO);
 
-	draw_text(tprint("%\% - % / 255B", ff, 255 - engine.S), offset + .{20, 63}, 1, col);
+	draw_text(tprint("%\% - % / 255B", ff, 255 - engine.S), offset + .{20, 63}, FONT_SIZE_SMALL, col);
 }
 
 draw_current_instruction :: () {
@@ -273,7 +268,7 @@ draw_current_instruction :: () {
 
 	intrins := intrinsic_to_string(engine.current_instruction);
 
-	draw_text(intrins, offset + .{12, 11}, 2, settings.themes.general_text);
+	draw_text(intrins, offset + .{12, 11}, FONT_SIZE_NORMAL, settings.themes.general_text);
 }
 
 draw_input :: () {
@@ -282,7 +277,7 @@ draw_input :: () {
 
 	data := engine.RAM[MEMORY_INPUT_ADDRESS];
 
-	fmt: string;
+	fmt: string = ---;
 	if data == {
 		case 0;         fmt = "NONE";
 		case KEY_SPACE; fmt = "32 / SPACE";
@@ -294,7 +289,7 @@ draw_input :: () {
 			fmt = tprint("% / KEY_%", data, string.{1, *data});
 	}
 
-	draw_text(fmt, offset + .{12, 11}, 2, settings.themes.general_text);
+	draw_text(fmt, offset + .{12, 11}, FONT_SIZE_NORMAL, settings.themes.general_text);
 }
 
 draw_program_frequency :: () {
@@ -311,7 +306,7 @@ draw_program_frequency :: () {
 	else if freq < GHz(1) str = tprint("%MHz", formatInt(freq / 1_000_000,     minimum_digits = 3, padding = #char " "));
 	else                  str = tprint("%GHz", formatInt(freq / 1_000_000_000, minimum_digits = 3, padding = #char " "));
 
-	freqs :: #run int.[
+	freqs :: #run s64.[
 		1,          2,      5,      10,      20,      50,      100,      200,      500,
 		kHz(1), kHz(2), kHz(5), kHz(10), kHz(20), kHz(50), kHz(100), kHz(200), kHz(500),
 		MHz(1), MHz(2), MHz(5), MHz(10), MHz(20), MHz(50), MHz(100), MHz(200), MHz(500), GHz(1)
@@ -321,7 +316,7 @@ draw_program_frequency :: () {
 	draw_step_hslider(offset + .{20, 55}, .{160, 20}, freqs.count, *idx, disabled = engine.metrics.unlock);
 	engine.metrics.update_rate = freqs[idx];
 
-	draw_text(str, offset + .{90, 16}, 2, ifx engine.metrics.unlock then settings.themes.platform_disabled else settings.themes.platform_text_normal);
+	draw_text(str, offset + .{90, 16}, FONT_SIZE_NORMAL, ifx engine.metrics.unlock then settings.themes.platform_disabled else settings.themes.platform_text_normal);
 }
 
 draw_display :: (panel: *Panel) {
@@ -330,7 +325,7 @@ draw_display :: (panel: *Panel) {
 	parent := fetch_parent();
 	draw_rect_lines(parent + .{padding, padding}, .{DISPLAY_WIDTH * 8, DISPLAY_HEIGHT * 8}, settings.themes.platform_widget_border_normal, 1);
 
-	width: int;
+	width: s64;
 	row_data: u8 = engine.RAM[0x0200];  // first value
 	row_x := parent.x + padding;
 	row_y := parent.y + padding;
@@ -340,12 +335,12 @@ draw_display :: (panel: *Panel) {
 
 	draw_internal :: () #expand {
 		col: Col = ifx `data >= 0 && `data < DISPLAY_COLOR.count then DISPLAY_COLOR[`row_data] else DISPLAY_COLOR[0];
-		draw_rect(.{`row_x, `row_y}, .{8.0 * `width, 8}, col);
-		`row_x = (((`it - 0x0200) % DISPLAY_WIDTH) * 8) + parent.x + padding;
-		`row_y = (((`it - 0x0200) / DISPLAY_WIDTH) * 8) + parent.y + padding;
+		draw_rect(.{`row_x, `row_y}, .{FONT_SIZE_GRANULARITY * `width, FONT_SIZE_GRANULARITY}, col);
+		`row_x = (((`it - 0x0200) % DISPLAY_WIDTH) * FONT_SIZE_GRANULARITY) + parent.x + padding;
+		`row_y = (((`it - 0x0200) / DISPLAY_WIDTH) * FONT_SIZE_GRANULARITY) + parent.y + padding;
 	}
 
-	for 0x0200..(0x0200 + DISPLAY_WIDTH * DISPLAY_HEIGHT - 1) {
+	for 0x0200 .. (0x0200 + DISPLAY_WIDTH * DISPLAY_HEIGHT - 1) {
 		data := engine.RAM[it];
 
 		// some sort of greedy meshing (not advanced, works rows per rows)
@@ -370,23 +365,23 @@ draw_modal :: (panel: *Panel) {
 
 	if #complete ui.modal_error_type == {
 		case .FAILED_COMPILATION;
-			draw_text(ui.modal_error_message, pos + .{10, 10}, 2, settings.themes.general_text, wrap = MODAL_WIDTH - 20);
+			draw_text(ui.modal_error_message, pos + .{10, 10}, FONT_SIZE_NORMAL, settings.themes.general_text, wrap = MODAL_WIDTH - 20);
 		case .UNABLE_TO_OPEN_BINARY;
-			draw_text("Unable to open binary file <out.bin> for reading", pos + .{10, 10}, 2, settings.themes.general_text);
+			draw_text("Unable to open binary file <out.bin> for reading", pos + .{10, 10}, FONT_SIZE_NORMAL, settings.themes.general_text);
 		case .INCOMPATIBLE_ROM_SIZE;
-			draw_text("Incompatible ROM size", pos + .{10, 10}, 2, settings.themes.general_text);
-			draw_text("ROM size must to be 32kB", pos + .{10, 26}, 2, settings.themes.general_text);
+			draw_text("Incompatible ROM size", pos + .{10, 10}, FONT_SIZE_NORMAL, settings.themes.general_text);
+			draw_text("ROM size must to be 32kB", pos + .{10, 26}, FONT_SIZE_NORMAL, settings.themes.general_text);
 		case .ERROR_OPENING_FILE;
-			draw_text("An error has occured while opening the file", pos + .{10, 10}, 2, settings.themes.general_text);
+			draw_text("An error has occured while opening the file", pos + .{10, 10}, FONT_SIZE_NORMAL, settings.themes.general_text);
 		case .READING_FILE_TIMED_OUT;
-			draw_text("Reading file timed out", pos + .{10, 10}, 2, settings.themes.general_text);
+			draw_text("Reading file timed out", pos + .{10, 10}, FONT_SIZE_NORMAL, settings.themes.general_text);
 		case .NO_INPUT_FILE_GIVEN;
-			draw_text("No input file given", pos + .{10, 10}, 2, settings.themes.general_text);
+			draw_text("No input file given", pos + .{10, 10}, FONT_SIZE_NORMAL, settings.themes.general_text);
 		case .GIVEN_FILE_NOT_VALID;
-			draw_text("Unsupported given file", pos + .{10, 10}, 2, settings.themes.general_text);
-			draw_text("File must to have the '.s' extension", pos + .{10, 26}, 2, settings.themes.general_text);
+			draw_text("Unsupported given file", pos + .{10, 10}, FONT_SIZE_NORMAL, settings.themes.general_text);
+			draw_text("File must to have the '.s' extension", pos + .{10, 26}, FONT_SIZE_NORMAL, settings.themes.general_text);
 		case .UNABLE_TO_FIND_COMPILER;
-			draw_text("Unable to find 'vasm6502_oldstyle.exe', aborting", pos + .{10, 10}, 2, settings.themes.general_text);
+			draw_text("Unable to find 'vasm6502_oldstyle.exe', aborting", pos + .{10, 10}, FONT_SIZE_NORMAL, settings.themes.general_text);
 	}
 
 	engine.compilation_successful = false;
@@ -400,15 +395,15 @@ draw_settings :: (panel: *Panel) {
 	if #complete ui.settings_focused_tab == {
 		case .PLATFORM;
 			t :: "at startup, open:";
-			draw_text(t, pos + .{20, 50}, 2, settings.themes.platform_text_normal);
-			w :: #run measure_text(t, 2).x;
+			draw_text(t, pos + .{20, 50}, FONT_SIZE_NORMAL, settings.themes.platform_text_normal);
+			w :: #run measure_text(t, FONT_SIZE_NORMAL).x;
 
 			edit := combo_box(pos + .{40 + w, 50 - 2}, .{205, 20}, *settings.platform.at_startup);
 			if edit then save_options_file();
 
 			{
-				draw_text("fps lock:", pos + .{20, 70}, 2, settings.themes.platform_text_normal);
-				changed_value := input_int(pos + .{165, 70}, 2, *ui.settings_platform_view_fps_lock, 1, 3000);
+				draw_text("fps lock:", pos + .{20, 70}, FONT_SIZE_NORMAL, settings.themes.platform_text_normal);
+				changed_value := input_int(pos + .{165, 70}, FONT_SIZE_NORMAL, *ui.settings_platform_view_fps_lock, 1, 3000);
 
 				if changed_value {
 					settings.platform.fps_lock = ui.settings_platform_view_fps_lock;
@@ -417,10 +412,10 @@ draw_settings :: (panel: *Panel) {
 			}
 
 			internal_scroll :: ($text: string, pos: Vec2, var: *u8, y: f32) {
-				draw_text(text, pos + .{20, y}, 2, settings.themes.platform_text_normal);
-				w :: #run measure_text(text, 2).x;
+				draw_text(text, pos + .{20, y}, FONT_SIZE_NORMAL, settings.themes.platform_text_normal);
+				w :: #run measure_text(text, FONT_SIZE_NORMAL).x;
 
-				edit := input_int(pos + .{40 + w, y}, s = 2, var, min_value = 1, max_value = 255, it = xx y);
+				edit := input_int(pos + .{40 + w, y}, s = FONT_SIZE_NORMAL, var, min_value = 1, max_value = 255, it = xx y);
 
 				if edit then save_options_file();
 			}
@@ -438,7 +433,7 @@ draw_settings :: (panel: *Panel) {
 				y_off := y.*;
 				y_off -= ui.settings_theming_scroll_pos.y;
 				if y_off < 40 || y_off > SETTINGS_HEIGHT - 50 then return;
-				s :: #run measure_text(text, 2);
+				s :: #run measure_text(text, FONT_SIZE_NORMAL);
 
 				box_pos := Vec2.{x, y_off + 2};
 				box_size :: Vec2.{14, 14};
@@ -449,7 +444,7 @@ draw_settings :: (panel: *Panel) {
 				border_col: Col = ---;
 				text_col:   Col = ---;
 
-				// even if it's an enum and not a flag, we have two separated areas, so an OR is totally fine
+				// even if it's an enum and not a flag (or bool), we have two separated areas, so an OR is totally fine
 				if (state1 | state2) == {
 					case .RELEASE_NON_HOVER; #through;
 					case .NORMAL;
@@ -466,7 +461,7 @@ draw_settings :: (panel: *Panel) {
 						text_col   = settings.themes.platform_text_hover;
 				}
 
-				draw_text(text, pos + .{10, y_off}, 2, text_col);
+				draw_text(text, pos + .{10, y_off}, FONT_SIZE_NORMAL, text_col);
 
 				draw_rect(pos + box_pos, box_size, col.*);
 				draw_rect_lines(pos + box_pos, box_size, border_col);
@@ -610,13 +605,13 @@ draw_settings :: (panel: *Panel) {
 			}
 		case .EDITOR;
 			t :: "Save";
-			draw_text(t, pos + .{20, 50}, 2, settings.themes.platform_text_normal);
-			w :: #run measure_text(t, 2).x;
+			draw_text(t, pos + .{20, 50}, FONT_SIZE_NORMAL, settings.themes.platform_text_normal);
+			w :: #run measure_text(t, FONT_SIZE_NORMAL).x;
 
 			// Todo - Quattro - save data to file
 			combo_box(pos + .{40 + w, 50 - 2}, .{250, 20}, *settings.editor.when_to_save);
-			// if settings.editor.when_to_save == .EVERY_MS {
-				// input_int(pos + .{40 + w + 260, 50 - 2}, s = 2, *settings.editor.save_interval_in_ms, min_value = 1, max_value = 10000);
-			// }
+			if settings.editor.when_to_save == .EVERY_MS {
+				input_int(pos + .{40 + w + 260, 50 - 2}, s = FONT_SIZE_NORMAL, *settings.editor.save_interval_in_ms, min_value = 1, max_value = 10000);
+			}
 	}
 }
