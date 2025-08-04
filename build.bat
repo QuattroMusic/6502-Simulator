@@ -14,7 +14,6 @@ goto :end
 		GOTO :cont
 	)
 	:cont
-	if exist "%executable:~0,-4%.pdb" del /f "%executable:~0,-4%.pdb"
 	start "%executable:~0,-4% - Terminal" cmd /c ""%executable%" || pause"
 	
 	popd

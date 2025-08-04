@@ -1,20 +1,16 @@
 fetch_window_inputs :: () {
-	for input_keyboard_states {
-		if      it & .PRESSED || it & .REPEATED then input_keyboard_states[it_index] = .DOWN;
-		else if it & .RELEASED                  then input_keyboard_states[it_index] = .UP;
-	}
+	keyboard_mask :: ~(Button_State.PRESSED | .REPEATED | .RELEASED);
+	mouse_mask    :: ~(Button_State.PRESSED | .RELEASED);
 	
-	for input_button_states {
-		if      it & .PRESSED  then input_button_states[it_index] = .DOWN;
-		else if it & .RELEASED then input_button_states[it_index] = .UP;
-	}
+	for * input_keyboard_states it.* &= keyboard_mask;
+	for * input_mouse_states    it.* &= mouse_mask;
 	
 	mouse_dz = 0;
 	pressed_char = 0;
 	
 	while true {
 		msg: MSG;
-		if !PeekMessageA(*msg, null, 0, 0, 1) then break;
+		if !PeekMessageA(*msg, vp.window, 0, 0, 1) then break;
 		
 		TranslateMessage(*msg);
 		DispatchMessageA(*msg);
@@ -25,13 +21,13 @@ reset_input :: () {
 	mouse_dz = 0;
 	
 	memset(input_keyboard_states.data, xx Button_State.UP, size_of(type_of(input_keyboard_states)));
-	memset(input_button_states.data,   xx Button_State.UP, size_of(type_of(input_button_states)));
+	memset(input_mouse_states.data,    xx Button_State.UP, size_of(type_of(input_mouse_states)));
 }
 
-is_mouse_down     :: (key: u8) -> bool { return cast(bool, input_button_states[key] & .DOWN);     }
-is_mouse_up       :: (key: u8) -> bool { return cast(bool, input_button_states[key] & .UP);       }
-is_mouse_pressed  :: (key: u8) -> bool { return cast(bool, input_button_states[key] & .PRESSED);  }
-is_mouse_released :: (key: u8) -> bool { return cast(bool, input_button_states[key] & .RELEASED); }
+is_mouse_down     :: (key: u8) -> bool { return cast(bool, input_mouse_states[key] & .DOWN);     }
+is_mouse_up       :: (key: u8) -> bool { return cast(bool, input_mouse_states[key] & .UP);       }
+is_mouse_pressed  :: (key: u8) -> bool { return cast(bool, input_mouse_states[key] & .PRESSED);  }
+is_mouse_released :: (key: u8) -> bool { return cast(bool, input_mouse_states[key] & .RELEASED); }
 
 is_key_down     :: (key: u8) -> bool { return cast(bool, input_keyboard_states[key] & .DOWN);     }
 is_key_up       :: (key: u8) -> bool { return cast(bool, input_keyboard_states[key] & .UP);       }
@@ -48,7 +44,7 @@ mouse_dz: s64;
 last_down_key: u8;
 pressed_char:  u8;
 
-input_button_states:   [3]   Button_State;
+input_mouse_states:    [  3] Button_State;
 input_keyboard_states: [256] Button_State;
 
 Button_State :: enum_flags u8 {

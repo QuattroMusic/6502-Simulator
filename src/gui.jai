@@ -129,11 +129,11 @@ draw_RAM_content :: (offset: Vec2, start: s64, end: s64, pos_y: f32, height: f32
 		v2 := (value >>  8) & 0xF;
 		v3 := (value >> 12) & 0xF;
 
-		draw_character(chars[v3], offset + .{5     , 9.0 + y * 16}, FONT_SIZE_SMALL, settings.themes.platform_text_normal);
-		draw_character(chars[v2], offset + .{5 +  8, 9.0 + y * 16}, FONT_SIZE_SMALL, settings.themes.platform_text_normal);
-		draw_character(chars[v1], offset + .{5 + 16, 9.0 + y * 16}, FONT_SIZE_SMALL, settings.themes.platform_text_normal);
-		draw_character(#char "0", offset + .{5 + 24, 9.0 + y * 16}, FONT_SIZE_SMALL, settings.themes.platform_text_normal);
-		draw_character(#char ":", offset + .{5 + 32, 9.0 + y * 16}, FONT_SIZE_SMALL, settings.themes.platform_text_normal);
+		draw_character(chars[v3], offset + .{5     , 9.0 + y * 16}, FONT_SIZE_SMALL, settings.themes.platform_text_normal, range_check = false);
+		draw_character(chars[v2], offset + .{5 +  8, 9.0 + y * 16}, FONT_SIZE_SMALL, settings.themes.platform_text_normal, range_check = false);
+		draw_character(chars[v1], offset + .{5 + 16, 9.0 + y * 16}, FONT_SIZE_SMALL, settings.themes.platform_text_normal, range_check = false);
+		draw_character(#char "0", offset + .{5 + 24, 9.0 + y * 16}, FONT_SIZE_SMALL, settings.themes.platform_text_normal, range_check = false);
+		draw_character(#char ":", offset + .{5 + 32, 9.0 + y * 16}, FONT_SIZE_SMALL, settings.themes.platform_text_normal, range_check = false);
 
 		// draw values
 		for x: 0..15 {
@@ -155,8 +155,8 @@ draw_RAM_content :: (offset: Vec2, start: s64, end: s64, pos_y: f32, height: f32
 			lo := (data     ) & 0xF;
 			hi := (data >> 4) & 0xF;
 
-			draw_character(chars[hi], offset + .{55.0 + x * (32 + 4), 4.0 + y * 16}, FONT_SIZE_NORMAL, col);
-			draw_character(chars[lo], offset + .{71.0 + x * (32 + 4), 4.0 + y * 16}, FONT_SIZE_NORMAL, col);
+			draw_character(chars[hi], offset + .{55.0 + x * (32 + 4), 4.0 + y * 16}, FONT_SIZE_NORMAL, col, range_check = false);
+			draw_character(chars[lo], offset + .{71.0 + x * (32 + 4), 4.0 + y * 16}, FONT_SIZE_NORMAL, col, range_check = false);
 		}
 	}
 

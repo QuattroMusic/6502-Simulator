@@ -142,7 +142,7 @@ operator + :: (a: Col, b: Col) -> Col {
 	return out;
 }
 
-operator == :: (a: Col, b: Col) -> bool {
+operator == :: inline (a: Col, b: Col) -> bool {
 	return a.data == b.data;
 }
 

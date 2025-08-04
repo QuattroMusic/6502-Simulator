@@ -147,12 +147,12 @@ events_manager :: (hwnd: *void, msg: u32, wparam: u64, lparam: s64) -> s64 #c_ca
 				key := cast,no_check(u8, wparam);
 				pressed_char = key;
 			}
-		case WM_LBUTTONDOWN; input_button_states[0] = .DOWN | .PRESSED;
-		case WM_RBUTTONDOWN; input_button_states[1] = .DOWN | .PRESSED;
-		case WM_MBUTTONDOWN; input_button_states[2] = .DOWN | .PRESSED;
-		case WM_LBUTTONUP;   input_button_states[0] = .UP   | .RELEASED;
-		case WM_RBUTTONUP;   input_button_states[1] = .UP   | .RELEASED;
-		case WM_MBUTTONUP;   input_button_states[2] = .UP   | .RELEASED;
+		case WM_LBUTTONDOWN; input_mouse_states[0] = .DOWN | .PRESSED;
+		case WM_RBUTTONDOWN; input_mouse_states[1] = .DOWN | .PRESSED;
+		case WM_MBUTTONDOWN; input_mouse_states[2] = .DOWN | .PRESSED;
+		case WM_LBUTTONUP;   input_mouse_states[0] = .UP   | .RELEASED;
+		case WM_RBUTTONUP;   input_mouse_states[1] = .UP   | .RELEASED;
+		case WM_MBUTTONUP;   input_mouse_states[2] = .UP   | .RELEASED;
 		case WM_MOUSEMOVE;
 			mouse_x = cast(s64, (lparam      ) & 0xFFFF);
 			mouse_y = cast(s64, (lparam >> 16) & 0xFFFF);

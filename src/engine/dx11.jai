@@ -368,7 +368,7 @@ Buffer_Data :: struct (vertex_type: Type) {
 	layout: *ID3D11InputLayout;
 }
 
-BUFFER_MAX_SIZE :: 0x800;
+BUFFER_MAX_SIZE :: 0x1000;
 
 font_elements: [BUFFER_MAX_SIZE] Font_Vertex;
 

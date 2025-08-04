@@ -56,20 +56,20 @@ setup_windows :: () {
 }
 
 main :: () {
-	#if !DEBUG {
-		WR :: #import "Windows_Resources";
-		#run WR.disable_runtime_console();
-	}
-
+	// #if !DEBUG {
+		// WR :: #import "Windows_Resources";
+		// #run WR.disable_runtime_console();
+	// }
+	
 	cpu_init();
 	init_window();
 
 	init_settings();
-
+	
 	// init_code_editor("examples\\paint.s");
 
 	setup_windows();
-
+	
 	while vp.running {
 		lock_frame_rate();
 		fetch_window_inputs();

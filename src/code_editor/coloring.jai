@@ -82,7 +82,7 @@ draw_line_count_bar :: (x_visible: bool) {
 		y := off.y + 10 + it * FONT_SIZE_NORMAL - editor.scrollbar_pos.y;
 		fmt := formatInt(it + 1, minimum_digits = editor.row_digits, padding = #char " ");
 		// Todo - Quattro - benchmark this?
-		draw_text(tprint("%", fmt), .{off.x + 8, y}, FONT_SIZE_SMALL, settings.themes.platform_text_normal);
+		draw_text(tprint("%", fmt), .{off.x + 8, y}, FONT_SIZE_SMALL, settings.themes.platform_text_normal, range_check = false);
 	}
 }
 
