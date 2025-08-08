@@ -56,11 +56,11 @@ setup_windows :: () {
 }
 
 main :: () {
-	// #if !DEBUG {
-		// WR :: #import "Windows_Resources";
-		// #run WR.disable_runtime_console();
-	// }
-	
+	#if !DEBUG {
+		WR :: #import "Windows_Resources";
+		#run WR.disable_runtime_console();
+	}
+
 	cpu_init();
 	init_window();
 

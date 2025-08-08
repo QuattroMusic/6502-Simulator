@@ -1,5 +1,5 @@
 draw_rect :: inline (pos: Vec2, size: Vec2, col: Col) {
-	uv :: #run 8.0 * 8 / texture_width;
+	uv :: #run FONT_SIZE_GRANULARITY * 8 / texture_width;
 	element_add(*font_buffer, .{pos.x, pos.y, size.x, size.y, col.data, uv});
 }
 
@@ -21,7 +21,7 @@ draw_character :: inline ($$c: u8, pos: Vec2, scale: f32, col: Col, $range_check
 	}
 
 	element_add(*font_buffer, .{pos.x, pos.y, scale, scale, col.data, uv});
-} @NoProfile
+}
 
 draw_text :: (text: string, pos: Vec2, scale: f32, color: Col, $wrap: f32 = 0, $range_check := true) {
 	x_pos: f32;
@@ -50,12 +50,12 @@ draw_icon :: ($$icon: Icon, pos: Vec2, $scale: f32, col: Col) {
 
 get_icon_mapping :: (icon: Icon) -> uvx: f32 {
 	if #complete icon == {
-		case .REDUCE;      return #run  0.0 / texture_width;
-		case .MINIMIZE;    return #run  8.0 / texture_width;
-		case .MAXIMIZE;    return #run 16.0 / texture_width;
-		case .CLOSE;       return #run 24.0 / texture_width;
-		case .ARROW_LEFT;  return #run 32.0 / texture_width;
-		case .ARROW_DOWN;  return #run 40.0 / texture_width;
+		case .REDUCE;      return #run FONT_SIZE_GRANULARITY * 0 / texture_width;
+		case .MINIMIZE;    return #run FONT_SIZE_GRANULARITY * 1 / texture_width;
+		case .MAXIMIZE;    return #run FONT_SIZE_GRANULARITY * 2 / texture_width;
+		case .CLOSE;       return #run FONT_SIZE_GRANULARITY * 3 / texture_width;
+		case .ARROW_LEFT;  return #run FONT_SIZE_GRANULARITY * 4 / texture_width;
+		case .ARROW_DOWN;  return #run FONT_SIZE_GRANULARITY * 5 / texture_width;
 	}
 }
 
@@ -69,29 +69,15 @@ get_char_mapping :: inline ($$c: u8, $range_check: bool) -> uvx: f32 {
 	else char := c;
 	
 	return char * t;
-} @NoProfile
+}
 
-measure_text :: ($$text: string, $scale: f32) -> Vec2 {
-	_internal :: (t: string, s: f32) -> Vec2 {
-		w: f32;
-		max_w: f32;
-		h: f32 = s;
-		
-		for t {
-			if it == #char "\n" {
-				max_w = max(w, max_w);
-				w = 0;
-				h += s;
-			} else {
-				w += s;
-			}
+measure_text :: inline (text: string, scale: f32) -> Vec2 {
+	#if DEBUG {
+		for text {
+			if it == #char "\n" then log("[WARN] found \\n inside measure_text");
 		}
-		
-		return .{max(w, max_w), h};
 	}
-
-	#if is_constant(text) { return #run _internal(text, scale); }
-	else                  { return      _internal(text, scale); }
+	return .{text.count * scale, scale};
 }
 
 Icon :: enum {

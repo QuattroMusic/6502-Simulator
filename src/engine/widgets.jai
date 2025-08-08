@@ -409,7 +409,7 @@ input_int :: (pos: Vec2, $s: f32, value: *$T, $$min_value: T, $$max_value: T, it
 	info := cast(*Type_Info, T);
 	return info.type == .INTEGER;
 	} {
-	// Todo - Quattro - use `#modify` and polymorphism
+
 	digits :: #run count_digits(max_value);
 	size   :: #run Vec2.{digits * s + 8.0, s + 4.0};
 
@@ -876,7 +876,8 @@ hash_widget :: (loc: Source_Code_Location, it: s64) -> ID {
 
 	out := cast,no_check(ID)(h1 ^ h2 ^ h3);
 
-	// ID == 0 means no widget is focused, better to not happen this
+	// With this widgets architecture, an ID of zero means that the user hasn't any focused widget.
+	// If for some reasons we're hashing a widget and we get zero, we should rethink the hashing algoritm.
 	#if DEBUG then assert(out != 0);
 
 	return out;
