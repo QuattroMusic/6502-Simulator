@@ -161,7 +161,7 @@ event_mouse :: () {
 	}
 }
 
-handle_code_editor_events :: (loc := #caller_location) {
+handle_code_editor_events :: () {
 	if ui.settings_panel.visible {
 		editor.focused = false;
 		return;
@@ -176,7 +176,7 @@ handle_code_editor_events :: (loc := #caller_location) {
 		editor.focused = true;
 	}
 	
-	state := create_selectable_region(.SCROLLBAR, loc, 0, editor.pos, editor.size, disable_interactions = true);
+	state := create_selectable_region(.SCROLLBAR, editor.pos, editor.size, disable_interactions = true);
 	if is_mouse_pressed(0) {
 		editor.focused = (state == .PRESSED);
 	}

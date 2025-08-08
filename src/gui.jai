@@ -438,8 +438,8 @@ draw_settings :: (panel: *Panel) {
 				box_pos := Vec2.{x, y_off + 2};
 				box_size :: Vec2.{14, 14};
 
-				state1 := create_selectable_region(.TEXT,   loc, 0, pos + .{10, y_off}, s);
-				state2 := create_selectable_region(.BUTTON, loc, 1, pos + box_pos, box_size);
+				state1 := create_selectable_region(.TEXT,   pos + .{10, y_off}, s, loc, 0);
+				state2 := create_selectable_region(.BUTTON, pos + box_pos, box_size, loc, 1);
 
 				border_col: Col = ---;
 				text_col:   Col = ---;

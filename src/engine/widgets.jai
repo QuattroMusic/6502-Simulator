@@ -1,5 +1,5 @@
 button :: ($$text: string, pos: Vec2, size: Vec2, $t: f32 = FONT_SIZE_SMALL, disabled := false, it: s64 = 0, loc := #caller_location) -> bool {
-	state := create_selectable_region(.BUTTON, loc, it, pos, size);
+	state := create_selectable_region(.BUTTON, pos, size, loc, it);
 
 	bg_col:     Col = ---;
 	border_col: Col = ---;
@@ -44,7 +44,7 @@ button :: ($$text: string, pos: Vec2, size: Vec2, $t: f32 = FONT_SIZE_SMALL, dis
 }
 
 button :: ($$icon: Icon, pos: Vec2, size: Vec2, $t: f32 = FONT_SIZE_SMALL, it: s64 = 0, loc := #caller_location) -> bool {
-	state := create_selectable_region(.BUTTON, loc, it, pos, size);
+	state := create_selectable_region(.BUTTON, pos, size, loc, it);
 
 	bg_col:     Col = ---;
 	border_col: Col = ---;
@@ -84,7 +84,7 @@ checkbox :: ($$text: string, pos: Vec2, size: Vec2, value: *bool, it: s64 = 0, l
 		s := measure_text(text, FONT_SIZE_SMALL);
 	}
 
-	state := create_selectable_region(.CHECKBOX, loc, it, pos, size + .{s.x + 12, 0});
+	state := create_selectable_region(.CHECKBOX, pos, size + .{s.x + 12, 0}, loc, it);
 
 	bg_col:     Col = ---;
 	text_col:   Col = ---;
@@ -121,7 +121,7 @@ draw_step_hslider :: (pos: Vec2, size: Vec2, amt: s32, value: *s64, disabled: bo
 		col_main = settings.themes.platform_widget_bg_hover;
 		col_step = settings.themes.platform_widget_border_normal;
 
-		state := create_selectable_region(.SLIDER, loc, it, pos, size);
+		state := create_selectable_region(.SLIDER, pos, size, loc, it);
 
 		if state == .PRESSED || state == .HOLD {
 			col_main = settings.themes.platform_widget_bg_press;
@@ -168,7 +168,7 @@ draw_scrollbar :: (pos: Vec2, size: Vec2, scroll_pos: *Vec2, scroll_size: Vec2, 
 	if y_visible then content_size_without_scrollbar.x -= WIDGET_SCROLLBAR_SIZE;
 
 	// Todo - Quattro - Check again and document this use case of disable_interactions = true
-	content_state := create_selectable_region(.SCROLLBAR, loc, it, pos, content_size_without_scrollbar, disable_interactions = true);
+	content_state := create_selectable_region(.SCROLLBAR, pos, content_size_without_scrollbar, loc, it, disable_interactions = true);
 
 	if y_visible {
 		true_size.x -= WIDGET_SCROLLBAR_SIZE;
@@ -177,7 +177,7 @@ draw_scrollbar :: (pos: Vec2, size: Vec2, scroll_pos: *Vec2, scroll_size: Vec2, 
 		scroll_pos_y := pos.y;
 		off := ifx x_visible then cast(f32)WIDGET_SCROLLBAR_SIZE;
 
-		state := create_selectable_region(.SCROLLBAR, loc, it + 1, .{scroll_pos_x, scroll_pos_y}, .{WIDGET_SCROLLBAR_SIZE, size.y - off});
+		state := create_selectable_region(.SCROLLBAR, .{scroll_pos_x, scroll_pos_y}, .{WIDGET_SCROLLBAR_SIZE, size.y - off}, loc, it + 1);
 
 		if mouse_dz && !is_key_down(KEY_SHIFT) && content_state == .HOVER {
 			true_speed := ifx is_key_down(KEY_CTRL) then speed_fast else speed_slow;
@@ -211,7 +211,7 @@ draw_scrollbar :: (pos: Vec2, size: Vec2, scroll_pos: *Vec2, scroll_size: Vec2, 
 		scroll_pos_y := pos.y + size.y - WIDGET_SCROLLBAR_SIZE;
 		off := ifx y_visible then cast(f32)WIDGET_SCROLLBAR_SIZE;
 
-		state := create_selectable_region(.SCROLLBAR, loc, it + 2, .{scroll_pos_x, scroll_pos_y}, .{size.x - off, WIDGET_SCROLLBAR_SIZE});
+		state := create_selectable_region(.SCROLLBAR, .{scroll_pos_x, scroll_pos_y}, .{size.x - off, WIDGET_SCROLLBAR_SIZE}, loc, it + 2);
 
 		if mouse_dz && is_key_down(KEY_SHIFT) && content_state == .HOVER {
 			true_speed := ifx is_key_down(KEY_CTRL) then speed_fast else speed_slow;
@@ -257,7 +257,7 @@ tab_bar :: (pos: Vec2, width: f32, focused_tab: *$T, it_: s64 = 0, loc := #calle
 	x: f32;
 	for tabs {
 		d := measure_text(it, FONT_SIZE_NORMAL);
-		state := create_selectable_region(.TAB, loc, it_ + it_index, pos + .{4 + x, 0}, .{d.x + 8, tab_height});
+		state := create_selectable_region(.TAB, pos + .{4 + x, 0}, .{d.x + 8, tab_height}, loc, it_ + it_index);
 
 		if state == .RELEASE then focused_tab.* = cast(T, it_index);
 
@@ -314,7 +314,7 @@ combo_box :: (pos: Vec2, size: Vec2, sel: *$T, it_: s64 = 0, loc := #caller_loca
 	}
 
 	uuid   := hash_widget(loc, it_);
-	state  := create_selectable_region(.COMBO, uuid, pos, size);
+	state  := create_selectable_region(.COMBO, pos, size, uuid);
 	widget := *find_or_add(*widgets, uuid).combo_box;
 
 	border_col: Col = ---;
@@ -360,7 +360,7 @@ combo_box :: (pos: Vec2, size: Vec2, sel: *$T, it_: s64 = 0, loc := #caller_loca
 		draw_rect(pos + .{0, 20}, .{size.x, h}, settings.themes.platform_widget_bg_normal);
 
 		for items {
-			state_internal := create_selectable_region(.COMBO, loc, it_ + it_index + 1, pos + .{0, 20.0 * (it_index + 1)}, .{size.x, 20.0});
+			state_internal := create_selectable_region(.COMBO, pos + .{0, 20.0 * (it_index + 1)}, .{size.x, 20.0}, loc, it_ + it_index + 1);
 
 			if state_internal == .RELEASE then fire_internal = true;
 
@@ -414,7 +414,7 @@ input_int :: (pos: Vec2, $s: f32, value: *$T, $$min_value: T, $$max_value: T, it
 	size   :: #run Vec2.{digits * s + 8.0, s + 4.0};
 
 	uuid := hash_widget(loc, it);
-	state := create_selectable_region(.INPUT, uuid, pos, size);
+	state := create_selectable_region(.INPUT, pos, size, uuid);
 	widget := *find_or_add(*widgets, uuid).input_int;
 
 	unfocused := false;
@@ -504,8 +504,8 @@ color_picker :: (pos: Vec2, rgb: *Col, external_update: bool, it: s64 = 0, loc :
 	s :: 160.0;
 
 	uuid := hash_widget(loc, it);
-	state_quad := create_selectable_region(.COLOR_PICKER, uuid,        pos + .{8,      8}, .{s,  s});
-	state_bar  := create_selectable_region(.COLOR_PICKER, loc, it + 1, pos + .{s + 12, 8}, .{20, s});
+	state_quad := create_selectable_region(.COLOR_PICKER, pos + .{8,      8}, .{s,  s}, uuid);
+	state_bar  := create_selectable_region(.COLOR_PICKER, pos + .{s + 12, 8}, .{20, s}, loc, it + 1);
 
 	widget := *find_or_add(*widgets, uuid).color_picker;
 
@@ -711,7 +711,7 @@ window :: (p: *Panel) -> want_a_rise: bool {
 	stack.count      -= 1;
 
 	// after drawing the inside, handle the movement
-	state := create_selectable_region(.WINDOW, p.uuid, p.pos, p.size);
+	state := create_selectable_region(.WINDOW, p.pos, p.size, p.uuid);
 
 	want_a_rise := false;
 
@@ -819,12 +819,12 @@ fetch_parent :: inline () -> Vec2 {
 	if stack.count then return stack[stack.count - 1]; else return .{0, 0};
 }
 
-create_selectable_region :: inline (type: Widget_Type, loc: Source_Code_Location, it: s64, pos: Vec2, size: Vec2, $disable_interactions := false) -> Interaction_State {
+create_selectable_region :: inline (type: Widget_Type, pos: Vec2, size: Vec2, loc := #caller_location, it: s64 = 0, $disable_interactions := false) -> Interaction_State {
 	uuid := hash_widget(loc, it);
-	return create_selectable_region(type, uuid, pos, size, disable_interactions);
+	return create_selectable_region(type, pos, size, uuid, disable_interactions);
 }
 
-create_selectable_region :: (type: Widget_Type, uuid: ID, pos: Vec2, size: Vec2, $disable_interactions := false) -> Interaction_State {
+create_selectable_region :: (type: Widget_Type, pos: Vec2, size: Vec2, uuid: ID, $disable_interactions := false) -> Interaction_State {
 	// handling of the focused ID
 	if focused_uuid == uuid {
 		if is_mouse_inside_rect(pos, size) {
