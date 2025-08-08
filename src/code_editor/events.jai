@@ -25,6 +25,8 @@ event_right :: () {
 	using editor;
 	
 	if caret_col == rows_length[caret_row] {
+		if caret_row == rows_length.count - 1 then return;
+
 		caret_col = 0;
 		caret_row += 1;
 	} else {
@@ -183,9 +185,9 @@ handle_code_editor_events :: () {
 	
 	if !editor.focused then return;
 
-	// interaction
-	moved := false;
+	// interactions
 	edited := false;
+	moved := false;
 	
 	Mod :: enum_flags {
 		SHIFT;
@@ -194,12 +196,13 @@ handle_code_editor_events :: () {
 	}
 	
 	modifiers: Mod;
-	if is_key_down(KEY_SHIFT) then modifiers |= .SHIFT;
-	if is_key_down(KEY_CTRL)  then modifiers |= .CTRL;
-	if is_key_down(KEY_ALT)   then modifiers |= .ALT;
+	modifiers |= xx cast(u64, is_key_down(KEY_SHIFT)) << 0;
+	modifiers |= xx cast(u64, is_key_down(KEY_CTRL))  << 1;
+	modifiers |= xx cast(u64, is_key_down(KEY_ALT))   << 2;
 	
 	if modifiers == {
 		case .CTRL;
+			if is_key_pressed(KEY_S) then save_editor_file();
 			// Todo - Quattro - word movement with arrows
 			// Todo - Quattro - word deletion
 			// Todo - Quattro - new line without changing the selected one
@@ -209,7 +212,7 @@ handle_code_editor_events :: () {
 			// Todo - Quattro - selection
 			// Todo - Quattro - shift-alt
 		case .ALT;
-			// Todo - Quattro - line movement
+			// Todo - Quattro - move line up or down
 		case;
 			if pressed_char { event_char(); moved = true; edited = true; }
 
@@ -230,5 +233,20 @@ handle_code_editor_events :: () {
 	if edited {
 		// Todo - Quattro - This is updating everything, maybe we could update where needed.
 		update_code_editor_coloring();
+		
+		if settings.editor.when_to_save == .EACH_EDIT then save_editor_file();
+		
+		if settings.editor.when_to_save == .EVERY_MS then editor.asked_to_save = true;
+	}
+	
+	if editor.asked_to_save {
+		time := ms_since_init();
+		
+		if time - editor.last_saved_time > settings.editor.save_interval_in_ms {
+			editor.last_saved_time = time;
+			editor.asked_to_save = false;
+			
+			save_editor_file();
+		}
 	}
 }

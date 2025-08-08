@@ -86,8 +86,8 @@ draw_code_editor :: () {
 
 	max_value := Vec2.{editor.longest_line * FONT_SIZE_NORMAL, editor.rows_length.count * FONT_SIZE_NORMAL};
 	scroll_size := editor.size + max_value;
-	// Todo - Quattro - make this '4' more robust (maybe in settings?).
-	// It means how many empty characters for the scroll x before the scrollbar appears
+	// Todo - Quattro - make this '4' more robust.
+	// It means how many empty characters for the scroll x before the bar appears
 	min_size := Vec2.{(char_per_lines - 4) * FONT_SIZE_NORMAL, 1 * FONT_SIZE_NORMAL};
 
 	x_visible := min_size.x + editor.size.x < scroll_size.x;
@@ -103,10 +103,21 @@ draw_code_editor :: () {
 
 		if time < 500 {
 			// Todo - Quattro - 3 and 5 is padding, make it more robust
-			x := editor.pos.x + editor.caret_col * 16.0 + 3 + get_width_of_line_count_bar() - editor.scrollbar_pos.x;
-			y := editor.pos.y + editor.caret_row * 16.0 + 5                                 - editor.scrollbar_pos.y;
-
+			// Also make more robust the 16.0
 			w := get_width_of_line_count_bar();
+			
+			// check if there are tabs in a row, offset the caret accordingly
+			x_offset: f32;
+			cursor_start_row: u32 = 0;
+			for 0 .. cast(s64, editor.caret_row) - 1 cursor_start_row += editor.rows_length[it] + 1;
+			for cursor_start_row .. (cast(s64, cursor_start_row + editor.caret_col) - 1) {
+				c := editor.content[it];
+				if c == #char "\t" then x_offset += FONT_SIZE_NORMAL * 3;  // Todo - Quattro - tab size in settings
+			}
+			
+			x := editor.pos.x + editor.caret_col * 16.0 + 3 - editor.scrollbar_pos.x + w + x_offset;
+			y := editor.pos.y + editor.caret_row * 16.0 + 5 - editor.scrollbar_pos.y;
+
 			if x > (editor.pos.x + w) && x < (editor.pos.x + editor.size.x) && y > editor.pos.y && y < (editor.pos.y + editor.size.y - 16) {
 				draw_rect(.{x, y}, .{1, 16}, .{255, 255, 255, 255});
 			}

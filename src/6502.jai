@@ -151,7 +151,7 @@ Code_Editor :: struct {
 	editor_content_size: Vec2;
 
 	file_path: string;
-	file_name: string;  // view
+	file_name: string;  // string view
 	
 	content:     [..]  u8;
 	rows_length: [..] u32;
@@ -171,6 +171,10 @@ Code_Editor :: struct {
 	text_color:  [..] Color_Tokens;
 	
 	focused: bool;
+	
+	// when it's set to save every x milliseconds
+	asked_to_save: bool;
+	last_saved_time: s64;
 }
 
 Status_Flags :: struct {
