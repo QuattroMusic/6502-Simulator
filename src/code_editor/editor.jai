@@ -15,6 +15,9 @@ init_code_editor :: (path: string) {
 	editor.content.count     = data.count;
 	editor.content.allocated = data.count;
 
+	editor.caret_row = 0;
+	editor.caret_col = 0;
+
 	remove_bad_characters();
 
 	calculate_rows_length();
