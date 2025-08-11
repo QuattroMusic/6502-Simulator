@@ -1,4 +1,8 @@
 init_code_editor_coloring :: () {
+	// Todo - Quattro - This code is super duper sloppy.
+	// I'm going to completely change this whenever I'll make the
+	// 6502 internal compiler, simply because the tokens
+	// are useful to both the compiler and the editor
 	idx: u32;
 	for editor.rows_length {
 		code_editor_coloring_parse_line(it_index, idx, it);
@@ -40,10 +44,9 @@ code_editor_coloring_parse_line :: (line: s64, idx: u32, len: s64) {
 		if c == #char "\t" {
 			tab_size += 3;
 			continue;
-		}
-		else if (it + 2) < len && is_an_instruction(editor.content.data + idx + it) {
+		} else if (it + 2) < len && is_an_instruction(editor.content.data + idx + it, len, it) {
 			add_new_color_token(idx + it, 3, line, it + tab_size, .INSTRUCTION);
-			it += 3;
+			it += 2;
 		} else if c == #char ";" {
 			add_new_color_token(idx + it, len - it, line, it + tab_size, .COMMENT);
 			return;
@@ -136,8 +139,9 @@ eat_until_whitespace :: (idx: u32, i: u32, len: u32) -> u32 {
 	length: u32;
 	while i < len {
 		c = editor.content[idx + i];
-		if c == #char " " then break;
-		if c == #char ";" then break;
+		if      c == #char " "  then break;
+		else if c == #char ";"  then break;
+		else if c == #char "\t" then break;
 		i += 1;
 		length += 1;
 	}
@@ -147,7 +151,7 @@ eat_until_whitespace :: (idx: u32, i: u32, len: u32) -> u32 {
 is_word_a_label :: (idx: u32, it: u32, len: u32, label_len: *u32) -> bool {
 	c: u8;
 	off: u32;
-	while it + off < len && c != #char " " && c != #char "\n" && c != #char "\r" {
+	while it + off < len && c != #char " " && c != #char "\n" && c != #char "\r" && c != #char "\t" {
 		c = editor.content[idx + it + off];
 		off += 1;
 		if c == #char ":" {
@@ -158,12 +162,12 @@ is_word_a_label :: (idx: u32, it: u32, len: u32, label_len: *u32) -> bool {
 	return false;
 }
 
-is_an_instruction :: (buff: *u8) -> bool {
-	if !(buff[3] == #char " " || buff[3] == #char "\n" || buff[3] == #char "\r") {
+is_an_instruction :: (buff: *u8, len: s64, it: s64) -> bool {
+	if (len - it) > 3 && !(buff[3] == #char " " || buff[3] == #char "\n" || buff[3] == #char "\r" || buff[3] == #char "\t") {
 		// check if instruction is 3 char long
 		return false;
 	}
-
+	
 	make_u24 :: ($$s: string) -> u32 {
 		#if is_constant(s) {
 			c1 :: cast(u32, s[0]);
@@ -179,7 +183,6 @@ is_an_instruction :: (buff: *u8) -> bool {
 	}
 
 	value := make_u24(string.{3, buff});
-
 	if value == {
 		case #run make_u24("adc"); return true;
 		case #run make_u24("and"); return true;

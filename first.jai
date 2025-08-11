@@ -34,10 +34,10 @@ draw_one_frame :: () {
 
 setup_windows :: () {
 	modal_on_close :: () {  // Todo - Temporary!
-		// there's a silly bug about this that I cannot explain
-		// the Basic()(MEMORY_DEBUGGER = true) sometimes shows an allocation and sometimes it doesn't
-		// even if I free the memory, the bytes aren't decreasing (?)
-		// with my good sense, I'm stil free-ing the memory, you know
+		// There's a silly bug about this that I cannot explain
+		// the Basic()(MEMORY_DEBUGGER = true) sometimes shows an allocation and sometimes it doesn't.
+		// Even if I free the memory, the bytes aren't decreasing.
+		// With my good sense, I'm stil free-ing the memory, you know.
 		// I absolutely need to throw away the vasm compiler and build one
 		// ~ Quattro 2024 / 10 / 11
 		if ui.modal_error_type == .FAILED_COMPILATION then free(ui.modal_error_message);
@@ -66,7 +66,7 @@ main :: () {
 
 	init_settings();
 	
-	init_code_editor("examples\\hello 6502 display.s");
+	init_code_editor("examples\\random number.s");
 
 	setup_windows();
 	

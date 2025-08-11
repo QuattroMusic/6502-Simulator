@@ -158,7 +158,7 @@ event_mouse :: () {
 	cursor := 0;
 	count := 0;
 	for 0 .. rows_length[caret_row] - 1 {
-		if cursor >= x then break;
+		if cursor >= x || cursor_start_row + it >= content.count then break;
 		count += 1;
 		cursor += 1;
 		
