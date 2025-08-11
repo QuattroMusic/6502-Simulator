@@ -66,12 +66,12 @@ main :: () {
 
 	init_settings();
 	
-	// init_code_editor("examples\\paint.s");
+	init_code_editor("examples\\hello 6502 display.s");
 
 	setup_windows();
 	
 	while vp.running {
-		lock_frame_rate();
+		lock_window_frame_rate();
 		fetch_window_inputs();
 		
 		draw_one_frame();

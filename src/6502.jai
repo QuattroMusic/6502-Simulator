@@ -1,7 +1,7 @@
 Theming :: struct {
-	// we're using the color picker in HSV for a better precision
-	// at the end of the chain we're still converting the HSV to RGB for GPU reasons
-	// hence, we're storing data as HSV and RGB
+	// We're using the color picker in HSV.
+	// At the end of the chain we're still converting the HSV to RGB for GPU reasons
+	// hence, we're storing data as RGB
 	general_text:              Col = .{240, 240, 220, 255};
 	general_flag_off:          Col = .{202,  45,  31, 255};
 	general_flag_on:           Col = .{ 59, 187,  20, 255};
@@ -242,7 +242,7 @@ update_N_and_Z :: (data: u8) {
 }
 
 pack_P :: () -> u8 {
-	n1 := (cast(u8)engine.flags.C);
+	n1 := (cast(u8)engine.flags.C) << 0;
 	n2 := (cast(u8)engine.flags.Z) << 1;
 	n3 := (cast(u8)engine.flags.I) << 2;
 	n4 := (cast(u8)engine.flags.D) << 3;
@@ -254,13 +254,13 @@ pack_P :: () -> u8 {
 }
 
 unpack_P :: (data: u8) {
-	engine.flags.N = cast(bool)((data >> 7)    );
+	engine.flags.N = cast(bool)((data >> 7) & 1);
 	engine.flags.V = cast(bool)((data >> 6) & 1);
 	engine.flags.B = cast(bool)((data >> 4) & 1);
 	engine.flags.D = cast(bool)((data >> 3) & 1);
 	engine.flags.I = cast(bool)((data >> 2) & 1);
 	engine.flags.Z = cast(bool)((data >> 1) & 1);
-	engine.flags.C = cast(bool)((data     ) & 1);
+	engine.flags.C = cast(bool)((data >> 0) & 1);
 }
 
 cpu_stop :: () {
@@ -270,10 +270,10 @@ cpu_stop :: () {
 	engine.current_instruction = 0xFF;  // intentionally out of range
 }
 
-cpu_reset :: () {
+cpu_reset :: ($virtual := false) {
 	memset(engine.RAM.data, 0, RAM_SIZE);
 	memset(*engine.flags, 0, size_of(Status_Flags));
-	engine.PC = 0xFFFC;
+	engine.PC = #ifx virtual then 0x8000 else 0xFFFC;
 	engine.S = 0xFF;
 	engine.A = 0;
 	engine.X = 0;
@@ -282,36 +282,11 @@ cpu_reset :: () {
 	engine.current_instruction = 0xFF;  // intentionally out of range
 }
 
-cpu_init :: () {
+cpu_init :: ($virtual := false) {
 	memset(engine.ROM.data, 0, ROM_SIZE);
 	memset(engine.RAM.data, 0, RAM_SIZE);
 	memset(*engine.flags, 0, size_of(Status_Flags));
-	engine.PC = 0xFFFC;
-	engine.S = 0xFF;
-	engine.A = 0;
-	engine.X = 0;
-	engine.Y = 0;
-	
-	engine.current_instruction = 0xFF;  // intentionally out of range
-}
-
-virtual_cpu_reset :: () {
-	memset(engine.RAM.data, 0, RAM_SIZE);
-	memset(*engine.flags, 0, size_of(Status_Flags));
-	engine.PC = 0x8000;
-	engine.S = 0xFF;
-	engine.A = 0;
-	engine.X = 0;
-	engine.Y = 0;
-	
-	engine.current_instruction = 0xFF;  // intentionally out of range
-}
-
-virtual_cpu_init :: () {
-	memset(engine.ROM.data, 0, ROM_SIZE);
-	memset(engine.RAM.data, 0, RAM_SIZE);
-	memset(*engine.flags, 0, size_of(Status_Flags));
-	engine.PC = 0x8000;
+	engine.PC = #ifx virtual then 0x8000 else 0xFFFC;
 	engine.S = 0xFF;
 	engine.A = 0;
 	engine.X = 0;
@@ -333,6 +308,7 @@ cpu_start :: () {
 			if !engine.metrics.unlock then lock_frame_rate_6502();
 			if engine.running && !engine.debug then next_instruction();
 		}
+		// Todo - Quattro - Maybe find a way to pause the thread instead of init-deinit
 		thread_deinit(*engine.cpu_thread);
 		return 0;
 	}
@@ -346,20 +322,8 @@ cpu_start :: () {
 }
 
 lock_frame_rate_6502 :: () {
-    target_s: f32 = 1.0 / engine.metrics.update_rate;
-    seconds_elapsed_for_frame: f32 = (cast(f32)(read_os_timer() - engine.metrics.last_counter)) / vp.perf_count_frequency;
-    if seconds_elapsed_for_frame < target_s {
-        if vp.sleep_is_granular {
-			sleep_ms := cast(s32)(1000.0 * (target_s - seconds_elapsed_for_frame));
-            if sleep_ms > 0 then Sleep(sleep_ms);
-        }
-        while seconds_elapsed_for_frame < target_s {
-            seconds_elapsed_for_frame = (cast(f32)(read_os_timer() - engine.metrics.last_counter)) / vp.perf_count_frequency;
-        }
-    }
-    end_counter: s64;
-    QueryPerformanceCounter(*end_counter);
-    engine.metrics.last_counter = end_counter;
+	lock_frame_rate(cast(f32, engine.metrics.update_rate), engine.metrics.last_counter);
+    QueryPerformanceCounter(*engine.metrics.last_counter);
 }
 
 compile_program :: () {

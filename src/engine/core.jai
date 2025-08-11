@@ -41,18 +41,23 @@ read_os_timer :: () -> s64 {
 	return timer;
 }
 
-lock_frame_rate :: () {
-    target_s: f32 = 1.0 / settings.platform.fps_lock;
-    seconds_elapsed_for_frame: f32 = (cast(f32)(read_os_timer() - vp.last_counter)) / vp.perf_count_frequency;
+lock_frame_rate :: (target_fps: f32, last_counter: s64) {
+    target_s: f32 = 1.0 / target_fps;
+    seconds_elapsed_for_frame: f32 = (cast(f32)(read_os_timer() - last_counter)) / vp.perf_count_frequency;
     if seconds_elapsed_for_frame < target_s {
         if vp.sleep_is_granular {
             sleep_ms := cast(s32)(1000.0 * (target_s - seconds_elapsed_for_frame) - 1);
             if sleep_ms > 0 then Sleep(sleep_ms);
         }
         while seconds_elapsed_for_frame < target_s {
-            seconds_elapsed_for_frame = (cast(f32)(read_os_timer() - vp.last_counter)) / vp.perf_count_frequency;
+            seconds_elapsed_for_frame = (cast(f32)(read_os_timer() - last_counter)) / vp.perf_count_frequency;
         }
     }
+}
+
+lock_window_frame_rate :: () {
+	lock_frame_rate(cast(f32, settings.platform.fps_lock), vp.last_counter);
+
     end_counter: s64;
     QueryPerformanceCounter(*end_counter);
     vp.dt = (cast(f32)(end_counter - vp.last_counter)) / vp.perf_count_frequency;
