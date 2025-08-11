@@ -118,9 +118,9 @@ General_UI :: struct {
 	internal_selected_saved_state: *Col;
 	color_picker_edited: bool;
 
-	display_panel:  *Panel;
-	modal_panel:    *Panel;
-	settings_panel: *Panel;
+	display_window:  *Window;
+	modal_window:    *Window;
+	settings_window: *Window;
 }
 
 Error_Type :: enum {
@@ -333,12 +333,12 @@ compile_program :: () {
 	file, success := file_open(compiler_path);  // Todo - robustness
 	defer file_close(*file);
 	if !success {
-		display_error_panel(.UNABLE_TO_FIND_COMPILER, "no compiler found");
+		display_error_window(.UNABLE_TO_FIND_COMPILER, "no compiler found");
 		return;
 	}
 
 	if !editor.file_path {
-		display_error_panel(.NO_INPUT_FILE_GIVEN, "no input file");
+		display_error_window(.NO_INPUT_FILE_GIVEN, "no input file");
 		return;
 	}
 
@@ -355,7 +355,7 @@ compile_program :: () {
 
 	if res.exit_code != 0 {
 		ui.modal_error_message = copy_string(error_string);
-		display_error_panel(.FAILED_COMPILATION, "compilation failed");
+		display_error_window(.FAILED_COMPILATION, "compilation failed");
 		return;
 	}
 

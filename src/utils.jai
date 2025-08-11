@@ -62,10 +62,10 @@ split_from_right :: (s: string, c: u8) -> right: string {
 	return s;
 }
 
-display_error_panel :: (error: Error_Type, title: string) {
+display_error_window :: (error: Error_Type, title: string) {
 	ui.modal_error_type = error;
-	ui.modal_panel.name = title;
-	toggle_panel(ui.modal_panel, centered = true);
+	ui.modal_window.name = title;
+	toggle_window(ui.modal_window, centered = true);
 }
 
 RGB_to_HSV :: (c: Col) -> Vec3 {

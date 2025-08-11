@@ -688,7 +688,7 @@ draw_panel :: ($$text: string, pos: Vec2, size: Vec2) {
 	draw_text(text, pos + .{p + 4, -m.y / 2}, s, settings.themes.platform_line);
 }
 
-window :: (p: *Panel) -> want_a_rise: bool {
+window :: (p: *Window) -> want_a_rise: bool {
 	draw_rect(p.pos, p.size, settings.themes.platform_widget_bg_normal);
 	draw_rect_lines(p.pos, p.size, settings.themes.platform_widget_border_normal);
 	if p.name then draw_text(p.name, p.pos + .{9, 8}, FONT_SIZE_SMALL, settings.themes.platform_text_normal);
@@ -701,7 +701,7 @@ window :: (p: *Panel) -> want_a_rise: bool {
 	draw_rect(p.pos + .{0, WIDGET_HEADER_HEIGHT - 1}, .{p.size.x, 1}, settings.themes.platform_widget_border_normal);
 
 	if fire {
-		toggle_panel(p);
+		toggle_window(p);
 		if p.on_close then p.on_close();
 	}
 
@@ -726,7 +726,7 @@ window :: (p: *Panel) -> want_a_rise: bool {
 		case .RELEASE;
 			p.pressed = false;
 	}
-
+	
 	if p.pressed {
 		delta := Vec2.{cast(f32, mouse_x), cast(f32, mouse_y)} - p.pressed_pos;
 		p.pos = delta;
@@ -738,16 +738,16 @@ window :: (p: *Panel) -> want_a_rise: bool {
 	return want_a_rise;
 }
 
-create_new_panel :: (draw: (*Panel) -> (), name: string, size: Vec2, on_close: () -> () = null, it: s64 = 0, loc := #caller_location) -> *Panel {
+create_new_window :: (draw: (*Window) -> (), name: string, size: Vec2, on_close: () -> () = null, it: s64 = 0, loc := #caller_location) -> *Window {
 	uuid := hash_widget(loc, it);
 
 	#if DEBUG {
-		for panels_order {
-			if it.uuid == uuid assert(false, "Found a panel with the same uuid");
+		for windows_order {
+			if it.uuid == uuid assert(false, "Found a window with the same uuid");
 		}
 	}
 
-	p := New(Panel, initialized = false);
+	p := New(Window, initialized = false);
 
 	p.*.size      = size;
 	p.*.draw_func = draw;
@@ -756,22 +756,22 @@ create_new_panel :: (draw: (*Panel) -> (), name: string, size: Vec2, on_close: (
 	p.*.on_close  = on_close;
 	p.*.uuid      = uuid;
 
-	array_add(*panels_order, p);
+	array_add(*windows_order, p);
 
 	return p;
 }
 
-draw_panels :: () {
+draw_windows :: () {
 	// drawing windows
 	idx := -1;
-	for < panels_order {
+	for < windows_order {
 		if !it.visible then continue;
 
 		rise := window(it);
 		if rise then idx = it_index;
 	}
 
-	if idx != -1 then make_panel_topmost_by_index(idx);
+	if idx != -1 then make_window_topmost_by_index(idx);
 }
 
 init_widgets :: () {
@@ -782,30 +782,30 @@ deinit_widgets :: () {
 	deinit(*widgets);
 }
 
-make_panel_topmost_by_index :: (idx: s64) {
-	panel := panels_order[idx];
+make_window_topmost_by_index :: (idx: s64) {
+	panel := windows_order[idx];
 
 	// remove ordered
-	for #v2 < i: 1 .. idx { panels_order[i] = panels_order[i - 1]; }
+	for #v2 < i: 1 .. idx { windows_order[i] = windows_order[i - 1]; }
 
-	panels_order[0] = panel;
+	windows_order[0] = panel;
 }
 
-make_panel_topmost_by_value :: inline (p: *Panel) {
+make_window_topmost_by_value :: inline (p: *Window) {
 	idx := -1;
-	for panels_order if it == p then idx = it_index;
+	for windows_order if it == p then idx = it_index;
 	#if DEBUG then assert(idx != -1);
 
-	make_panel_topmost_by_index(idx);
+	make_window_topmost_by_index(idx);
 }
 
-toggle_panel :: (panel: *Panel, $centered := false) {
+toggle_window :: (panel: *Window, $centered := false) {
 	if panel.*.visible {
 		panel.*.visible = false;
 		panel.*.pressed = false;
 	} else {
 		panel.*.visible = true;
-		make_panel_topmost_by_value(panel);
+		make_window_topmost_by_value(panel);
 	}
 
 	#if centered {
@@ -813,6 +813,18 @@ toggle_panel :: (panel: *Panel, $centered := false) {
 		y := (vp.height - panel.size.y) / 2;
 		panel.*.pos = .{x, y};
 	}
+}
+
+mouse_inside_a_window :: () -> bool {
+	for windows_order {
+		if !it.visible then continue;
+		
+		if is_mouse_inside_rect(it.pos, it.size) {
+			return true;
+		}
+	}
+	
+	return false;
 }
 
 fetch_parent :: inline () -> Vec2 {
@@ -847,7 +859,7 @@ create_selectable_region :: (type: Widget_Type, pos: Vec2, size: Vec2, uuid: ID,
 	state := Interaction_State.NORMAL;
 
 	// general handling, considering occlusions
-	for panels_order {
+	for windows_order {
 		if !it.visible then continue;
 		if it.uuid == uuid || it.uuid == current_panel_uuid then break;
 
@@ -931,8 +943,8 @@ Widget :: struct {
 
 widgets: Table(ID, Widget);
 
-stack:        [..]  Vec2;
-panels_order: [..] *Panel;
+stack:         [..]  Vec2;
+windows_order: [..] *Window;
 
 current_panel_uuid: ID;
 
@@ -948,7 +960,7 @@ Interaction_State :: enum {
 	RELEASE_NON_HOVER;
 }
 
-Panel :: struct {
+Window :: struct {
 	pos: Vec2;
 	size: Vec2;
 	z: f32;
@@ -960,7 +972,7 @@ Panel :: struct {
 	visible: bool;
 	name: string;
 
-	draw_func: (*Panel) -> ();
+	draw_func: (*Window) -> ();
 	on_close:  () -> ();
 }
 

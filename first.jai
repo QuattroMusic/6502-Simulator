@@ -15,7 +15,7 @@ update_6502 :: () {
 	draw_current_instruction();
 	draw_input();
 
-	if is_key_pressed(KEY_ESC) then toggle_panel(ui.settings_panel, centered = true);
+	if is_key_pressed(KEY_ESC) then toggle_window(ui.settings_window, centered = true);
 }
 
 draw_one_frame :: () {
@@ -26,7 +26,7 @@ draw_one_frame :: () {
 
 		update_6502();
 
-		draw_panels();
+		draw_windows();
 		finalize_drawing();
 	}
 	reset_temporary_storage();
@@ -42,14 +42,14 @@ setup_windows :: () {
 		// ~ Quattro 2024 / 10 / 11
 		if ui.modal_error_type == .FAILED_COMPILATION then free(ui.modal_error_message);
 	}
-	ui.modal_panel = create_new_panel(draw_modal, "", .{800, 600}, on_close = modal_on_close);
+	ui.modal_window = create_new_window(draw_modal, "", .{800, 600}, on_close = modal_on_close);
 	
 	padding :: 4;
 	w :: DISPLAY_WIDTH  * 8 + padding * 2;
 	h :: DISPLAY_HEIGHT * 8 + padding * 2 + 24;
-	ui.display_panel = create_new_panel(draw_display, "display", .{w, h});
+	ui.display_window = create_new_window(draw_display, "display", .{w, h});
 
-	ui.settings_panel = create_new_panel(draw_settings, "settings", .{SETTINGS_WIDTH, SETTINGS_HEIGHT});
+	ui.settings_window = create_new_window(draw_settings, "settings", .{SETTINGS_WIDTH, SETTINGS_HEIGHT});
 
 	ui.internal_selected             = *settings.themes.general_text;
 	ui.internal_selected_saved_state = *settings.themes_saved_state.general_text;

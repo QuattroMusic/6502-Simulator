@@ -2,7 +2,7 @@ read_ROM :: (name: string) {
 	file, res := file_open(name);
 	defer file_close(*file);
 	if !res {
-		display_error_panel(.UNABLE_TO_OPEN_BINARY, "bin error");
+		display_error_window(.UNABLE_TO_OPEN_BINARY, "bin error");
 		return;
 	}
 	
@@ -10,7 +10,7 @@ read_ROM :: (name: string) {
 	result, size := file_tell(file);
 
 	if size != ROM_SIZE {
-		display_error_panel(.INCOMPATIBLE_ROM_SIZE, "rom error");
+		display_error_window(.INCOMPATIBLE_ROM_SIZE, "rom error");
 		return;
 	}
 	file_seek(file, 0, .START);

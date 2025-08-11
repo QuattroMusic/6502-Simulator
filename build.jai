@@ -60,6 +60,11 @@ compile_type := CompileFlag.DEBUG;
 		}
     }
 	
+	if compile_type & .DEBUG {
+		p := array_add(*plugins_to_create);
+		p.name = "Check";
+	}
+	
 	init_plugins(plugins_to_create, *plugins, w);
 	
 	assert(plugins_to_create.count == plugins.count);

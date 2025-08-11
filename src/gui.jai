@@ -70,7 +70,7 @@ draw_buttons_controls :: () {
 	}
 
 	if button("Display", .{460, 40}, .{80, 25}, FONT_SIZE_SMALL) {
-		toggle_panel(ui.display_panel, centered = true);
+		toggle_window(ui.display_window, centered = true);
 	}
 }
 
@@ -330,7 +330,7 @@ draw_program_frequency :: () {
 	draw_text(str, offset + .{90, 16}, FONT_SIZE_NORMAL, ifx engine.metrics.unlock then settings.themes.platform_disabled else settings.themes.platform_text_normal);
 }
 
-draw_display :: (panel: *Panel) {
+draw_display :: (panel: *Window) {
 	padding :: 4;
 
 	parent := fetch_parent();
@@ -368,7 +368,7 @@ draw_display :: (panel: *Panel) {
 	draw_rect(.{row_x, row_y}, .{8.0 * width, 8}, col);
 }
 
-draw_modal :: (panel: *Panel) {
+draw_modal :: (panel: *Window) {
 	pos := panel.pos + .{0, WIDGET_HEADER_HEIGHT};
 
 	x := (vp.width  - MODAL_WIDTH)  / 2.0;
@@ -398,7 +398,7 @@ draw_modal :: (panel: *Panel) {
 	engine.compilation_successful = false;
 }
 
-draw_settings :: (panel: *Panel) {
+draw_settings :: (panel: *Window) {
 	pos := panel.pos + .{0, WIDGET_HEADER_HEIGHT};
 
 	tab_bar(pos + .{10, 10}, SETTINGS_WIDTH - 20, *ui.settings_focused_tab);

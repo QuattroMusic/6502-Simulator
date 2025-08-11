@@ -17,8 +17,6 @@ event_left :: () {
 	} else {
 		caret_col -= 1;
 	}
-	
-	// caret_idx -= 1;
 }
 
 event_right :: () {
@@ -66,13 +64,13 @@ event_tab :: () {
 	
 	idx := get_current_idx();
 	
-	array_insert_at(*content, #char " ", idx);
-	array_insert_at(*content, #char " ", idx);
-	array_insert_at(*content, #char " ", idx);
-	array_insert_at(*content, #char " ", idx);
+	array_insert_at(*content, #char "\t", idx);
+	// array_insert_at(*content, #char " ", idx);
+	// array_insert_at(*content, #char " ", idx);
+	// array_insert_at(*content, #char " ", idx);
 	
-	rows_length[caret_row] += 4;
-	caret_col += 4;
+	rows_length[caret_row] += 1;
+	caret_col += 1;
 }
 
 event_enter :: () {
@@ -125,8 +123,8 @@ event_char :: () {
 event_mouse :: () {
 	using editor;
 	
-	if ui.display_panel.visible  && is_mouse_inside_rect(ui.display_panel.pos,  ui.display_panel.size)  then return;
-	if ui.settings_panel.visible && is_mouse_inside_rect(ui.settings_panel.pos, ui.settings_panel.size) then return;
+	if ui.display_window.visible  && is_mouse_inside_rect(ui.display_window.pos,  ui.display_window.size)  then return;
+	if ui.settings_window.visible && is_mouse_inside_rect(ui.settings_window.pos, ui.settings_window.size) then return;
 	
 	x := cast(s32, mouse_x - pos.x);
 	y := cast(s32, mouse_y - pos.y);
@@ -135,7 +133,6 @@ event_mouse :: () {
 	
 	// if the mouse is inside the area
 	if x < 0 || x > cast(s32, size_x) || y < 0 || y > cast(s32, size_y) then return;
-	
 	
 	// get the current char with "rounding"
 	x = cast(s32, mouse_x - pos.x + 8);
@@ -147,39 +144,49 @@ event_mouse :: () {
 	x -= 3 + cast(s32, get_width_of_line_count_bar());
 	y -= 5;
 	
-	x /= 16;
 	y /= 16;
-	
 	if y >= rows_length.count {
 		caret_row = xx (rows_length.count - 1);
 	} else {
 		caret_row = xx y;
 	}
 	
+	x /= 16;
+	cursor_start_row: u32 = 0;
+	for 0 .. cast(s64, caret_row) - 1 { cursor_start_row += rows_length[it] + 1; }
+
+	cursor := 0;
+	count := 0;
+	for 0 .. rows_length[caret_row] - 1 {
+		if cursor >= x then break;
+		count += 1;
+		cursor += 1;
+		
+		c := content[cursor_start_row + it];
+		if c == #char "\t" {
+			cursor += 3;
+		}
+	}
+	
+	x = xx count;
+	
 	if cast(u32, x) > rows_length[caret_row] {
 		caret_col = rows_length[caret_row];
 	} else {
-		caret_col = xx x;
+		caret_col = xx x;  // :)
 	}
 }
 
 handle_code_editor_events :: () {
-	if ui.settings_panel.visible {
-		editor.focused = false;
-		return;
-	} else {
-		editor.focused = true;
-	}
+	if !editor.file_path then return;
 	
-	if !editor.file_path {
-		editor.focused = false;
-		return;
-	} else {
-		editor.focused = true;
-	}
-	
-	state := create_selectable_region(.SCROLLBAR, editor.pos, editor.size, disable_interactions = true);
 	if is_mouse_pressed(0) {
+		if mouse_inside_a_window() {
+			editor.focused = false;
+			return;
+		}
+		
+		state := create_selectable_region(.SCROLLBAR, editor.pos, editor.size, disable_interactions = true);
 		editor.focused = (state == .PRESSED);
 	}
 	
@@ -187,7 +194,7 @@ handle_code_editor_events :: () {
 
 	// interactions
 	edited := false;
-	moved := false;
+	moved  := false;
 	
 	Mod :: enum_flags {
 		SHIFT;

@@ -4,7 +4,7 @@ init_code_editor :: (path: string) {
 	if !success {
 		editor.content.count = 0;
 		editor.file_name = "";
-		display_error_panel(.ERROR_OPENING_FILE, "error opening file");
+		display_error_window(.ERROR_OPENING_FILE, "error opening file");
 		return;
 	}
 
@@ -106,7 +106,7 @@ remove_bad_characters :: () {
 handle_dropped_file :: (file: string) {
 	ext := split_from_right(file, #char ".");
 	if ext != "s" {  // allow only '.s' as extension
-		display_error_panel(.GIVEN_FILE_NOT_VALID, "unsupported file");
+		display_error_window(.GIVEN_FILE_NOT_VALID, "unsupported file");
 		return;
 	}
 
