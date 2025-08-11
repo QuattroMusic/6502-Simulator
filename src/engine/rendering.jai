@@ -14,21 +14,25 @@ draw_character :: inline ($$c: u8, pos: Vec2, scale: f32, col: Col, $range_check
 	#if is_constant(c) { #if c == #char " " || c == #char "\t" || c == #char "\r" then return; }
 	else               {  if c == #char " " || c == #char "\t" || c == #char "\r" then return; }
 	
+	do_range_check :: #ifx is_constant(c) then false else range_check;
+	
 	#if is_constant(c) {
-		uv :: #run get_char_mapping(c, range_check);
+		uv :: #run get_char_mapping(c, do_range_check);
 	} else {
-		uv := get_char_mapping(c, range_check);
+		uv := get_char_mapping(c, do_range_check);
 	}
 
 	element_add(*font_buffer, .{pos.x, pos.y, scale, scale, col.data, uv});
 }
 
-draw_text :: (text: string, pos: Vec2, scale: f32, color: Col, $wrap: f32 = 0, $range_check := true) {
+draw_text :: ($$text: string, pos: Vec2, scale: f32, color: Col, $wrap: f32 = 0, $range_check := true) {
 	x_pos: f32;
 	y_pos: f32;
 
+	do_range_check :: #ifx is_constant(text) then false else range_check;
+
 	for text {
-		draw_character(cast,trunc(u8)it, pos + .{x_pos, y_pos}, scale, color, range_check);
+		draw_character(cast,trunc(u8)it, pos + .{x_pos, y_pos}, scale, color, do_range_check);
 		x_pos += scale;
 		
 		#if wrap if x_pos + scale > wrap {
