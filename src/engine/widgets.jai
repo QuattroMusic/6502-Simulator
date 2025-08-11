@@ -365,11 +365,10 @@ combo_box :: (pos: Vec2, size: Vec2, sel: *$T, it_: s64 = 0, loc := #caller_loca
 		draw_rect_lines(pos + .{size.x - 20, 0}, .{20, 20}, border_col);
 
 		draw_rect(pos + .{0, 20}, .{size.x, h}, settings.themes.platform_widget_bg_normal);
-
+		
 		for items {
 			state_internal := create_selectable_region(.COMBO, pos + .{0, 20.0 * (it_index + 1)}, .{size.x, 20.0}, loc, it_ + it_index + 1);
-
-			if state_internal == .RELEASE then fire_internal = true;
+			single_selected := state_internal == .RELEASE;
 
 			border_col: Col = ---;
 			text_col:   Col = ---;
@@ -380,10 +379,10 @@ combo_box :: (pos: Vec2, size: Vec2, sel: *$T, it_: s64 = 0, loc := #caller_loca
 					border_col = settings.themes.platform_widget_border_normal;
 					text_col   = settings.themes.platform_text_normal;
 				case .PRESSED; #through;
+				case .RELEASE; #through;
 				case .HOLD;
 					border_col = settings.themes.platform_widget_border_press;
 					text_col   = settings.themes.platform_text_press;
-				case .RELEASE; #through;
 				case .HOVER; #through;
 				case .HOLD_NON_HOVER;
 					border_col = settings.themes.platform_widget_border_hover;
@@ -396,17 +395,18 @@ combo_box :: (pos: Vec2, size: Vec2, sel: *$T, it_: s64 = 0, loc := #caller_loca
 			draw_rect_lines(.{rel_x, rel_y}, .{size.x, 20.0}, border_col);
 			draw_text(it, .{rel_x + 2, rel_y + 1}, FONT_SIZE_NORMAL, text_col);
 
-			if fire_internal {
+			if single_selected {
 				selected = it_index;
 				widget.*.open = false;
 				occlusion.type = .NONE;
+				fire_internal = true;
 			}
 		}
 	} else {
 		draw_icon(.ARROW_LEFT, pos + .{size.x - 18, 2}, FONT_SIZE_NORMAL, text_col);
 		draw_rect_lines(pos + .{size.x - 20, 0}, .{20, 20}, border_col);
 	}
-
+	
 	sel.* = cast(T, selected);
 
 	return fire_internal;

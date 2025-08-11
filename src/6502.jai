@@ -57,9 +57,8 @@ Theming :: struct {
 	display_col15: Col = .{255, 110, 199, 255};
 }
 
-
 Platform_Settings :: struct {
-	at_startup: enum {
+	at_startup: enum u8 {
 		EMPTY_FILE;
 		LAST_FILE;
 	} = .EMPTY_FILE;
