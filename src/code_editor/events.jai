@@ -217,7 +217,6 @@ handle_code_editor_events :: () {
 		case .SHIFT;
 			if pressed_char { event_char(); moved = true; edited = true; }
 			// Todo - Quattro - selection
-			// Todo - Quattro - shift-alt
 		case .ALT;
 			// Todo - Quattro - move line up or down
 		case;

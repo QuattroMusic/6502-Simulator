@@ -176,7 +176,7 @@ parse_settings_version_2 :: (file: *File) {
 	using settings.platform;
 	
 	{
-		m, M := enum_range(At_Startup);
+		m, M := enum_range(type_of(at_startup));
 		at_startup = xx read_u8_in_range(file, xx m, xx M);
 		if at_startup == .LAST_FILE {
 			file_size: type_of(editor.file_path.count);

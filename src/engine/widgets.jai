@@ -291,14 +291,17 @@ tab_bar :: (pos: Vec2, width: f32, focused_tab: *$T, it_: s64 = 0, loc := #calle
 }
 
 h_separator :: ($name: string, pos: Vec2, width: f32) {
-	p :: 12;
+	#if name {
+		p :: 12;
+		draw_rect(pos, .{p, 1}, settings.themes.platform_line);
 
-	draw_rect(pos, .{p, 1}, settings.themes.platform_line);
+		draw_text(name, pos + .{p + 4, -5}, FONT_SIZE_SMALL, settings.themes.platform_text_normal);
+		s :: #run measure_text(name, FONT_SIZE_SMALL);
 
-	draw_text(name, pos + .{p + 4, -5}, FONT_SIZE_SMALL, settings.themes.platform_text_normal);
-	s :: #run measure_text(name, FONT_SIZE_SMALL);
-
-	draw_rect(pos + .{p + 8 + s.x, 0}, .{width - p - 8 - s.x, 1}, settings.themes.platform_line);
+		draw_rect(pos + .{p + 8 + s.x, 0}, .{width - p - 8 - s.x, 1}, settings.themes.platform_line);
+	} else {
+		draw_rect(pos, .{width, 1}, settings.themes.platform_line);
+	}
 }
 
 combo_box :: (pos: Vec2, size: Vec2, sel: *$T, it_: s64 = 0, loc := #caller_location) -> bool #modify {
@@ -341,12 +344,12 @@ combo_box :: (pos: Vec2, size: Vec2, sel: *$T, it_: s64 = 0, loc := #caller_loca
 
 	if state == .RELEASE then widget.*.open = !widget.*.open;
 
-	h := items.count * 20.0;
+	h :: items.count * 20.0;
 
-	if is_mouse_pressed(0) && !is_mouse_inside_rect(pos, pos + .{size.x, h + 20.0}) then widget.*.open = false;
+	if is_mouse_pressed(0) && !is_mouse_inside_rect(pos, .{size.x, h + 20.0}) then widget.*.open = false;
 	if is_key_pressed(KEY_ESC) then widget.*.open = false;
 
-	fire_internal: bool;
+	fire_internal := false;
 
 	if state == .HOVER && mouse_dz {
 		selected = clamp(selected - mouse_dz, 0, items.count - 1);
@@ -354,6 +357,10 @@ combo_box :: (pos: Vec2, size: Vec2, sel: *$T, it_: s64 = 0, loc := #caller_loca
 	}
 
 	if widget.open {
+		occlusion.pos = pos;
+		occlusion.size = .{size.x, h + 20.0};
+		occlusion.type = .COMBO;
+		
 		draw_icon(.ARROW_DOWN, pos + .{size.x - 18, 2}, FONT_SIZE_NORMAL, text_col);
 		draw_rect_lines(pos + .{size.x - 20, 0}, .{20, 20}, border_col);
 
@@ -392,7 +399,7 @@ combo_box :: (pos: Vec2, size: Vec2, sel: *$T, it_: s64 = 0, loc := #caller_loca
 			if fire_internal {
 				selected = it_index;
 				widget.*.open = false;
-				break;
+				occlusion.type = .NONE;
 			}
 		}
 	} else {
@@ -772,6 +779,9 @@ draw_windows :: () {
 	}
 
 	if idx != -1 then make_window_topmost_by_index(idx);
+	
+	Swap(*occlusion, *prev_occlusion);
+	occlusion.type = .NONE;
 }
 
 init_widgets :: () {
@@ -858,7 +868,6 @@ create_selectable_region :: (type: Widget_Type, pos: Vec2, size: Vec2, uuid: ID,
 
 	state := Interaction_State.NORMAL;
 
-	// general handling, considering occlusions
 	for windows_order {
 		if !it.visible then continue;
 		if it.uuid == uuid || it.uuid == current_panel_uuid then break;
@@ -867,6 +876,8 @@ create_selectable_region :: (type: Widget_Type, pos: Vec2, size: Vec2, uuid: ID,
 			return state;
 		}
 	}
+	
+	if prev_occlusion.type != .NONE && prev_occlusion.type != type && is_mouse_inside_rect(prev_occlusion.pos, prev_occlusion.size) then return state;
 
 	if is_mouse_inside_rect(pos, size) {
 		state = .HOVER;
@@ -896,6 +907,7 @@ hash_widget :: (loc: Source_Code_Location, it: s64) -> ID {
 }
 
 Widget_Type :: enum u32 {
+	NONE;
 	BUTTON;
 	CHECKBOX;
 	SLIDER;
@@ -941,10 +953,22 @@ Widget :: struct {
 	}
 }
 
+Occlusion_Area :: struct {
+	pos:  Vec2;
+	size: Vec2;
+	type: Widget_Type;
+}
+
 widgets: Table(ID, Widget);
 
-stack:         [..]  Vec2;
-windows_order: [..] *Window;
+stack:           [..]  Vec2;
+windows_order:   [..] *Window;
+
+// Note that this should be a stack, but since we just need one occlusion, it's just an item
+occlusion: Occlusion_Area;
+prev_occlusion: Occlusion_Area;
+
+occluder_area: *Widget;
 
 current_panel_uuid: ID;
 

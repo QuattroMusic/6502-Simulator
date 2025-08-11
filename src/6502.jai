@@ -57,13 +57,12 @@ Theming :: struct {
 	display_col15: Col = .{255, 110, 199, 255};
 }
 
-At_Startup :: enum u8 {
-	EMPTY_FILE;
-	LAST_FILE;
-}
 
 Platform_Settings :: struct {
-	at_startup: At_Startup = .EMPTY_FILE;
+	at_startup: enum {
+		EMPTY_FILE;
+		LAST_FILE;
+	} = .EMPTY_FILE;
 	
 	fps_lock: u16 = 60;
 	
@@ -73,15 +72,14 @@ Platform_Settings :: struct {
 	memory_cursor_speed_fast: u8 = 8;
 }
 
-When_To_Save_Editor :: enum {
-	MANUALLY;
-	EACH_EDIT;
-	WHEN_COMPILING;
-	EVERY_MS;
-}
-
 Editor_Settings :: struct {
-	when_to_save: When_To_Save_Editor = .WHEN_COMPILING;
+	when_to_save: enum {
+		MANUALLY;
+		EACH_EDIT;
+		WHEN_COMPILING;
+		EVERY_MS;
+	} = .WHEN_COMPILING;
+	
 	save_interval_in_ms: s64;
 }
 
@@ -94,19 +92,17 @@ Settings :: struct {
 	editor: Editor_Settings;
 }
 
-Settings_Focused_Tab :: enum {
-	PLATFORM;
-	THEMING;
-	EDITOR;
-}
-
 General_UI :: struct {
 	memory_scrollbar_pos: f32;
 
 	modal_error_message: string;
 	modal_error_type: Error_Type;
 
-	settings_focused_tab: Settings_Focused_Tab;
+	settings_focused_tab: enum {
+		PLATFORM;
+		THEMING;
+		EDITOR;
+	}
 
 	settings_platform_scrollbar_edited: bool;
 	settings_theming_scroll_pos: Vec2;
@@ -118,9 +114,16 @@ General_UI :: struct {
 	internal_selected_saved_state: *Col;
 	color_picker_edited: bool;
 
-	display_window:  *Window;
-	modal_window:    *Window;
-	settings_window: *Window;
+	instruction_set_category: enum {
+		UNPACKED;
+		PACKED;
+		CATEGORIZED;
+	}
+
+	display_window:          *Window;
+	modal_window:            *Window;
+	settings_window:         *Window;
+	instructions_set_window: *Window;
 }
 
 Error_Type :: enum {
@@ -492,50 +495,50 @@ intrinsic_to_string :: (code: Opcode) -> string {
 }
 
 Opcode :: enum u8 {
-	BRK :: 0X00;
-	NOP :: 0XEA;
+	BRK :: 0x00;
+	NOP :: 0xEA;
 
-	CLC :: 0X18; CLD :: 0XD8; CLI :: 0X58; CLV :: 0XB8;
-	SEC :: 0X38; SED :: 0XF8; SEI :: 0X78;
+	CLC :: 0x18; CLD :: 0xD8; CLI :: 0x58; CLV :: 0xB8;
+	SEC :: 0x38; SED :: 0xF8; SEI :: 0x78;
 
-	DEX :: 0XCA; DEY :: 0X88;
-	INX :: 0XE8; INY :: 0XC8;
+	DEX :: 0xCA; DEY :: 0x88;
+	INX :: 0xE8; INY :: 0xC8;
 
-	PHA :: 0X48; PHP :: 0X08; PLA :: 0X68; PLP :: 0X28;
+	PHA :: 0x48; PHP :: 0x08; PLA :: 0x68; PLP :: 0x28;
 
-	RTI :: 0X40; RTS :: 0X60;
+	RTI :: 0x40; RTS :: 0x60;
 
-	TAX :: 0XAA; TAY :: 0XA8; TSX :: 0XBA; TXA :: 0X8A; TXS :: 0X9A; TYA :: 0X98;
+	TAX :: 0xAA; TAY :: 0xA8; TSX :: 0xBA; TXA :: 0x8A; TXS :: 0x9A; TYA :: 0x98;
 
-	BIT_ABS :: 0X2C; BIT_ZPG :: 0X24;
+	BIT_ABS :: 0x2C; BIT_ZPG :: 0x24;
 
-	JMP_ABS :: 0X4C; JMP_IND :: 0X6C;
-	JSR_ABS :: 0X20;
+	JMP_ABS :: 0x4C; JMP_IND :: 0x6C;
+	JSR_ABS :: 0x20;
 
-	BCC :: 0X90; BCS :: 0XB0; BEQ :: 0XF0; BNE :: 0XD0; BMI :: 0X30; BPL :: 0X10; BVC :: 0X50; BVS :: 0X70;
+	BCC :: 0x90; BCS :: 0xB0; BEQ :: 0xF0; BNE :: 0xD0; BMI :: 0x30; BPL :: 0x10; BVC :: 0x50; BVS :: 0x70;
 
-	INC_ABS :: 0XEE; INC_ZPG :: 0XE6; INC_ZPX :: 0XF6; INC_ABX :: 0XFE;
-	DEC_ABS :: 0XCE; DEC_ZPG :: 0XC6; DEC_ZPX :: 0XD6; DEC_ABX :: 0XDE;
+	INC_ABS :: 0xEE; INC_ZPG :: 0xE6; INC_ZPX :: 0xF6; INC_ABX :: 0xFE;
+	DEC_ABS :: 0xCE; DEC_ZPG :: 0xC6; DEC_ZPX :: 0xD6; DEC_ABX :: 0xDE;
 
-	STA_ABS :: 0X8D; STA_ZPG :: 0X85; STA_INX :: 0X81; STA_INY :: 0X91; STA_ZPX :: 0x95; STA_ABX :: 0X9D; STA_ABY :: 0X99;
-	STX_ABS :: 0X8E; STX_ZPG :: 0X86; STX_ZPY :: 0X96;
-	STY_ABS :: 0X8C; STY_ZPG :: 0X84; STY_ZPX :: 0X94;
+	STA_ABS :: 0x8D; STA_ZPG :: 0x85; STA_INX :: 0x81; STA_INY :: 0x91; STA_ZPX :: 0x95; STA_ABX :: 0x9D; STA_ABY :: 0x99;
+	STX_ABS :: 0x8E; STX_ZPG :: 0x86; STX_ZPY :: 0x96;
+	STY_ABS :: 0x8C; STY_ZPG :: 0x84; STY_ZPX :: 0x94;
 
 	ADC_IMM :: 0x69; ADC_ABS :: 0x6D; ADC_ZPG :: 0x65; ADC_INX :: 0x61; ADC_INY :: 0x71; ADC_ZPX :: 0x75; ADC_ABX :: 0x7D; ADC_ABY :: 0x79;
-	AND_IMM :: 0x29; AND_ABS :: 0x2D; AND_ZPG :: 0X25; AND_INX :: 0X21; AND_INY :: 0X31; AND_ZPX :: 0X35; AND_ABX :: 0X3D; AND_ABY :: 0X39;
-	CMP_IMM :: 0XC9; CMP_ABS :: 0XCD; CMP_ZPG :: 0XC5; CMP_INX :: 0XC1; CMP_INY :: 0XD1; CMP_ABX :: 0XDD; CMP_ABY :: 0XD9;
-	CPX_IMM :: 0XE0; CPX_ABS :: 0XEC; CPX_ZPG :: 0XE4;
-	CPY_IMM :: 0XC0; CPY_ABS :: 0XCC; CPY_ZPG :: 0XC4;
-	EOR_IMM :: 0X49; EOR_ABS :: 0X4D; EOR_ZPG :: 0X45; EOR_INX :: 0X41; EOR_INY :: 0X51; EOR_ZPX :: 0X55; EOR_ABX :: 0X5D; EOR_ABY :: 0X59;
-	LDA_IMM :: 0XA9; LDA_ABS :: 0XAD; LDA_ZPG :: 0XA5; LDA_INX :: 0XA1; LDA_INY :: 0XB1; LDA_ZPX :: 0XB5; LDA_ABX :: 0XBD; LDA_ABY :: 0XB9;
-	ORA_IMM :: 0X09; ORA_ABS :: 0X0D; ORA_ZPG :: 0X05; ORA_INX :: 0X01; ORA_INY :: 0X11; ORA_ZPX :: 0X15; ORA_ABX :: 0X1D; ORA_ABY :: 0X19;
-	SBC_IMM :: 0XE9; SBC_ABS :: 0XED; SBC_ZPG :: 0XE5; SBC_INX :: 0XE1; SBC_INY :: 0XF1; SBC_ZPX :: 0XF5; SBC_ABX :: 0XFD; SBC_ABY :: 0XF9;
+	AND_IMM :: 0x29; AND_ABS :: 0x2D; AND_ZPG :: 0x25; AND_INX :: 0x21; AND_INY :: 0x31; AND_ZPX :: 0x35; AND_ABX :: 0x3D; AND_ABY :: 0x39;
+	CMP_IMM :: 0xC9; CMP_ABS :: 0xCD; CMP_ZPG :: 0xC5; CMP_INX :: 0xC1; CMP_INY :: 0xD1; CMP_ABX :: 0xDD; CMP_ABY :: 0xD9;
+	CPX_IMM :: 0xE0; CPX_ABS :: 0xEC; CPX_ZPG :: 0xE4;
+	CPY_IMM :: 0xC0; CPY_ABS :: 0xCC; CPY_ZPG :: 0xC4;
+	EOR_IMM :: 0x49; EOR_ABS :: 0x4D; EOR_ZPG :: 0x45; EOR_INX :: 0x41; EOR_INY :: 0x51; EOR_ZPX :: 0x55; EOR_ABX :: 0x5D; EOR_ABY :: 0x59;
+	LDA_IMM :: 0xA9; LDA_ABS :: 0xAD; LDA_ZPG :: 0xA5; LDA_INX :: 0xA1; LDA_INY :: 0xB1; LDA_ZPX :: 0xB5; LDA_ABX :: 0xBD; LDA_ABY :: 0xB9;
+	ORA_IMM :: 0x09; ORA_ABS :: 0x0D; ORA_ZPG :: 0x05; ORA_INX :: 0x01; ORA_INY :: 0x11; ORA_ZPX :: 0x15; ORA_ABX :: 0x1D; ORA_ABY :: 0x19;
+	SBC_IMM :: 0xE9; SBC_ABS :: 0xED; SBC_ZPG :: 0xE5; SBC_INX :: 0xE1; SBC_INY :: 0xF1; SBC_ZPX :: 0xF5; SBC_ABX :: 0xFD; SBC_ABY :: 0xF9;
 
-	LDX_IMM :: 0XA2; LDX_ABS :: 0XAE; LDX_ZPG :: 0XA6; LDX_ABY :: 0XBE; LDX_ZPY :: 0XB6;
-	LDY_IMM :: 0XA0; LDY_ABS :: 0XAC; LDY_ZPG :: 0XA4; LDY_ZPX :: 0XB4; LDY_ABX :: 0XBC;
+	LDX_IMM :: 0xA2; LDX_ABS :: 0xAE; LDX_ZPG :: 0xA6; LDX_ABY :: 0xBE; LDX_ZPY :: 0xB6;
+	LDY_IMM :: 0xA0; LDY_ABS :: 0xAC; LDY_ZPG :: 0xA4; LDY_ZPX :: 0xB4; LDY_ABX :: 0xBC;
 
-	ROR_ABS :: 0X6E; ROR_ZPG :: 0X66; ROR_ACC :: 0X6A; ROR_ZPX :: 0X76; ROR_ABX :: 0X7E;
-	ROL_ABS :: 0X2E; ROL_ZPG :: 0X26; ROL_ACC :: 0X2A; ROL_ZPX :: 0X36; ROL_ABX :: 0XE3;
-	LSR_ABS :: 0X4E; LSR_ZPG :: 0X46; LSR_ACC :: 0X4A; LSR_ZPX :: 0X56; LSR_ABX :: 0X5E;
-	ASL_ABS :: 0X0E; ASL_ZPG :: 0X06; ASL_ACC :: 0X0A; ASL_ZPX :: 0X16; ASL_ABX :: 0X1E;
+	ROR_ABS :: 0x6E; ROR_ZPG :: 0x66; ROR_ACC :: 0x6A; ROR_ZPX :: 0x76; ROR_ABX :: 0x7E;
+	ROL_ABS :: 0x2E; ROL_ZPG :: 0x26; ROL_ACC :: 0x2A; ROL_ZPX :: 0x36; ROL_ABX :: 0xE3;
+	LSR_ABS :: 0x4E; LSR_ZPG :: 0x46; LSR_ACC :: 0x4A; LSR_ZPX :: 0x56; LSR_ABX :: 0x5E;
+	ASL_ABS :: 0x0E; ASL_ZPG :: 0x06; ASL_ACC :: 0x0A; ASL_ZPX :: 0x16; ASL_ABX :: 0x1E;
 }
