@@ -114,10 +114,11 @@ General_UI :: struct {
 	color_picker_edited: bool;
 
 	instruction_set_category: enum {
-		UNPACKED;
+		INSTRUCTION;
 		PACKED;
 		CATEGORIZED;
 	}
+	instruction_set_scrollbar: Vec2;
 
 	display_window:          *Window;
 	modal_window:            *Window;

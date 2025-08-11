@@ -146,10 +146,10 @@ init:
 
 ### Version 3.0
 - [ ] code editor instead of code viewer
-- [ ] error handling
+- [ ] panel for the 6502 instruction set
 
 ### Version 4.0
-- [ ] panel for the 6502 instruction set
+- [ ] error handling
 - [ ] use an internal 6502 compiler
 
 

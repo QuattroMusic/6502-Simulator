@@ -72,6 +72,10 @@ draw_buttons_controls :: () {
 	if button("Display", .{460, 40}, .{80, 25}, FONT_SIZE_SMALL) {
 		toggle_window(ui.display_window, centered = true);
 	}
+	
+	if button("Instruction set", .{550, 40}, .{140, 25}, FONT_SIZE_SMALL) {
+		toggle_window(ui.instructions_set_window, centered = true);
+	}
 }
 
 draw_code_editor :: () {
@@ -623,4 +627,82 @@ draw_settings :: (panel: *Window) {
 				input_int(pos + .{40 + w + 260, 50 - 2}, s = FONT_SIZE_NORMAL, *settings.editor.save_interval_in_ms, min_value = 1, max_value = 10000);
 			}
 	}
+}
+
+draw_instruction_set :: (window: *Window) {
+	pos := window.pos + .{0, WIDGET_HEADER_HEIGHT};
+	
+	h_separator("", pos + .{10, 40}, INSTRUCTION_SET_WIDTH - 20);
+	
+	if #complete ui.instruction_set_category == {
+		case .INSTRUCTION;
+			draw_scrollbar(pos  + .{10, 50}, .{INSTRUCTION_SET_WIDTH - 20, INSTRUCTION_SET_HEIGHT - 79}, *ui.instruction_set_scrollbar, .{0, 163 * 16.0}, .{0, 0}, 1, 1);
+			draw_rect_lines(pos + .{10, 50}, .{INSTRUCTION_SET_WIDTH - 20, INSTRUCTION_SET_HEIGHT - 79}, settings.themes.platform_line);
+			
+			internal_text :: inline ($text1: string, $text2: string, $info: string, y: *f32, pos: Vec2) {
+				v := ui.instruction_set_scrollbar.y;
+			
+				// text + space
+				s :: #run measure_text(text1, FONT_SIZE_NORMAL).x + FONT_SIZE_NORMAL;
+			
+				if y.* - INSTRUCTION_SET_HEIGHT + 100 <= v && v <= y.* then draw_text(text1, pos + .{ 20,     55 + y.* - v}, FONT_SIZE_NORMAL, settings.themes.viewer_instruction);
+				#if text2 != ""
+				if y.* - INSTRUCTION_SET_HEIGHT + 100 <= v && v <= y.* then draw_text(text2, pos + .{ 20 + s, 55 + y.* - v}, FONT_SIZE_NORMAL, settings.themes.platform_text_normal);
+				if y.* - INSTRUCTION_SET_HEIGHT + 100 <= v && v <= y.* then draw_text(info,  pos + .{190,     55 + y.* - v}, FONT_SIZE_NORMAL, settings.themes.platform_text_normal);
+				y.* += 16.0;
+			}
+			internal_separator :: inline (y: *f32, pos: Vec2) {
+				v := ui.instruction_set_scrollbar.y;
+				
+				if y.* - INSTRUCTION_SET_HEIGHT + 100 <= v && v <= y.* then h_separator("", pos + .{20, 65 + y.* - v}, INSTRUCTION_SET_WIDTH - 50);
+				y.* += 16.0;
+			}
+			
+			draw_rect(pos + .{170, 60}, .{1, INSTRUCTION_SET_HEIGHT - 100}, settings.themes.platform_line);
+			draw_rect(pos + .{INSTRUCTION_SET_WIDTH - WIDGET_SCROLLBAR_SIZE - 10, 50}, .{1, INSTRUCTION_SET_HEIGHT - 80}, settings.themes.platform_line);
+			
+			y := 0.0;
+			
+			internal_text("adc", "#n",    "Add with carry to A", *y, pos);
+			internal_text("adc", "nn",    "Add with carry to A", *y, pos);
+			internal_text("adc", "n",     "Add with carry to A", *y, pos);
+			internal_text("adc", "(n,x)", "Add with carry to A", *y, pos);
+			internal_text("adc", "(n),y", "Add with carry to A", *y, pos);
+			internal_text("adc", "n,x",   "Add with carry to A", *y, pos);
+			internal_text("adc", "nn,x",  "Add with carry to A", *y, pos);
+			internal_text("adc", "nn,y",  "Add with carry to A", *y, pos);
+			internal_separator(*y, pos);
+			internal_text("and", "#n",    "AND to A", *y, pos);
+			internal_text("and", "nn",    "AND to A", *y, pos);
+			internal_text("and", "n",     "AND to A", *y, pos);
+			internal_text("and", "(n,x)", "AND to A", *y, pos);
+			internal_text("and", "(n),y", "AND to A", *y, pos);
+			internal_text("and", "n,x",   "AND to A", *y, pos);
+			internal_text("and", "nn,x",  "AND to A", *y, pos);
+			internal_text("and", "nn,y",  "AND to A", *y, pos);
+			internal_separator(*y, pos);
+			internal_text("als", "nn",   "Arithmetic shift left", *y, pos);
+			internal_text("als", "n",    "Arithmetic shift left", *y, pos);
+			internal_text("als", "A",    "Arithmetic shift left", *y, pos);
+			internal_text("als", "n,x",  "Arithmetic shift left", *y, pos);
+			internal_text("als", "nn,x", "Arithmetic shift left", *y, pos);
+			internal_separator(*y, pos);
+			internal_text("bcc", "n", "Branch if carry clear (C=0)", *y, pos);
+			internal_text("bcs", "n", "Branch if carry set   (C=1)", *y, pos);
+			internal_text("beq", "n", "Branch if equal       (Z=1)", *y, pos);
+			internal_text("bne", "n", "Branch if not equal   (Z=0)", *y, pos);
+			internal_text("bmi", "n", "Branch if minus       (N=1)", *y, pos);
+			internal_text("bpl", "n", "Branch if plus        (N=0)", *y, pos);
+			internal_text("bvc", "n", "Branch if ovfl clear  (V=0)", *y, pos);
+			internal_text("bvs", "n", "Branch if ovfl set    (V=1)", *y, pos);
+			internal_separator(*y, pos);
+			internal_text("bit", "nn", "AND with A (A unchanged)", *y, pos);
+			internal_text("bit", "n",  "AND with A (A unchanged)", *y, pos);
+			internal_separator(*y, pos);
+			internal_text("brk", "",  "Break (force interrupt)", *y, pos);
+		case .PACKED;
+		case .CATEGORIZED;
+	}
+	
+	combo_box(pos + .{10, 10}, .{220, 20}, *ui.instruction_set_category);
 }
