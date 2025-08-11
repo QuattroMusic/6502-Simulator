@@ -84,8 +84,7 @@ draw_code_editor :: () {
 
 	char_per_lines := round_down(editor.size.x / 16) - 2;
 
-	max_value := Vec2.{editor.longest_line * FONT_SIZE_NORMAL, editor.rows_length.count * FONT_SIZE_NORMAL};
-	scroll_size := editor.size + max_value;
+	scroll_size := editor.size + .{editor.longest_line * FONT_SIZE_NORMAL, editor.rows_length.count * FONT_SIZE_NORMAL};
 	// Todo - Quattro - make this '4' more robust.
 	// It means how many empty characters for the scroll x before the bar appears
 	min_size := Vec2.{(char_per_lines - 4) * FONT_SIZE_NORMAL, 1 * FONT_SIZE_NORMAL};
@@ -94,7 +93,7 @@ draw_code_editor :: () {
 	draw_colored_text(x_visible);
 	draw_line_count_bar(x_visible);
 
-	true_size := draw_scrollbar(editor.pos, editor.size, *editor.scrollbar_pos, scroll_size, min_size, max_value, settings.platform.code_cursor_speed_slow, settings.platform.code_cursor_speed_fast);
+	true_size := draw_scrollbar(editor.pos, editor.size, *editor.scrollbar_pos, scroll_size, min_size, settings.platform.code_cursor_speed_slow, settings.platform.code_cursor_speed_fast);
 	editor.editor_content_size = true_size;
 
 	// caret
@@ -191,9 +190,8 @@ draw_program_memory :: () {
 	rows_on_screen := round_down((size.y - 8) / FONT_SIZE_NORMAL);
 	scroll_pos     := Vec2.{0, ui.memory_scrollbar_pos};
 	min_size       := Vec2.{0, 0};
-	max_value      := Vec2.{0, (2048 - rows_on_screen) * FONT_SIZE_NORMAL};
 
-	draw_scrollbar(pos, size, *scroll_pos, .{0, 2048 * 16}, min_size, max_value, settings.platform.memory_cursor_speed_slow, settings.platform.memory_cursor_speed_fast);
+	draw_scrollbar(pos, size, *scroll_pos, .{0, 2048 * 16}, min_size, settings.platform.memory_cursor_speed_slow, settings.platform.memory_cursor_speed_fast);
 
 	ui.memory_scrollbar_pos = scroll_pos.y;
 
@@ -506,7 +504,7 @@ draw_settings :: (panel: *Window) {
 			draw_rect(pos + .{SETTINGS_WIDTH - 240, 40}, .{1, SETTINGS_HEIGHT - 70}, settings.themes.platform_line);
 
 			{
-				draw_scrollbar( pos + .{10, 40}, .{SETTINGS_WIDTH - 260, SETTINGS_HEIGHT - 81}, *ui.settings_theming_scroll_pos, .{0, 16 * 56}, .{0, 0}, .{0, 16 * (65 - 32)}, 1, 1);
+				draw_scrollbar( pos + .{10, 40}, .{SETTINGS_WIDTH - 260, SETTINGS_HEIGHT - 81}, *ui.settings_theming_scroll_pos, .{0, 16 * 56}, .{0, 0}, 1, 1);
 				draw_rect_lines(pos + .{SETTINGS_WIDTH - 250 - WIDGET_SCROLLBAR_SIZE, 40}, .{WIDGET_SCROLLBAR_SIZE, SETTINGS_HEIGHT - 80}, settings.themes.platform_line);
 
 				using settings.themes;

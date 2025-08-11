@@ -45,8 +45,8 @@ setup_windows :: () {
 	ui.modal_window = create_new_window(draw_modal, "", .{800, 600}, on_close = modal_on_close);
 	
 	padding :: 4;
-	w :: DISPLAY_WIDTH  * 8 + padding * 2;
-	h :: DISPLAY_HEIGHT * 8 + padding * 2 + 24;
+	w :: DISPLAY_WIDTH  * FONT_SIZE_GRANULARITY + padding * 2;
+	h :: DISPLAY_HEIGHT * FONT_SIZE_GRANULARITY + padding * 2 + 24;
 	ui.display_window = create_new_window(draw_display, "display", .{w, h});
 
 	ui.settings_window = create_new_window(draw_settings, "settings", .{SETTINGS_WIDTH, SETTINGS_HEIGHT});

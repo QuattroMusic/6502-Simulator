@@ -156,12 +156,11 @@ draw_step_hslider :: (pos: Vec2, size: Vec2, amt: s32, value: *s64, disabled: bo
 	draw_rect(main_step_bar_pos, .{8, size.y}, col_main);
 }
 
-draw_scrollbar :: (pos: Vec2, size: Vec2, scroll_pos: *Vec2, scroll_size: Vec2, min_size: Vec2, max_value: Vec2, speed_slow: s64, speed_fast: s64, it: s64 = 0, loc := #caller_location) -> Vec2 {
+draw_scrollbar :: (pos: Vec2, size: Vec2, scroll_pos: *Vec2, scroll_size: Vec2, min_size: Vec2, speed_slow: s64, speed_fast: s64, it: s64 = 0, loc := #caller_location) -> Vec2 {
 	y_visible := (min_size.y + size.y) < scroll_size.y;
 	x_visible := (min_size.x + size.x) < scroll_size.x;
 
 	true_size := size;
-
 
 	content_size_without_scrollbar := size;
 	if x_visible then content_size_without_scrollbar.y -= WIDGET_SCROLLBAR_SIZE;
@@ -195,10 +194,10 @@ draw_scrollbar :: (pos: Vec2, size: Vec2, scroll_pos: *Vec2, scroll_size: Vec2, 
 		bar_col := ifx state == .NORMAL then settings.themes.platform_widget_border_normal else settings.themes.platform_widget_bg_press;
 
 		val := round_up(scroll_pos.y, FONT_SIZE_NORMAL);
-		scroll_pos.*.y = clamp(val, 0, max_value.y - min_size.y);
-
+		scroll_pos.*.y = clamp(val, 0, scroll_size.y - size.y - min_size.y);
+		
 		scrollbar_pos := Vec2.{scroll_pos_x, scroll_pos_y + aspect_ratio * scroll_pos.*.y};
-		scrollbar_pos.y = cast(f32, cast(s64, scrollbar_pos.y));
+		scrollbar_pos.y = round_down(scrollbar_pos.y);
 
 		draw_rect(.{scroll_pos_x, scroll_pos_y}, .{WIDGET_SCROLLBAR_SIZE, size.y}, settings.themes.platform_widget_bg_normal);
 		draw_rect(scrollbar_pos, .{WIDGET_SCROLLBAR_SIZE, bar_height}, bar_col);
@@ -229,7 +228,7 @@ draw_scrollbar :: (pos: Vec2, size: Vec2, scroll_pos: *Vec2, scroll_size: Vec2, 
 		bar_col := ifx state == .NORMAL then settings.themes.platform_widget_border_normal else settings.themes.platform_widget_bg_press;
 
 		val := round_up(scroll_pos.x, FONT_SIZE_NORMAL);
-		scroll_pos.*.x = clamp(val, 0, max_value.x - min_size.x);
+		scroll_pos.*.x = clamp(val, 0, scroll_size.x - size.x - min_size.x);
 
 		draw_rect(.{scroll_pos_x, scroll_pos_y}, .{size.x, WIDGET_SCROLLBAR_SIZE}, settings.themes.platform_widget_bg_normal);
 		draw_rect(.{scroll_pos_x + aspect_ratio * scroll_pos.*.x, scroll_pos_y}, .{bar_width, WIDGET_SCROLLBAR_SIZE}, bar_col);
@@ -340,7 +339,7 @@ combo_box :: (pos: Vec2, size: Vec2, sel: *$T, it_: s64 = 0, loc := #caller_loca
 	}
 
 	draw_rect_lines(pos, size, border_col);
-	draw_text( items[selected], pos + .{2, 1}, FONT_SIZE_NORMAL, text_col);
+	draw_text( items[selected], pos + .{3, 1}, FONT_SIZE_NORMAL, text_col);
 
 	if state == .RELEASE then widget.*.open = !widget.*.open;
 
@@ -466,7 +465,7 @@ input_int :: (pos: Vec2, $s: f32, value: *$T, $$min_value: T, $$max_value: T, it
 			value.* = min(new_value, max_value);
 			widget.edited = true;
 		}
-		if is_key_pressed(KEY_DELETE) {
+		if is_key_pressed_or_repeated(KEY_DELETE) {
 			value.* /= 10;
 			widget.edited = true;
 		}
