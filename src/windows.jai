@@ -295,255 +295,371 @@ draw_settings :: (panel: *Window) {
 	}
 }
 
-draw_instruction_set :: (window: *Window) {
-	internal_text :: inline ($instruction: string, $addressing: string, $description: string, y: *f32, pos: Vec2, $$packed := false) {
-		v := ui.instruction_set_scrollbar.y;
-	
-		// text + space
-		s :: #run measure_text(instruction, FONT_SIZE_NORMAL).x + FONT_SIZE_NORMAL;
-	
-		lo := y.* - INSTRUCTION_SET_HEIGHT + 100;
-		hi := y.*;
-	
-		if lo <= v && v <= hi then draw_text(instruction, pos + .{ 20, 55 + y.* - v}, FONT_SIZE_NORMAL, settings.themes.viewer_instruction);
-		#if addressing != "" {
-			if !packed {
-				if lo <= v && v <= hi then draw_text(addressing, pos + .{ 20 + s, 55 + y.* - v}, FONT_SIZE_NORMAL, settings.themes.platform_text_normal);
-			}
-		}
-		
-		x := ifx packed then 94.0 else 190.0;
-		if lo <= v && v <= hi then draw_text(description, pos + .{x, 55 + y.* - v}, FONT_SIZE_NORMAL, settings.themes.platform_text_normal);
-		y.* += 16.0;
-	}
-	internal_separator :: inline (y: *f32, pos: Vec2) {
-		v := ui.instruction_set_scrollbar.y;
-		
-		if y.* - INSTRUCTION_SET_HEIGHT + 100 <= v && v <= y.* then h_separator("", pos + .{20, 65 + y.* - v}, INSTRUCTION_SET_WIDTH - 50);
-		y.* += 16.0;
-	}
-	
+draw_cheatsheet :: (window: *Window) {
 	pos := window.pos + .{0, WIDGET_HEADER_HEIGHT};
 	
-	h_separator("", pos + .{10, 40}, INSTRUCTION_SET_WIDTH - 20);
+	tab_bar(pos + .{10, 10}, CHEATSHEET_WIDTH - 20, *ui.cheatsheet_tab);
 	
-	checkbox("packed", pos + .{10, 10}, .{20, 20}, *ui.instruction_set_packed_checkbox);
-	
-	packed := ui.instruction_set_packed_checkbox;
-	internal_height := 16.0 * ifx packed then 89 else 184;
-	
-	draw_scrollbar(pos  + .{10, 50}, .{INSTRUCTION_SET_WIDTH - 20, INSTRUCTION_SET_HEIGHT - 79}, *ui.instruction_set_scrollbar, .{0, internal_height}, .{0, 0}, 1, 1);
-	
-	y := 0.0;
-	
-	internal_text("adc", "#n", "Add with carry to A", *y, pos, packed);
-	if !packed {
-		internal_text("adc", "nn",    "Add with carry to A", *y, pos);
-		internal_text("adc", "n",     "Add with carry to A", *y, pos);
-		internal_text("adc", "(n,x)", "Add with carry to A", *y, pos);
-		internal_text("adc", "(n),y", "Add with carry to A", *y, pos);
-		internal_text("adc", "n,x",   "Add with carry to A", *y, pos);
-		internal_text("adc", "nn,x",  "Add with carry to A", *y, pos);
-		internal_text("adc", "nn,y",  "Add with carry to A", *y, pos);
-	} internal_separator(*y, pos);
-	internal_text("and", "#n",    "AND to A", *y, pos, packed);
-	if !packed {
-		internal_text("and", "nn",    "AND to A", *y, pos);
-		internal_text("and", "n",     "AND to A", *y, pos);
-		internal_text("and", "(n,x)", "AND to A", *y, pos);
-		internal_text("and", "(n),y", "AND to A", *y, pos);
-		internal_text("and", "n,x",   "AND to A", *y, pos);
-		internal_text("and", "nn,x",  "AND to A", *y, pos);
-		internal_text("and", "nn,y",  "AND to A", *y, pos);
-	} internal_separator(*y, pos);
-	internal_text("asl", "nn",   "Arithmetic shift left", *y, pos, packed);
-	if !packed {
-		internal_text("asl", "n",    "Arithmetic shift left", *y, pos);
-		internal_text("asl", "A",    "Arithmetic shift left", *y, pos);
-		internal_text("asl", "n,x",  "Arithmetic shift left", *y, pos);
-		internal_text("asl", "nn,x", "Arithmetic shift left", *y, pos);
-	} internal_separator(*y, pos);
-	internal_text("bcc", "n", "Branch if carry clear (C=0)", *y, pos, packed);
-	internal_text("bcs", "n", "Branch if carry set   (C=1)", *y, pos, packed);
-	internal_text("beq", "n", "Branch if equal       (Z=1)", *y, pos, packed);
-	internal_text("bne", "n", "Branch if not equal   (Z=0)", *y, pos, packed);
-	internal_text("bmi", "n", "Branch if minus       (N=1)", *y, pos, packed);
-	internal_text("bpl", "n", "Branch if plus        (N=0)", *y, pos, packed);
-	internal_text("bvc", "n", "Branch if ovfl clear  (V=0)", *y, pos, packed);
-	internal_text("bvs", "n", "Branch if ovfl set    (V=1)", *y, pos, packed);
-	internal_separator(*y, pos);
-	internal_text("bit", "nn", "AND with A (A unchanged)", *y, pos, packed);
-	if !packed {
-		internal_text("bit", "n",  "AND with A (A unchanged)", *y, pos);
-	} internal_separator(*y, pos);
-	internal_text("brk", "",  "Break (force interrupt)", *y, pos, packed);
-	internal_separator(*y, pos);
-	internal_text("clc", "", "Clear carry",        *y, pos, packed);
-	internal_text("cld", "", "Clear decimal mode", *y, pos, packed);
-	internal_text("cli", "", "Clear IRQ disable",  *y, pos, packed);
-	internal_text("clv", "", "Clear overflow",     *y, pos, packed);
-	internal_separator(*y, pos);
-	internal_text("cmp", "#n",    "Compare with A", *y, pos, packed);
-	if !packed {
-		internal_text("cmp", "nn",    "Compare with A", *y, pos);
-		internal_text("cmp", "n",     "Compare with A", *y, pos);
-		internal_text("cmp", "(n,x)", "Compare with A", *y, pos);
-		internal_text("cmp", "(n),y", "Compare with A", *y, pos);
-		internal_text("cmp", "n,x",   "Compare with A", *y, pos);
-		internal_text("cmp", "nn,x",  "Compare with A", *y, pos);
-		internal_text("cmp", "nn,y",  "Compare with A", *y, pos);
-	} internal_separator(*y, pos);
-	internal_text("cpx", "#n", "Compare with X", *y, pos, packed);
-	if !packed {
-		internal_text("cpx", "nn", "Compare with X", *y, pos);
-		internal_text("cpx", "n",  "Compare with X", *y, pos);
-	} internal_separator(*y, pos);
-	internal_text("cpy", "#n", "Compare with y", *y, pos, packed);
-	if !packed {
-		internal_text("cpy", "nn", "Compare with y", *y, pos);
-		internal_text("cpy", "n",  "Compare with y", *y, pos);
-	} internal_separator(*y, pos);
-	internal_text("dec", "nn",   "Decrement by one", *y, pos, packed);
-	if !packed {
-		internal_text("dec", "n",    "Decrement by one", *y, pos);
-		internal_text("dec", "n,x",  "Decrement by one", *y, pos);
-		internal_text("dec", "nn,x", "Decrement by one", *y, pos);
-	} internal_separator(*y, pos);
-	internal_text("dex", "", "Decrement X by one", *y, pos, packed);
-	internal_text("dey", "", "Decrement Y by one", *y, pos, packed);
-	internal_separator(*y, pos);
-	internal_text("eor", "#n",    "XOR to A", *y, pos, packed);
-	if !packed {
-		internal_text("eor", "nn",    "XOR to A", *y, pos);
-		internal_text("eor", "n",     "XOR to A", *y, pos);
-		internal_text("eor", "(n,x)", "XOR to A", *y, pos);
-		internal_text("eor", "(n),y", "XOR to A", *y, pos);
-		internal_text("eor", "n,x",   "XOR to A", *y, pos);
-		internal_text("eor", "nn,x",  "XOR to A", *y, pos);
-		internal_text("eor", "nn,y",  "XOR to A", *y, pos);
-	} internal_separator(*y, pos);
-	internal_text("inc", "nn",   "Increment by one", *y, pos, packed);
-	if !packed {
-		internal_text("inc", "n",    "Increment by one", *y, pos);
-		internal_text("inc", "n,x",  "Increment by one", *y, pos);
-		internal_text("inc", "nn,x", "Increment by one", *y, pos);
-	} internal_separator(*y, pos);
-	internal_text("inx", "", "Increment X by one", *y, pos, packed);
-	internal_text("iny", "", "Increment Y by one", *y, pos, packed);
-	internal_separator(*y, pos);
-	internal_text("jmp", "nn",   "Jump to new location", *y, pos, packed);
-	if !packed then internal_text("jmp", "(nn)", "Jump to new location", *y, pos);
-	internal_separator(*y, pos);
-	internal_text("jsr", "nn", "Jump to subroutine", *y, pos, packed);
-	internal_separator(*y, pos);
-	internal_text("lda", "#n",    "Load A", *y, pos, packed);
-	if !packed {
-		internal_text("lda", "nn",    "Load A", *y, pos);
-		internal_text("lda", "n",     "Load A", *y, pos);
-		internal_text("lda", "(n,x)", "Load A", *y, pos);
-		internal_text("lda", "(n),y", "Load A", *y, pos);
-		internal_text("lda", "n,x",   "Load A", *y, pos);
-		internal_text("lda", "nn,x",  "Load A", *y, pos);
-		internal_text("lda", "nn,y",  "Load A", *y, pos);
-	} internal_separator(*y, pos);
-	internal_text("ldx", "#n",   "Load X", *y, pos, packed);
-	if !packed {
-		internal_text("ldx", "nn",   "Load X", *y, pos);
-		internal_text("ldx", "n",    "Load X", *y, pos);
-		internal_text("ldx", "nn,y", "Load X", *y, pos);
-		internal_text("ldx", "n,y",  "Load X", *y, pos);
-	} internal_separator(*y, pos);
-	internal_text("ldy", "#n",   "Load Y", *y, pos, packed);
-	if !packed {
-		internal_text("ldy", "nn",   "Load Y", *y, pos);
-		internal_text("ldy", "n",    "Load Y", *y, pos);
-		internal_text("ldy", "n,x",  "Load Y", *y, pos);
-		internal_text("ldy", "nn,x", "Load Y", *y, pos);
-	} internal_separator(*y, pos);
-	internal_text("lsr", "nn",   "Logical shift right", *y, pos, packed);
-	if !packed {
-		internal_text("lsr", "n",    "Logical shift right", *y, pos);
-		internal_text("lsr", "A",    "Logical shift right", *y, pos);
-		internal_text("lsr", "n,x",  "Logical shift right", *y, pos);
-		internal_text("lsr", "nn,x", "Logical shift right", *y, pos);
-	} internal_separator(*y, pos);
-	internal_text("nop", "", "No operation", *y, pos, packed);
-	internal_separator(*y, pos);
-	internal_text("ora", "#n",    "OR to A", *y, pos, packed);
-	if !packed {
-		internal_text("ora", "nn",    "OR to A", *y, pos);
-		internal_text("ora", "n",     "OR to A", *y, pos);
-		internal_text("ora", "(n,x)", "OR to A", *y, pos);
-		internal_text("ora", "(n),y", "OR to A", *y, pos);
-		internal_text("ora", "n,x",   "OR to A", *y, pos);
-		internal_text("ora", "nn,x",  "OR to A", *y, pos);
-		internal_text("ora", "nn,y",  "OR to A", *y, pos);
-	} internal_separator(*y, pos);
-	internal_text("pha", "", "Push       A onto stack", *y, pos, packed);
-	internal_text("php", "", "Push       P onto stack", *y, pos, packed);
-	internal_text("pla", "", "Pull (pop) A from stack", *y, pos, packed);
-	internal_text("plp", "", "Pull (pop) P from stack", *y, pos, packed);
-	internal_separator(*y, pos);
-	internal_text("rol", "nn",   "rotate left through carry", *y, pos, packed);
-	if !packed {
-		internal_text("rol", "n",    "rotate left through carry", *y, pos);
-		internal_text("rol", "A",    "rotate left through carry", *y, pos);
-		internal_text("rol", "n,x",  "rotate left through carry", *y, pos);
-		internal_text("rol", "nn,x", "rotate left through carry", *y, pos);
-	} internal_separator(*y, pos);
-	internal_text("ror", "nn",   "rotate right through carry", *y, pos, packed);
-	if !packed {
-		internal_text("ror", "n",    "rotate right through carry", *y, pos);
-		internal_text("ror", "A",    "rotate right through carry", *y, pos);
-		internal_text("ror", "n,x",  "rotate right through carry", *y, pos);
-		internal_text("ror", "nn,x", "rotate right through carry", *y, pos);
-	} internal_separator(*y, pos);
-	internal_text("rti", "", "return from interrupt",  *y, pos, packed);
-	internal_text("rts", "", "return from subroutine", *y, pos, packed);
-	internal_separator(*y, pos);
-	internal_text("sbc", "#n",    "Subtract with borrow from A", *y, pos, packed);
-	if !packed {
-		internal_text("sbc", "nn",    "Subtract with borrow from A", *y, pos);
-		internal_text("sbc", "n",     "Subtract with borrow from A", *y, pos);
-		internal_text("sbc", "(n,x)", "Subtract with borrow from A", *y, pos);
-		internal_text("sbc", "(n),y", "Subtract with borrow from A", *y, pos);
-		internal_text("sbc", "n,x",   "Subtract with borrow from A", *y, pos);
-		internal_text("sbc", "nn,x",  "Subtract with borrow from A", *y, pos);
-		internal_text("sbc", "nn,y",  "Subtract with borrow from A", *y, pos);
-	} internal_separator(*y, pos);
-	internal_text("sec", "", "Set carry",        *y, pos, packed);
-	internal_text("sed", "", "Set decimal mode", *y, pos, packed);
-	internal_text("sei", "", "Set IRQ disable",  *y, pos, packed);
-	internal_separator(*y, pos);
-	internal_text("sta", "nn",    "Store A", *y, pos, packed);
-	if !packed {
-		internal_text("sta", "n",     "Store A", *y, pos);
-		internal_text("sta", "(n,x)", "Store A", *y, pos);
-		internal_text("sta", "(n),y", "Store A", *y, pos);
-		internal_text("sta", "n,x",   "Store A", *y, pos);
-		internal_text("sta", "nn,x",  "Store A", *y, pos);
-		internal_text("sta", "nn,y",  "Store A", *y, pos);
-	} internal_separator(*y, pos);
-	internal_text("stx", "nn",  "Store X", *y, pos, packed);
-	if !packed {
-		internal_text("stx", "n",   "Store X", *y, pos);
-		internal_text("stx", "n,y", "Store X", *y, pos);
-	} internal_separator(*y, pos);
-	internal_text("sty", "nn",  "Store Y", *y, pos, packed);
-	if !packed {
-		internal_text("sty", "n",   "Store Y", *y, pos);
-		internal_text("sty", "n,x", "Store Y", *y, pos);
-	} internal_separator(*y, pos);
-	internal_text("tax", "", "Transfer A to X", *y, pos, packed);
-	internal_text("tay", "", "Transfer A to Y", *y, pos, packed);
-	internal_text("tsx", "", "Transfer S to X", *y, pos, packed);
-	internal_text("txa", "", "Transfer X to A", *y, pos, packed);
-	internal_text("txs", "", "Transfer X to S", *y, pos, packed);
-	internal_text("tya", "", "Transfer Y to A", *y, pos, packed);
-	
-	draw_rect_lines(pos + .{10, 50}, .{INSTRUCTION_SET_WIDTH - 20, INSTRUCTION_SET_HEIGHT - 79}, settings.themes.platform_line);
-	draw_rect(pos + .{INSTRUCTION_SET_WIDTH - WIDGET_SCROLLBAR_SIZE - 10, 50}, .{1, INSTRUCTION_SET_HEIGHT - 80}, settings.themes.platform_line);
-	
-	x := ifx packed then 84.0 else 180.0;
-	draw_rect(pos + .{x, 60}, .{1, INSTRUCTION_SET_HEIGHT - 100}, settings.themes.platform_line);
+	if #complete ui.cheatsheet_tab == {
+		case .ISA;
+			internal_text :: inline ($instruction: string, $addressing: string, $description: string, y: *f32, pos: Vec2, $$packed := false) {
+				v := ui.cheatsheet_isa_scrollbar.y;
+			
+				// text + space
+				s :: #run measure_text(instruction, FONT_SIZE_NORMAL).x + FONT_SIZE_NORMAL;
+			
+				lo := y.* - CHEATSHEET_HEIGHT + 120;
+				hi := y.*;
+			
+				if lo <= v && v <= hi then draw_text(instruction, pos + .{ 20, 71 + y.* - v}, FONT_SIZE_NORMAL, settings.themes.viewer_instruction);
+				#if addressing != "" {
+					if !packed {
+						if lo <= v && v <= hi then draw_text(addressing, pos + .{ 20 + s, 71 + y.* - v}, FONT_SIZE_NORMAL, settings.themes.platform_text_normal);
+					}
+				}
+				
+				x := ifx packed then 94.0 else 190.0;
+				if lo <= v && v <= hi then draw_text(description, pos + .{x, 71 + y.* - v}, FONT_SIZE_NORMAL, settings.themes.platform_text_normal);
+				y.* += 16.0;
+			}
+			internal_separator :: inline (y: *f32, pos: Vec2) {
+				v := ui.cheatsheet_isa_scrollbar.y;
+				
+				if y.* - CHEATSHEET_HEIGHT + 120 <= v && v <= y.* then h_separator("", pos + .{15, 81 + y.* - v}, CHEATSHEET_WIDTH - 40);
+				y.* += 16.0;
+			}
+			
+			checkbox("packed", pos + .{14, 40}, .{20, 20}, *ui.cheatsheet_isa_packed_checkbox);
+			
+			packed := ui.cheatsheet_isa_packed_checkbox;
+			internal_height := 16.0 * ifx packed then 89 else 184;
+			
+			draw_scrollbar(pos  + .{10, 66}, .{CHEATSHEET_WIDTH - 20, CHEATSHEET_HEIGHT - 100}, *ui.cheatsheet_isa_scrollbar, .{0, internal_height}, .{0, 0}, 1, 1);
+			
+			y := 0.0;
+			
+			internal_text("adc", "#n", "Add with carry to A", *y, pos, packed);
+			if !packed {
+				internal_text("adc", "nn",    "Add with carry to A", *y, pos);
+				internal_text("adc", "n",     "Add with carry to A", *y, pos);
+				internal_text("adc", "(n,x)", "Add with carry to A", *y, pos);
+				internal_text("adc", "(n),y", "Add with carry to A", *y, pos);
+				internal_text("adc", "n,x",   "Add with carry to A", *y, pos);
+				internal_text("adc", "nn,x",  "Add with carry to A", *y, pos);
+				internal_text("adc", "nn,y",  "Add with carry to A", *y, pos);
+			} internal_separator(*y, pos);
+			internal_text("and", "#n",    "AND to A", *y, pos, packed);
+			if !packed {
+				internal_text("and", "nn",    "AND to A", *y, pos);
+				internal_text("and", "n",     "AND to A", *y, pos);
+				internal_text("and", "(n,x)", "AND to A", *y, pos);
+				internal_text("and", "(n),y", "AND to A", *y, pos);
+				internal_text("and", "n,x",   "AND to A", *y, pos);
+				internal_text("and", "nn,x",  "AND to A", *y, pos);
+				internal_text("and", "nn,y",  "AND to A", *y, pos);
+			} internal_separator(*y, pos);
+			internal_text("asl", "nn",   "Arithmetic shift left", *y, pos, packed);
+			if !packed {
+				internal_text("asl", "n",    "Arithmetic shift left", *y, pos);
+				internal_text("asl", "A",    "Arithmetic shift left", *y, pos);
+				internal_text("asl", "n,x",  "Arithmetic shift left", *y, pos);
+				internal_text("asl", "nn,x", "Arithmetic shift left", *y, pos);
+			} internal_separator(*y, pos);
+			internal_text("bcc", "n", "Branch if carry clear (C=0)", *y, pos, packed);
+			internal_text("bcs", "n", "Branch if carry set   (C=1)", *y, pos, packed);
+			internal_text("beq", "n", "Branch if equal       (Z=1)", *y, pos, packed);
+			internal_text("bne", "n", "Branch if not equal   (Z=0)", *y, pos, packed);
+			internal_text("bmi", "n", "Branch if minus       (N=1)", *y, pos, packed);
+			internal_text("bpl", "n", "Branch if plus        (N=0)", *y, pos, packed);
+			internal_text("bvc", "n", "Branch if ovfl clear  (V=0)", *y, pos, packed);
+			internal_text("bvs", "n", "Branch if ovfl set    (V=1)", *y, pos, packed);
+			internal_separator(*y, pos);
+			internal_text("bit", "nn", "AND with A (A unchanged)", *y, pos, packed);
+			if !packed {
+				internal_text("bit", "n",  "AND with A (A unchanged)", *y, pos);
+			} internal_separator(*y, pos);
+			internal_text("brk", "",  "Break (force interrupt)", *y, pos, packed);
+			internal_separator(*y, pos);
+			internal_text("clc", "", "Clear carry",        *y, pos, packed);
+			internal_text("cld", "", "Clear decimal mode", *y, pos, packed);
+			internal_text("cli", "", "Clear IRQ disable",  *y, pos, packed);
+			internal_text("clv", "", "Clear overflow",     *y, pos, packed);
+			internal_separator(*y, pos);
+			internal_text("cmp", "#n",    "Compare with A", *y, pos, packed);
+			if !packed {
+				internal_text("cmp", "nn",    "Compare with A", *y, pos);
+				internal_text("cmp", "n",     "Compare with A", *y, pos);
+				internal_text("cmp", "(n,x)", "Compare with A", *y, pos);
+				internal_text("cmp", "(n),y", "Compare with A", *y, pos);
+				internal_text("cmp", "n,x",   "Compare with A", *y, pos);
+				internal_text("cmp", "nn,x",  "Compare with A", *y, pos);
+				internal_text("cmp", "nn,y",  "Compare with A", *y, pos);
+			} internal_separator(*y, pos);
+			internal_text("cpx", "#n", "Compare with X", *y, pos, packed);
+			if !packed {
+				internal_text("cpx", "nn", "Compare with X", *y, pos);
+				internal_text("cpx", "n",  "Compare with X", *y, pos);
+			} internal_separator(*y, pos);
+			internal_text("cpy", "#n", "Compare with y", *y, pos, packed);
+			if !packed {
+				internal_text("cpy", "nn", "Compare with y", *y, pos);
+				internal_text("cpy", "n",  "Compare with y", *y, pos);
+			} internal_separator(*y, pos);
+			internal_text("dec", "nn",   "Decrement by one", *y, pos, packed);
+			if !packed {
+				internal_text("dec", "n",    "Decrement by one", *y, pos);
+				internal_text("dec", "n,x",  "Decrement by one", *y, pos);
+				internal_text("dec", "nn,x", "Decrement by one", *y, pos);
+			} internal_separator(*y, pos);
+			internal_text("dex", "", "Decrement X by one", *y, pos, packed);
+			internal_text("dey", "", "Decrement Y by one", *y, pos, packed);
+			internal_separator(*y, pos);
+			internal_text("eor", "#n",    "XOR to A", *y, pos, packed);
+			if !packed {
+				internal_text("eor", "nn",    "XOR to A", *y, pos);
+				internal_text("eor", "n",     "XOR to A", *y, pos);
+				internal_text("eor", "(n,x)", "XOR to A", *y, pos);
+				internal_text("eor", "(n),y", "XOR to A", *y, pos);
+				internal_text("eor", "n,x",   "XOR to A", *y, pos);
+				internal_text("eor", "nn,x",  "XOR to A", *y, pos);
+				internal_text("eor", "nn,y",  "XOR to A", *y, pos);
+			} internal_separator(*y, pos);
+			internal_text("inc", "nn",   "Increment by one", *y, pos, packed);
+			if !packed {
+				internal_text("inc", "n",    "Increment by one", *y, pos);
+				internal_text("inc", "n,x",  "Increment by one", *y, pos);
+				internal_text("inc", "nn,x", "Increment by one", *y, pos);
+			} internal_separator(*y, pos);
+			internal_text("inx", "", "Increment X by one", *y, pos, packed);
+			internal_text("iny", "", "Increment Y by one", *y, pos, packed);
+			internal_separator(*y, pos);
+			internal_text("jmp", "nn",   "Jump to new location", *y, pos, packed);
+			if !packed then internal_text("jmp", "(nn)", "Jump to new location", *y, pos);
+			internal_separator(*y, pos);
+			internal_text("jsr", "nn", "Jump to subroutine", *y, pos, packed);
+			internal_separator(*y, pos);
+			internal_text("lda", "#n",    "Load A", *y, pos, packed);
+			if !packed {
+				internal_text("lda", "nn",    "Load A", *y, pos);
+				internal_text("lda", "n",     "Load A", *y, pos);
+				internal_text("lda", "(n,x)", "Load A", *y, pos);
+				internal_text("lda", "(n),y", "Load A", *y, pos);
+				internal_text("lda", "n,x",   "Load A", *y, pos);
+				internal_text("lda", "nn,x",  "Load A", *y, pos);
+				internal_text("lda", "nn,y",  "Load A", *y, pos);
+			} internal_separator(*y, pos);
+			internal_text("ldx", "#n",   "Load X", *y, pos, packed);
+			if !packed {
+				internal_text("ldx", "nn",   "Load X", *y, pos);
+				internal_text("ldx", "n",    "Load X", *y, pos);
+				internal_text("ldx", "nn,y", "Load X", *y, pos);
+				internal_text("ldx", "n,y",  "Load X", *y, pos);
+			} internal_separator(*y, pos);
+			internal_text("ldy", "#n",   "Load Y", *y, pos, packed);
+			if !packed {
+				internal_text("ldy", "nn",   "Load Y", *y, pos);
+				internal_text("ldy", "n",    "Load Y", *y, pos);
+				internal_text("ldy", "n,x",  "Load Y", *y, pos);
+				internal_text("ldy", "nn,x", "Load Y", *y, pos);
+			} internal_separator(*y, pos);
+			internal_text("lsr", "nn",   "Logical shift right", *y, pos, packed);
+			if !packed {
+				internal_text("lsr", "n",    "Logical shift right", *y, pos);
+				internal_text("lsr", "A",    "Logical shift right", *y, pos);
+				internal_text("lsr", "n,x",  "Logical shift right", *y, pos);
+				internal_text("lsr", "nn,x", "Logical shift right", *y, pos);
+			} internal_separator(*y, pos);
+			internal_text("nop", "", "No operation", *y, pos, packed);
+			internal_separator(*y, pos);
+			internal_text("ora", "#n",    "OR to A", *y, pos, packed);
+			if !packed {
+				internal_text("ora", "nn",    "OR to A", *y, pos);
+				internal_text("ora", "n",     "OR to A", *y, pos);
+				internal_text("ora", "(n,x)", "OR to A", *y, pos);
+				internal_text("ora", "(n),y", "OR to A", *y, pos);
+				internal_text("ora", "n,x",   "OR to A", *y, pos);
+				internal_text("ora", "nn,x",  "OR to A", *y, pos);
+				internal_text("ora", "nn,y",  "OR to A", *y, pos);
+			} internal_separator(*y, pos);
+			internal_text("pha", "", "Push       A onto stack", *y, pos, packed);
+			internal_text("php", "", "Push       P onto stack", *y, pos, packed);
+			internal_text("pla", "", "Pull (pop) A from stack", *y, pos, packed);
+			internal_text("plp", "", "Pull (pop) P from stack", *y, pos, packed);
+			internal_separator(*y, pos);
+			internal_text("rol", "nn",   "rotate left through carry", *y, pos, packed);
+			if !packed {
+				internal_text("rol", "n",    "rotate left through carry", *y, pos);
+				internal_text("rol", "A",    "rotate left through carry", *y, pos);
+				internal_text("rol", "n,x",  "rotate left through carry", *y, pos);
+				internal_text("rol", "nn,x", "rotate left through carry", *y, pos);
+			} internal_separator(*y, pos);
+			internal_text("ror", "nn",   "rotate right through carry", *y, pos, packed);
+			if !packed {
+				internal_text("ror", "n",    "rotate right through carry", *y, pos);
+				internal_text("ror", "A",    "rotate right through carry", *y, pos);
+				internal_text("ror", "n,x",  "rotate right through carry", *y, pos);
+				internal_text("ror", "nn,x", "rotate right through carry", *y, pos);
+			} internal_separator(*y, pos);
+			internal_text("rti", "", "return from interrupt",  *y, pos, packed);
+			internal_text("rts", "", "return from subroutine", *y, pos, packed);
+			internal_separator(*y, pos);
+			internal_text("sbc", "#n",    "Subtract with borrow from A", *y, pos, packed);
+			if !packed {
+				internal_text("sbc", "nn",    "Subtract with borrow from A", *y, pos);
+				internal_text("sbc", "n",     "Subtract with borrow from A", *y, pos);
+				internal_text("sbc", "(n,x)", "Subtract with borrow from A", *y, pos);
+				internal_text("sbc", "(n),y", "Subtract with borrow from A", *y, pos);
+				internal_text("sbc", "n,x",   "Subtract with borrow from A", *y, pos);
+				internal_text("sbc", "nn,x",  "Subtract with borrow from A", *y, pos);
+				internal_text("sbc", "nn,y",  "Subtract with borrow from A", *y, pos);
+			} internal_separator(*y, pos);
+			internal_text("sec", "", "Set carry",        *y, pos, packed);
+			internal_text("sed", "", "Set decimal mode", *y, pos, packed);
+			internal_text("sei", "", "Set IRQ disable",  *y, pos, packed);
+			internal_separator(*y, pos);
+			internal_text("sta", "nn",    "Store A", *y, pos, packed);
+			if !packed {
+				internal_text("sta", "n",     "Store A", *y, pos);
+				internal_text("sta", "(n,x)", "Store A", *y, pos);
+				internal_text("sta", "(n),y", "Store A", *y, pos);
+				internal_text("sta", "n,x",   "Store A", *y, pos);
+				internal_text("sta", "nn,x",  "Store A", *y, pos);
+				internal_text("sta", "nn,y",  "Store A", *y, pos);
+			} internal_separator(*y, pos);
+			internal_text("stx", "nn",  "Store X", *y, pos, packed);
+			if !packed {
+				internal_text("stx", "n",   "Store X", *y, pos);
+				internal_text("stx", "n,y", "Store X", *y, pos);
+			} internal_separator(*y, pos);
+			internal_text("sty", "nn",  "Store Y", *y, pos, packed);
+			if !packed {
+				internal_text("sty", "n",   "Store Y", *y, pos);
+				internal_text("sty", "n,x", "Store Y", *y, pos);
+			} internal_separator(*y, pos);
+			internal_text("tax", "", "Transfer A to X", *y, pos, packed);
+			internal_text("tay", "", "Transfer A to Y", *y, pos, packed);
+			internal_text("tsx", "", "Transfer S to X", *y, pos, packed);
+			internal_text("txa", "", "Transfer X to A", *y, pos, packed);
+			internal_text("txs", "", "Transfer X to S", *y, pos, packed);
+			internal_text("tya", "", "Transfer Y to A", *y, pos, packed);
+			
+			draw_rect_lines(pos + .{10, 66}, .{CHEATSHEET_WIDTH - 20, CHEATSHEET_HEIGHT - 100}, settings.themes.platform_line);
+			draw_rect(pos + .{CHEATSHEET_WIDTH - WIDGET_SCROLLBAR_SIZE - 10, 66}, .{1, CHEATSHEET_HEIGHT - 100}, settings.themes.platform_line);
+			
+			x := ifx packed then 84.0 else 180.0;
+			draw_rect(pos + .{x, 70}, .{1, CHEATSHEET_HEIGHT - 110}, settings.themes.platform_line);
+		case .ADDRESSING;
+			internal_text :: (text: string, pos: Vec2, y_off: f32) {
+				lo := y_off - CHEATSHEET_HEIGHT + 120;
+				hi := y_off;
+				
+				v := ui.cheatsheet_addressing_scrollbar.y;
+				
+				if lo <= v && v <= hi then draw_text(text, pos + .{0, y_off + 75 - v}, FONT_SIZE_NORMAL, settings.themes.platform_text_normal);
+			}
+			internal_separator :: inline (y: *f32, pos: Vec2) {
+				v := ui.cheatsheet_addressing_scrollbar.y;
+				
+				lo := y.* - CHEATSHEET_HEIGHT + 120;
+				hi := y.*;
+				
+				if lo <= v && v <= hi then h_separator("", pos + .{15, 83 + y.* - v}, CHEATSHEET_WIDTH - 40);
+				y.* += 16.0;
+			}
+			
+			x1 :: 5 + 15;
+			x2 :: 5 + 127;
+			x3 :: 5 + 335;
+			
+			y := 0.0;
+			
+			draw_scrollbar(pos  + .{10, 66}, .{CHEATSHEET_WIDTH - 20, CHEATSHEET_HEIGHT - 100}, *ui.cheatsheet_addressing_scrollbar, .{0, 43 * FONT_SIZE_NORMAL}, .{0, 0}, 1, 1);
+			draw_rect_lines(pos + .{10, 66}, .{CHEATSHEET_WIDTH - 20, CHEATSHEET_HEIGHT - 100}, settings.themes.platform_line);
+			draw_rect(pos + .{CHEATSHEET_WIDTH - WIDGET_SCROLLBAR_SIZE - 10, 66}, .{1, CHEATSHEET_HEIGHT - 100}, settings.themes.platform_line);
+			
+			draw_rect(pos + .{x2 - 16, 70}, .{1, CHEATSHEET_HEIGHT - 110}, settings.themes.platform_line);
+			draw_rect(pos + .{x3 - 16, 70}, .{1, CHEATSHEET_HEIGHT - 110}, settings.themes.platform_line);
+			
+			draw_text("form",        pos + .{x1, 40}, FONT_SIZE_NORMAL, settings.themes.platform_text_normal);
+			draw_text("Addressing",  pos + .{x2, 40}, FONT_SIZE_NORMAL, settings.themes.platform_text_normal);
+			draw_text("Description", pos + .{x3, 40}, FONT_SIZE_NORMAL, settings.themes.platform_text_normal);
+			
+			internal_text("nn",          pos + .{x1, 0}, y);
+			internal_text("absolute",    pos + .{x2, 0}, y);
+			internal_text("Location nn", pos + .{x3, 0}, y);  y += 16;
+			internal_text("holds data",  pos + .{x3, 0}, y);  y += 16;
+			internal_separator(*y, pos);
+			
+			internal_text("nn,x",          pos + .{x1, 0}, y);
+			internal_text("absolute x",    pos + .{x2, 0}, y);
+			internal_text("location nn+x", pos + .{x3, 0}, y); y += 16;
+			internal_text("holds data",    pos + .{x3, 0}, y); y += 16;
+			internal_separator(*y, pos);
+			
+			internal_text("nn,y", pos + .{x1, 0}, y);
+			internal_text("absolute y", pos + .{x2, 0}, y);
+			internal_text("location nn+y", pos + .{x3, 0}, y);  y += 16;
+			internal_text("holds data", pos + .{x3, 0}, y);  y += 16;
+			internal_separator(*y, pos);
+			
+			internal_text("A",          pos + .{x1, 0}, y);
+			internal_text("Accumulator",    pos + .{x2, 0}, y);
+			internal_text("Accumulator", pos + .{x3, 0}, y); y += 16;
+			internal_text("holds data",    pos + .{x3, 0}, y); y += 16;
+			internal_separator(*y, pos);
+			
+			internal_text("#n",          pos + .{x1, 0}, y);
+			internal_text("Immediate",    pos + .{x2, 0}, y);
+			internal_text("n is data", pos + .{x3, 0}, y); y += 16;
+			internal_separator(*y, pos);
+			
+			internal_text("(n,x)",          pos + .{x1, 0}, y);
+			internal_text("indirect x",    pos + .{x2, 0}, y);
+			internal_text("location n+x and", pos + .{x3, 0}, y); y += 16;
+			internal_text("next of page 0", pos + .{x3, 0}, y); y += 16;
+			internal_text("hold address", pos + .{x3, 0}, y); y += 16;
+			internal_text("of data", pos + .{x3, 0}, y); y += 16;
+			internal_separator(*y, pos);
+			
+			internal_text("(n),y",          pos + .{x1, 0}, y);
+			internal_text("indirect y",    pos + .{x2, 0}, y);
+			internal_text("address of data is", pos + .{x3, 0}, y); y += 16;
+			internal_text("y + address held", pos + .{x3, 0}, y); y += 16;
+			internal_text("by location n and", pos + .{x3, 0}, y); y += 16;
+			internal_text("next of page 0", pos + .{x3, 0}, y); y += 16;
+			internal_separator(*y, pos);
+			
+			internal_text("(nn)",          pos + .{x1, 0}, y);
+			internal_text("indirect",    pos + .{x2, 0}, y);
+			internal_text("location nn and", pos + .{x3, 0}, y); y += 16;
+			internal_text("next hold address", pos + .{x3, 0}, y); y += 16;
+			internal_text("to jump to", pos + .{x3, 0}, y); y += 16;
+			internal_separator(*y, pos);
+			
+			internal_text("n",          pos + .{x1, 0}, y);
+			internal_text("relative",    pos + .{x2, 0}, y);
+			internal_text("address to jump to", pos + .{x3, 0}, y); y += 16;
+			internal_text("is n + address of", pos + .{x3, 0}, y); y += 16;
+			internal_text("next instruction", pos + .{x3, 0}, y); y += 16;
+			internal_text("with n treated as", pos + .{x3, 0}, y); y += 16;
+			internal_text("a signed number", pos + .{x3, 0}, y); y += 16;
+			internal_separator(*y, pos);
+			
+			internal_text("n",          pos + .{x1, 0}, y);
+			internal_text("zero page",    pos + .{x2, 0}, y);
+			internal_text("location n of page", pos + .{x3, 0}, y); y += 16;
+			internal_text("0 holds data", pos + .{x3, 0}, y); y += 16;
+			internal_separator(*y, pos);
+			
+			internal_text("n,x",          pos + .{x1, 0}, y);
+			internal_text("zero page x",    pos + .{x2, 0}, y);
+			internal_text("location n+x of", pos + .{x3, 0}, y); y += 16;
+			internal_text("page 0 holds data", pos + .{x3, 0}, y); y += 16;
+			internal_separator(*y, pos);
+			
+			internal_text("n,y",          pos + .{x1, 0}, y);
+			internal_text("zero page y",    pos + .{x2, 0}, y);
+			internal_text("location n+y of", pos + .{x3, 0}, y); y += 16;
+			internal_text("page 0 holds data", pos + .{x3, 0}, y); y += 16;
+	}
 }

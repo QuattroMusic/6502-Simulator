@@ -54,8 +54,8 @@ setup_windows :: () {
 	ui.internal_selected             = *settings.themes.general_text;
 	ui.internal_selected_saved_state = *settings.themes_saved_state.general_text;
 	
-	ui.instructions_set_window = create_new_window(draw_instruction_set, "Instruction set", .{INSTRUCTION_SET_WIDTH, INSTRUCTION_SET_HEIGHT});
-	toggle_window(ui.instructions_set_window, centered = true);  // Todo - Quattro - Temporary
+	ui.cheatsheet_window = create_new_window(draw_cheatsheet, "Cheatsheet", .{CHEATSHEET_WIDTH, CHEATSHEET_HEIGHT});
+	toggle_window(ui.cheatsheet_window, centered = true);  // Todo - Quattro - Temporary
 }
 
 main :: () {
@@ -124,8 +124,8 @@ MODAL_HEIGHT :: 600;
 SETTINGS_WIDTH  :: 700;
 SETTINGS_HEIGHT :: 450;
 
-INSTRUCTION_SET_WIDTH  :: 650;
-INSTRUCTION_SET_HEIGHT :: 495;
+CHEATSHEET_WIDTH  :: 650;
+CHEATSHEET_HEIGHT :: 500;
 
 APP_MAJOR_VERSION :: 2;
 APP_MINOR_VERSION :: 1;

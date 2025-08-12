@@ -113,13 +113,19 @@ General_UI :: struct {
 	internal_selected_saved_state: *Col;
 	color_picker_edited: bool;
 
-	instruction_set_scrollbar: Vec2;
-	instruction_set_packed_checkbox: bool;
+	cheatsheet_tab: enum {
+		ISA;
+		ADDRESSING;
+	}
+	
+	cheatsheet_isa_scrollbar: Vec2;
+	cheatsheet_isa_packed_checkbox: bool;
+	cheatsheet_addressing_scrollbar: Vec2;
 
-	display_window:          *Window;
-	modal_window:            *Window;
-	settings_window:         *Window;
-	instructions_set_window: *Window;
+	display_window:    *Window;
+	modal_window:      *Window;
+	settings_window:   *Window;
+	cheatsheet_window: *Window;
 }
 
 Error_Type :: enum {

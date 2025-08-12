@@ -32,6 +32,7 @@ draw_text :: ($$text: string, pos: Vec2, scale: f32, color: Col, $wrap: f32 = 0,
 	do_range_check :: #ifx is_constant(text) then false else range_check;
 
 	for text {
+		#if DEBUG then if it == #char "\n" then log("[WARN] found \\n inside draw_text");
 		draw_character(cast,trunc(u8)it, pos + .{x_pos, y_pos}, scale, color, do_range_check);
 		x_pos += scale;
 		
@@ -76,11 +77,6 @@ get_char_mapping :: inline ($$c: u8, $range_check: bool) -> uvx: f32 {
 }
 
 measure_text :: inline (text: string, scale: f32) -> Vec2 {
-	#if DEBUG {
-		for text {
-			if it == #char "\n" then log("[WARN] found \\n inside measure_text");
-		}
-	}
 	return .{text.count * scale, scale};
 }
 

@@ -249,7 +249,11 @@ tab_bar :: (pos: Vec2, width: f32, focused_tab: *$T, it_: s64 = 0, loc := #calle
 
 	tab_height :: 24;
 
-	tabs :: #run cast(*Type_Info_Enum, T).names;
+	tabs :: #run -> []string {
+		n := cast(*Type_Info_Enum, T).names;
+		for s, idx_s: n for s if it == #char "_" n[idx_s][it_index] = #char " ";
+		return n;
+	}
 
 	focus := cast(s64, focused_tab.*);
 

@@ -73,8 +73,8 @@ draw_buttons_controls :: () {
 		toggle_window(ui.display_window, centered = true);
 	}
 	
-	if button("Instruction set", .{550, 40}, .{140, 25}, FONT_SIZE_SMALL) {
-		toggle_window(ui.instructions_set_window, centered = true);
+	if button("cheatsheet", .{550, 40}, .{100, 25}, FONT_SIZE_SMALL) {
+		toggle_window(ui.cheatsheet_window, centered = true);
 	}
 }
 
@@ -229,7 +229,7 @@ draw_program_registers :: () {
 	panel_internal("X", engine.X, offset, .{196, 15}, .{176, 76});
 	panel_internal("Y", engine.Y, offset, .{382, 15}, .{176, 76});
 
-	panel_internal("PC", engine.PC, offset, .{ 10, 104}, .{305, 76});
+	panel_internal("PC", engine.PC, offset, .{ 10, 104}, .{362, 76});
 	panel_internal("S",  engine.S,  offset, .{382, 104}, .{175, 76});
 
 	{
