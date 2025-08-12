@@ -89,17 +89,17 @@ checkbox :: ($$text: string, pos: Vec2, size: Vec2, value: *bool, it: s64 = 0, l
 	bg_col:     Col = ---;
 	text_col:   Col = ---;
 	if state == {
-		case .RELEASE;
-			value.* = !value.*;
-			#through;
 		case .RELEASE_NON_HOVER; #through;
 		case .NORMAL;
 			bg_col     = settings.themes.platform_widget_bg_hover;
 			text_col   = settings.themes.platform_text_normal;
+		case .RELEASE;
+			value.* = !value.*;
+			#through;
 		case .PRESSED; #through;
 		case .HOLD;
 			bg_col     = settings.themes.platform_widget_bg_press;
-			text_col   = settings.themes.platform_text_hover;
+			text_col   = settings.themes.platform_text_press;
 		case .HOVER; #through;
 		case .HOLD_NON_HOVER;
 			bg_col     = settings.themes.platform_widget_bg_hover;

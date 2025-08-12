@@ -184,6 +184,7 @@ Col :: struct {
 #load "src/memory.jai";
 #load "src/intrinsics.jai";
 #load "src/gui.jai";
+#load "src/windows.jai";
 #load "src/utils.jai";
 #load "src/files.jai";
 

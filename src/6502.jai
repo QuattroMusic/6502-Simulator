@@ -113,12 +113,8 @@ General_UI :: struct {
 	internal_selected_saved_state: *Col;
 	color_picker_edited: bool;
 
-	instruction_set_category: enum {
-		INSTRUCTION;
-		PACKED;
-		CATEGORIZED;
-	}
 	instruction_set_scrollbar: Vec2;
+	instruction_set_packed_checkbox: bool;
 
 	display_window:          *Window;
 	modal_window:            *Window;
