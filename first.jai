@@ -1,8 +1,6 @@
 update_6502 :: () {
 	handle_displayed_file();
-
 	handle_code_editor_events();
-	
 	handle_input_and_time();
 
 	draw_header();
@@ -55,7 +53,6 @@ setup_windows :: () {
 	ui.internal_selected_saved_state = *settings.themes_saved_state.general_text;
 	
 	ui.cheatsheet_window = create_new_window(draw_cheatsheet, "Cheatsheet", .{CHEATSHEET_WIDTH, CHEATSHEET_HEIGHT});
-	toggle_window(ui.cheatsheet_window, centered = true);  // Todo - Quattro - Temporary
 }
 
 main :: () {
@@ -85,7 +82,7 @@ main :: () {
 }
 
 ui: General_UI;
-settings: Settings = ---;
+settings: Settings;
 editor: Code_Editor;
 
 vp: Viewport;
@@ -127,8 +124,8 @@ SETTINGS_HEIGHT :: 450;
 CHEATSHEET_WIDTH  :: 650;
 CHEATSHEET_HEIGHT :: 500;
 
-APP_MAJOR_VERSION :: 2;
-APP_MINOR_VERSION :: 1;
+APP_MAJOR_VERSION :: 3;
+APP_MINOR_VERSION :: 0;
 
 DATA_FOLDER_NAME   :: "data";
 THEME_FILE_NAME    :: "theme";

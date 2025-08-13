@@ -63,8 +63,6 @@ Platform_Settings :: struct {
 		LAST_FILE;
 	} = .EMPTY_FILE;
 	
-	fps_lock: u16 = 60;
-	
 	code_cursor_speed_slow: u8 = 3;
 	code_cursor_speed_fast: u8 = 6;
 	memory_cursor_speed_slow: u8 = 1;
@@ -72,20 +70,22 @@ Platform_Settings :: struct {
 }
 
 Editor_Settings :: struct {
-	when_to_save: enum {
+	when_to_save: enum u8 {
 		MANUALLY;
 		EACH_EDIT;
 		WHEN_COMPILING;
 		EVERY_MS;
 	} = .WHEN_COMPILING;
 	
-	save_interval_in_ms: s64;
+	save_interval_in_ms: u16 = 200;
+	
+	lock_content_view: bool = false;
 }
 
 Settings :: struct {
 	platform: Platform_Settings;
 	
-	themes: Theming;
+	themes:             Theming;
 	themes_saved_state: Theming;
 	
 	editor: Editor_Settings;
@@ -106,7 +106,7 @@ General_UI :: struct {
 	settings_platform_scrollbar_edited: bool;
 	settings_theming_scroll_pos: Vec2;
 	
-	settings_platform_view_fps_lock: u16;
+	// settings_platform_view_fps_lock: u16;
 	
 	// color picker stuff
 	internal_selected: *Col;

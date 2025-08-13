@@ -77,7 +77,7 @@ button :: ($$icon: Icon, pos: Vec2, size: Vec2, $t: f32 = FONT_SIZE_SMALL, it: s
 	return state == .RELEASE;
 }
 
-checkbox :: ($$text: string, pos: Vec2, size: Vec2, value: *bool, it: s64 = 0, loc := #caller_location) {
+checkbox :: ($$text: string, pos: Vec2, size: Vec2, value: *bool, it: s64 = 0, loc := #caller_location) -> bool {
 	#if is_constant(text) {
 		s :: #run measure_text(text, FONT_SIZE_SMALL);
 	} else {
@@ -109,6 +109,8 @@ checkbox :: ($$text: string, pos: Vec2, size: Vec2, value: *bool, it: s64 = 0, l
 	if value.* || state == .PRESSED || state == .HOLD then draw_rect(pos + .{4, 4}, size - .{8, 8}, bg_col);
 	draw_rect_lines(pos, size, settings.themes.platform_line);
 	draw_text(text, pos + .{size.x + 8, (size.y - s.y) / 2}, FONT_SIZE_SMALL, text_col);
+	
+	return state == .RELEASE;
 }
 
 draw_step_hslider :: (pos: Vec2, size: Vec2, amt: s32, value: *s64, disabled: bool = false, it: s64 = 0, loc := #caller_location) {

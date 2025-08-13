@@ -56,7 +56,7 @@ lock_frame_rate :: (target_fps: f32, last_counter: s64) {
 }
 
 lock_window_frame_rate :: () {
-	lock_frame_rate(cast(f32, settings.platform.fps_lock), vp.last_counter);
+	lock_frame_rate(60, vp.last_counter);
 
     end_counter: s64;
     QueryPerformanceCounter(*end_counter);

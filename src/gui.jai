@@ -89,17 +89,22 @@ draw_code_editor :: () {
 	char_per_lines := round_down(editor.size.x / 16) - 2;
 
 	scroll_size := editor.size + .{editor.longest_line * FONT_SIZE_NORMAL, editor.rows_length.count * FONT_SIZE_NORMAL};
-	// Todo - Quattro - make this '4' more robust.
-	// It means how many empty characters for the scroll x before the bar appears
-	min_size := Vec2.{(char_per_lines - 4) * FONT_SIZE_NORMAL, 1 * FONT_SIZE_NORMAL};
+
+	min_size: Vec2 = ---;
+	min_size.x = (char_per_lines - 0) * FONT_SIZE_NORMAL;
+	
+	if settings.editor.lock_content_view {
+		visible_lines := round_down((editor.size.y - 8) / 16);
+		min_size.y = visible_lines * FONT_SIZE_NORMAL;
+	} else {
+		min_size.y = FONT_SIZE_NORMAL;
+	}
 
 	x_visible := min_size.x + editor.size.x < scroll_size.x;
+
 	draw_colored_text(x_visible);
 	draw_line_count_bar(x_visible);
-
-	true_size := draw_scrollbar(editor.pos, editor.size, *editor.scrollbar_pos, scroll_size, min_size, settings.platform.code_cursor_speed_slow, settings.platform.code_cursor_speed_fast);
-	editor.editor_content_size = true_size;
-
+	
 	// caret
 	if editor.focused {
 		time := (ms_since_init() - editor.caret_time) % 1000;
@@ -121,11 +126,14 @@ draw_code_editor :: () {
 			x := editor.pos.x + editor.caret_col * 16.0 + 3 - editor.scrollbar_pos.x + w + x_offset;
 			y := editor.pos.y + editor.caret_row * 16.0 + 5 - editor.scrollbar_pos.y;
 
-			if x > (editor.pos.x + w) && x < (editor.pos.x + editor.size.x) && y > editor.pos.y && y < (editor.pos.y + editor.size.y - 16) {
+			if x > (editor.pos.x + w) && x < (editor.pos.x + editor.size.x) && y > editor.pos.y && y < (editor.pos.y + editor.size.y - 18) {
 				draw_rect(.{x, y}, .{1, 16}, .{255, 255, 255, 255});
 			}
 		}
 	}
+	
+	true_size := draw_scrollbar(editor.pos, editor.size, *editor.scrollbar_pos, scroll_size, min_size, settings.platform.code_cursor_speed_slow, settings.platform.code_cursor_speed_fast);
+	editor.editor_content_size = true_size;
 
 	draw_panel(editor.file_name, editor.pos, editor.size);
 }

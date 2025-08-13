@@ -80,16 +80,6 @@ draw_settings :: (panel: *Window) {
 			edit := combo_box(pos + .{40 + w, 50 - 2}, .{205, 20}, *settings.platform.at_startup);
 			if edit then save_options_file();
 
-			{
-				draw_text("fps lock:", pos + .{20, 70}, FONT_SIZE_NORMAL, settings.themes.platform_text_normal);
-				changed_value := input_int(pos + .{165, 70}, FONT_SIZE_NORMAL, *ui.settings_platform_view_fps_lock, 1, 3000);
-
-				if changed_value {
-					settings.platform.fps_lock = ui.settings_platform_view_fps_lock;
-					save_options_file();
-				}
-			}
-
 			internal_scroll :: ($text: string, pos: Vec2, var: *u8, y: f32) {
 				draw_text(text, pos + .{20, y}, FONT_SIZE_NORMAL, settings.themes.platform_text_normal);
 				w :: #run measure_text(text, FONT_SIZE_NORMAL).x;
@@ -99,12 +89,12 @@ draw_settings :: (panel: *Window) {
 				if edit then save_options_file();
 			}
 
-			h_separator("scrollbars", pos + .{10, 110}, SETTINGS_WIDTH - 20);
+			h_separator("scrollbars", pos + .{10, 90}, SETTINGS_WIDTH - 20);
 
-			internal_scroll("code editor scroll slow speed",   pos, *settings.platform.code_cursor_speed_slow, 130);
-			internal_scroll("code editor scroll fast speed",   pos, *settings.platform.code_cursor_speed_fast, 155);
-			internal_scroll("memory viewer scroll slow speed", pos, *settings.platform.memory_cursor_speed_slow, 185);
-			internal_scroll("memory viewer scroll fast speed", pos, *settings.platform.memory_cursor_speed_fast, 210);
+			internal_scroll("code editor slow speed",   pos, *settings.platform.code_cursor_speed_slow, 110);
+			internal_scroll("code editor fast speed",   pos, *settings.platform.code_cursor_speed_fast, 135);
+			internal_scroll("memory viewer slow speed", pos, *settings.platform.memory_cursor_speed_slow, 165);
+			internal_scroll("memory viewer fast speed", pos, *settings.platform.memory_cursor_speed_fast, 190);
 		case .THEMING;
 			internal_selectable :: ($text: string, pos: Vec2, x: f32, y: *f32, col: *Col, loc := #caller_location) {
 				defer y.* += 16;
@@ -279,19 +269,29 @@ draw_settings :: (panel: *Window) {
 
 			if color_picker(pos + .{SETTINGS_WIDTH - 225, 45}, ui.internal_selected, external_update) {
 				// called only when the mouse button is released
-				// save_theme_file();
 				ui.color_picker_edited = true;
 			}
 		case .EDITOR;
+			{
+				t :: "lock content view";
+				s :: #run measure_text(t, FONT_SIZE_NORMAL).x + FONT_SIZE_NORMAL;
+				draw_text(t, pos + .{20, 80}, FONT_SIZE_NORMAL, settings.themes.platform_text_normal);
+				edit := checkbox("", pos + .{20 + s, 80}, .{20, 20}, *settings.editor.lock_content_view);
+				if edit then save_options_file();
+			}
+			
 			t :: "Save";
 			draw_text(t, pos + .{20, 50}, FONT_SIZE_NORMAL, settings.themes.platform_text_normal);
 			w :: #run measure_text(t, FONT_SIZE_NORMAL).x;
 
-			// Todo - Quattro - save data to file
-			combo_box(pos + .{40 + w, 50 - 2}, .{250, 20}, *settings.editor.when_to_save);
+			edit := combo_box(pos + .{40 + w, 50 - 2}, .{250, 20}, *settings.editor.when_to_save);
+			if edit then save_options_file();
+			
 			if settings.editor.when_to_save == .EVERY_MS {
-				input_int(pos + .{40 + w + 260, 50 - 2}, s = FONT_SIZE_NORMAL, *settings.editor.save_interval_in_ms, min_value = 1, max_value = 10000);
+				edit := input_int(pos + .{40 + w + 260, 50 - 2}, s = FONT_SIZE_NORMAL, *settings.editor.save_interval_in_ms, min_value = 1, max_value = 10000);
+				if edit then save_options_file();
 			}
+			
 	}
 }
 

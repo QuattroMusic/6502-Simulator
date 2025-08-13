@@ -21,11 +21,11 @@ save_options_file :: () {
 	file_close(*file);
 }
 
-get_asset_path :: (file: string) -> string {
+get_asset_path :: inline (file: string) -> string {
 	return tprint("%/%", DATA_FOLDER_NAME, file);
 }
 
-save_editor_file :: () {
+save_editor_file :: inline () {
 	write_entire_file(editor.file_path, editor.content.data, editor.content.count);
 }
 
@@ -34,7 +34,12 @@ init_options :: () {
 	success := file_exists(get_asset_path(SETTINGS_FILE_NAME));
 	
 	if !success {
-		create_options_file();
+		file, success := file_open(get_asset_path(SETTINGS_FILE_NAME), for_writing = true, keep_existing_content = false);
+		assert(success, "An error occurred while saving settings file");  // Todo - handle better error messages
+		
+		write_options_content(*file);
+		
+		file_close(*file);
 		return;
 	}
 	
@@ -45,7 +50,12 @@ init_theming :: () {
 	success := file_exists(get_asset_path(THEME_FILE_NAME));
 	
 	if !success {
-		create_theme_file();
+		file, success := file_open(get_asset_path(THEME_FILE_NAME), for_writing = true, keep_existing_content = false);
+		assert(success, "An error occurred while saving theme file");  // Todo - handle better error messages
+		
+		write_theme_content(*file);
+		
+		file_close(*file);
 		return;
 	}
 	
@@ -73,17 +83,23 @@ get_file_header :: (f: *File) -> (maj: u8, min: u16) {
 write_options_content :: (file: *File) {
 	setup_file_header(file);
 	
-	file_write(file, *settings.platform.at_startup, size_of(type_of(settings.platform.at_startup)));
-	if(settings.platform.at_startup == .LAST_FILE) {
+	p := settings.platform;
+	e := settings.editor;
+	
+	file_write(file, *p.at_startup, size_of(type_of(p.at_startup)));
+	if(p.at_startup == .LAST_FILE) {
 		file_write(file, *editor.file_path.count, size_of(type_of(editor.file_path.count)));
-		file_write(file, editor.file_path.data, editor.file_path.count);
+		file_write(file,  editor.file_path.data, editor.file_path.count);
 	}
 	
-	file_write(file, *settings.platform.fps_lock,                 size_of(type_of(settings.platform.fps_lock)));
-	file_write(file, *settings.platform.code_cursor_speed_slow,   size_of(type_of(settings.platform.code_cursor_speed_slow)));
-	file_write(file, *settings.platform.code_cursor_speed_fast,   size_of(type_of(settings.platform.code_cursor_speed_fast)));
-	file_write(file, *settings.platform.memory_cursor_speed_slow, size_of(type_of(settings.platform.memory_cursor_speed_slow)));
-	file_write(file, *settings.platform.memory_cursor_speed_fast, size_of(type_of(settings.platform.memory_cursor_speed_fast)));
+	file_write(file, *p.code_cursor_speed_slow,   size_of(type_of(p.code_cursor_speed_slow)));
+	file_write(file, *p.code_cursor_speed_fast,   size_of(type_of(p.code_cursor_speed_fast)));
+	file_write(file, *p.memory_cursor_speed_slow, size_of(type_of(p.memory_cursor_speed_slow)));
+	file_write(file, *p.memory_cursor_speed_fast, size_of(type_of(p.memory_cursor_speed_fast)));
+	
+	file_write(file, *e.when_to_save, size_of(type_of(e.when_to_save)));
+	file_write(file, *e.save_interval_in_ms, size_of(type_of(e.save_interval_in_ms)));
+	file_write(file, *e.lock_content_view, size_of(type_of(e.lock_content_view)));
 }
 
 write_theme_content :: (file: *File) {
@@ -97,48 +113,6 @@ write_theme_content :: (file: *File) {
 	memcpy(*settings.themes_saved_state, *settings.themes, size_of(Theming));
 }
 
-create_options_file :: () {
-	file, success := file_open(get_asset_path(SETTINGS_FILE_NAME), for_writing = true, keep_existing_content = false);
-	assert(success, "An error occurred while saving settings file");  // Todo - handle better error messages
-	
-	setup_file_header(*file);
-	
-	data: Platform_Settings;
-	
-	file_write(*file, *data.at_startup,               size_of(type_of(data.at_startup)));
-	file_write(*file, *data.fps_lock,                 size_of(type_of(data.fps_lock)));
-	file_write(*file, *data.code_cursor_speed_slow,   size_of(type_of(data.code_cursor_speed_slow)));
-	file_write(*file, *data.code_cursor_speed_fast,   size_of(type_of(data.code_cursor_speed_fast)));
-	file_write(*file, *data.memory_cursor_speed_slow, size_of(type_of(data.memory_cursor_speed_slow)));
-	file_write(*file, *data.memory_cursor_speed_fast, size_of(type_of(data.memory_cursor_speed_fast)));
-	
-	file_close(*file);
-	
-	ini :: initializer_of(Platform_Settings);
-	ini(*settings.platform);
-	
-	ui.settings_platform_view_fps_lock = settings.platform.fps_lock;
-}
-
-create_theme_file :: () {
-	file, success := file_open(get_asset_path(THEME_FILE_NAME), for_writing = true, keep_existing_content = false);
-	assert(success, "An error occurred while saving theme file");  // Todo - handle better error messages
-	
-	setup_file_header(*file);
-	
-	data: Theming;
-	info :: type_info(Theming);
-	for info.*.members {
-		write_color_to_file(*file, cast(*Col)(cast(*u8)(*data) + it.offset_in_bytes));
-	}
-	
-	file_close(*file);
-	
-	ini :: initializer_of(Theming);
-	ini(*settings.themes);
-	ini(*settings.themes_saved_state);
-}
-
 parse_options_file :: () {
 	file, success := file_open(get_asset_path(SETTINGS_FILE_NAME), for_writing = false);
 	assert(success, "An error occurred while reading settings file");  // Todo - handle better error messages
@@ -147,6 +121,8 @@ parse_options_file :: () {
 	
 	if maj_version == 2 && (min_version == 0 || min_version == 1) {
 		parse_settings_version_2(*file);
+	} else if maj_version == 3 && min_version == 0 {
+		parse_settings_version_3(*file);
 	} else {
 		assert(false, "Unable to read settings file, corrupted");
 	}
@@ -162,11 +138,60 @@ parse_theme_file :: () {
 	
 	if maj_version == 2 && (min_version == 0 || min_version == 1) {
 		parse_theming_version_2(*file);
+	} else if maj_version == 3 && min_version == 0 {
+		parse_theming_version_2(*file);  // still the same
 	} else {
 		assert(false, "Unable to read theming file, corrupted");
 	}
 	
 	file_close(*file);
+}
+
+parse_settings_version_3 :: (file: *File) {
+	size, success := file_length(file);  // don't move the cursor!
+	assert(success, "Unable to read settings file");
+	
+	{
+		using settings.platform;
+		
+		{
+			m, M := enum_range(type_of(at_startup));
+			at_startup = xx read_in_range(file, type_of(at_startup), xx m, xx M);
+			if at_startup == .LAST_FILE {
+				file_size: type_of(editor.file_path.count);
+				file_read(file, *file_size, size_of(type_of(editor.file_path.count)));
+				
+				total_size := size_of(type_of(editor.file_path.count)) + file_size + 12;
+				assert(size == total_size, "Unable to read settings file, corrupted");
+				
+				str: string;
+				str.data = talloc(file_size);
+				str.count = file_size;
+				
+				file_read(file, str.data, str.count);
+				
+				if file_exists(str) {
+					init_code_editor(str);
+				}
+			} else {
+				assert(size == 12, "Unable to read settings file, corrupted");
+			}
+		}
+		
+		code_cursor_speed_slow   = read_in_range(file, u8, CURSOR_SCROLLBAR_MIN_VALUE, CURSOR_SCROLLBAR_MAX_VALUE);
+		code_cursor_speed_fast   = read_in_range(file, u8, CURSOR_SCROLLBAR_MIN_VALUE, CURSOR_SCROLLBAR_MAX_VALUE);
+		memory_cursor_speed_slow = read_in_range(file, u8, CURSOR_SCROLLBAR_MIN_VALUE, CURSOR_SCROLLBAR_MAX_VALUE);
+		memory_cursor_speed_fast = read_in_range(file, u8, CURSOR_SCROLLBAR_MIN_VALUE, CURSOR_SCROLLBAR_MAX_VALUE);
+	}
+	
+	{
+		using settings.editor;
+		
+		m, M := enum_range(type_of(when_to_save));
+		when_to_save = xx read_in_range(file, type_of(when_to_save), xx m, xx M);
+		save_interval_in_ms = read_in_range(file, u16, 1, 10_000);
+		lock_content_view = cast(bool, read_in_range(file, u8, 0, 1));
+	}
 }
 
 parse_settings_version_2 :: (file: *File) {
@@ -177,7 +202,7 @@ parse_settings_version_2 :: (file: *File) {
 	
 	{
 		m, M := enum_range(type_of(at_startup));
-		at_startup = xx read_u8_in_range(file, xx m, xx M);
+		at_startup = xx read_in_range(file, type_of(at_startup), xx m, xx M);
 		if at_startup == .LAST_FILE {
 			file_size: type_of(editor.file_path.count);
 			file_read(file, *file_size, size_of(type_of(editor.file_path.count)));
@@ -198,13 +223,12 @@ parse_settings_version_2 :: (file: *File) {
 			assert(size == 10, "Unable to read settings file, corrupted");
 		}
 	}
-	fps_lock                 = read_u16_in_range(file, 1, 3000);
-	code_cursor_speed_slow   = read_u8_in_range(file, CURSOR_SCROLLBAR_MIN_VALUE, CURSOR_SCROLLBAR_MAX_VALUE);
-	code_cursor_speed_fast   = read_u8_in_range(file, CURSOR_SCROLLBAR_MIN_VALUE, CURSOR_SCROLLBAR_MAX_VALUE);
-	memory_cursor_speed_slow = read_u8_in_range(file, CURSOR_SCROLLBAR_MIN_VALUE, CURSOR_SCROLLBAR_MAX_VALUE);
-	memory_cursor_speed_fast = read_u8_in_range(file, CURSOR_SCROLLBAR_MIN_VALUE, CURSOR_SCROLLBAR_MAX_VALUE);
 	
-	ui.settings_platform_view_fps_lock = fps_lock;
+	skip_bytes(file, 2);
+	code_cursor_speed_slow   = read_in_range(file, u8, CURSOR_SCROLLBAR_MIN_VALUE, CURSOR_SCROLLBAR_MAX_VALUE);
+	code_cursor_speed_fast   = read_in_range(file, u8, CURSOR_SCROLLBAR_MIN_VALUE, CURSOR_SCROLLBAR_MAX_VALUE);
+	memory_cursor_speed_slow = read_in_range(file, u8, CURSOR_SCROLLBAR_MIN_VALUE, CURSOR_SCROLLBAR_MAX_VALUE);
+	memory_cursor_speed_fast = read_in_range(file, u8, CURSOR_SCROLLBAR_MIN_VALUE, CURSOR_SCROLLBAR_MAX_VALUE);
 }
 
 parse_theming_version_2 :: (file: *File) {
@@ -286,20 +310,17 @@ read_color_from_file :: inline (f: *File) -> Col {
 	return c;
 }
 
-read_u8_in_range :: inline (f: *File, min_v: u8, max_v: u8) -> u8 {
-	data: u8 = ---;
-	
-	file_read(f, *data, 1);
-	assert(min_v <= data && data <= max_v, "Unable to read settings file, corrupted");
-	
-	return data;
+skip_bytes :: (f: File, bytes: s64) {
+	pos := file_current_position(f);
+	pos += bytes;
+	file_set_position(f, pos);
 }
 
-read_u16_in_range :: inline (f: *File, min_v: u16, max_v: u16) -> u16 {
-	data: u16 = ---;
+read_in_range :: inline (f: *File, $type: Type, min_value: type, max_value: type) -> type {
+	data: type = ---;
 	
-	file_read(f, *data, 2);
-	assert(min_v <= data && data <= max_v, "Unable to read settings file, corrupted");
+	file_read(f, *data, size_of(type));
+	assert(min_value <= data && data <= max_value, "Unable to read settings file, corrupted");
 	
 	return data;
 }
