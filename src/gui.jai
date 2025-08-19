@@ -32,6 +32,7 @@ draw_buttons_controls :: () {
 				read_ROM(get_asset_path("out.bin"));  // Todo - robustness
 				cpu_reset();
 				cpu_start();
+				editor.focused = true;
 			}
 		}
 		if button("Compile", .{190, 40}, .{100, 25}, FONT_SIZE_SMALL) {
@@ -39,11 +40,13 @@ draw_buttons_controls :: () {
 			if engine.compilation_successful {
 				read_ROM(get_asset_path("out.bin"));  // Todo - robustness
 				cpu_reset();
+				editor.focused = true;
 			}
 		}
 		if engine.compilation_successful && button("Run", .{300, 40}, .{60, 25}, FONT_SIZE_SMALL) {
 			cpu_reset();
 			cpu_start();
+			editor.focused = true;
 		}
 	} else {
 		// we're doing this just to update the variable the next cycle
@@ -52,21 +55,25 @@ draw_buttons_controls :: () {
 			if engine.running {
 				if button("Pause", .{100, 40}, .{80, 25}, FONT_SIZE_SMALL) {
 					running = false;
+					editor.focused = true;
 				}
 			} else {
 				if button("Resume", .{100, 40}, .{80, 25}, FONT_SIZE_SMALL) {
 					running = true;
+					editor.focused = true;
 				}
 			}
 		}
 		engine.running = running;
 		if button("Stop", .{10, 40}, .{80, 25}, FONT_SIZE_SMALL) {
 			cpu_stop();
+			editor.focused = true;
 		}
 	}
 
 	if button("Reset", .{370, 40}, .{80, 25}, FONT_SIZE_SMALL) {
 		cpu_reset();
+		editor.focused = true;
 	}
 
 	if button("Display", .{460, 40}, .{80, 25}, FONT_SIZE_SMALL) {

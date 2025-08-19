@@ -66,7 +66,7 @@ handle_displayed_file :: () {
 
 get_width_of_line_count_bar :: inline () -> f32 {
 	// Todo - Quattro - robustness
-	return (editor.row_digits + 1.0) * 8 + 5;
+	return (editor.row_digits + 1.0) * FONT_SIZE_SMALL + 5;
 }
 
 calculate_rows_length :: () {

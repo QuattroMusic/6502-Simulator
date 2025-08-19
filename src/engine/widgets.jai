@@ -320,7 +320,7 @@ combo_box :: (pos: Vec2, size: Vec2, sel: *$T, it_: s64 = 0, loc := #caller_loca
 		for s, idx_s: n for s if it == #char "_" n[idx_s][it_index] = #char " ";
 		return n;
 	}
-
+	
 	uuid   := hash_widget(loc, it_);
 	state  := create_selectable_region(.COMBO, pos, size, uuid);
 	widget := *find_or_add(*widgets, uuid).combo_box;

@@ -64,11 +64,12 @@ handle_input_and_time :: () {
 	
 	c := last_down_key;
 	
-	allowed_chars :=
+	input_allowed_chars :=
 		(#char "A" <= c && c <= #char "Z") || 
 		(KEY_LEFT <= c && c <= KEY_DOWN) ||
 		c == KEY_SPACE ||
 		#char "0" <= c && c <= #char "9";
 	
-	engine.RAM[MEMORY_INPUT_ADDRESS] = ifx is_key_down(c) && allowed_chars then c;
+	
+	engine.RAM[MEMORY_INPUT_ADDRESS] = ifx input_allowed_chars && is_key_down(c) then c;
 }

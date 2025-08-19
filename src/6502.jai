@@ -106,8 +106,6 @@ General_UI :: struct {
 	settings_platform_scrollbar_edited: bool;
 	settings_theming_scroll_pos: Vec2;
 	
-	// settings_platform_view_fps_lock: u16;
-	
 	// color picker stuff
 	internal_selected: *Col;
 	internal_selected_saved_state: *Col;

@@ -86,6 +86,8 @@ event_enter :: () {
 	
 	caret_row += 1;
 	caret_col = 0;
+	
+	editor.row_digits = count_digits(xx rows_length.count);
 }
 
 event_delete :: () {
@@ -102,6 +104,8 @@ event_delete :: () {
 		caret_row -= 1;
 		caret_col = rows_length[caret_row];
 		rows_length[caret_row] += v;
+		
+		editor.row_digits = count_digits(xx editor.rows_length.count);
 	} else {
 		rows_length[caret_row] -= 1;
 		
@@ -122,9 +126,6 @@ event_char :: () {
 
 event_mouse :: () {
 	using editor;
-	
-	if ui.display_window.visible  && is_mouse_inside_rect(ui.display_window.pos,  ui.display_window.size)  then return;
-	if ui.settings_window.visible && is_mouse_inside_rect(ui.settings_window.pos, ui.settings_window.size) then return;
 	
 	x := cast(s32, mouse_x - pos.x);
 	y := cast(s32, mouse_y - pos.y);

@@ -66,7 +66,7 @@ main :: () {
 
 	init_settings();
 	
-	init_code_editor("examples\\random number.s");
+	// init_code_editor("examples\\random number.s");
 
 	setup_windows();
 	

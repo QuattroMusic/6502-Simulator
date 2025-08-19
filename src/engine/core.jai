@@ -244,7 +244,6 @@ Viewport :: struct {
 	width, height: s32;
 	running: bool;
 	reduced: bool;
-	// maximized: bool;
 
 	sleep_is_granular: bool;
 	dt: f32;

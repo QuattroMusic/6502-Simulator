@@ -9,14 +9,17 @@ draw_display :: (panel: *Window) {
 	row_x := parent.x + padding;
 	row_y := parent.y + padding;
 
-	DISPLAY_COLOR : [16]Col;
-	memcpy(DISPLAY_COLOR.data, *settings.themes.display_col0, size_of(type_of(DISPLAY_COLOR)));
-
+	display_colors: []Col;
+	display_colors.data  = *settings.themes.display_col0;
+	display_colors.count = 16;
+	
 	draw_internal :: () #expand {
-		col: Col = ifx `data >= 0 && `data < DISPLAY_COLOR.count then DISPLAY_COLOR[`row_data] else DISPLAY_COLOR[0];
-		draw_rect(.{`row_x, `row_y}, .{FONT_SIZE_GRANULARITY * `width, FONT_SIZE_GRANULARITY}, col);
-		`row_x = (((`it - 0x0200) % DISPLAY_WIDTH) * FONT_SIZE_GRANULARITY) + parent.x + padding;
-		`row_y = (((`it - 0x0200) / DISPLAY_WIDTH) * FONT_SIZE_GRANULARITY) + parent.y + padding;
+		col: Col = display_colors[(`row_data) & 0xF];
+		
+		draw_rect(.{`row_x, `row_y}, .{FONT_SIZE_SMALL * `width, FONT_SIZE_SMALL}, col);
+		
+		`row_x = (((`it - 0x0200) % DISPLAY_WIDTH) * FONT_SIZE_SMALL) + parent.x + padding;
+		`row_y = (((`it - 0x0200) / DISPLAY_WIDTH) * FONT_SIZE_SMALL) + parent.y + padding;
 	}
 
 	for 0x0200 .. (0x0200 + DISPLAY_WIDTH * DISPLAY_HEIGHT - 1) {
@@ -32,7 +35,8 @@ draw_display :: (panel: *Window) {
 			width = 1;
 		} else width += 1;
 	}
-	col: Col = DISPLAY_COLOR[row_data];
+	
+	col: Col = display_colors[row_data];
 	draw_rect(.{row_x, row_y}, .{8.0 * width, 8}, col);
 }
 
