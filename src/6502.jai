@@ -311,6 +311,9 @@ cpu_start :: () {
 			if !engine.metrics.unlock then lock_frame_rate_6502();
 			if engine.running && !engine.debug then next_instruction();
 		}
+		
+		focused_uuid = 0;  // some sorta cheat
+		
 		// Todo - Quattro - Maybe find a way to pause the thread instead of init-deinit
 		thread_deinit(*engine.cpu_thread);
 		return 0;
@@ -399,7 +402,7 @@ compact_ind_Y_data :: (func: (u8)) {
 }
 
 compact_zero_page_X_data :: (func: (u8)) {
-	func(read_data(cast(u16)read_data(engine.PC) + cast(u16)engine.X));
+	func(read_data((cast(u16)read_data(engine.PC) + cast(u16)engine.X) & 0xFF));
 	PC_advance(1);
 }
 
@@ -444,7 +447,7 @@ compact_ind_Y_address :: (func: (u16)) {
 }
 
 compact_zero_page_X_address :: (func: (u16)) {
-	func(cast(u16)read_data(engine.PC) + cast(u16)engine.X);
+	func((cast(u16)read_data(engine.PC) + cast(u16)engine.X) & 0xFF);
 	PC_advance(1);
 }
 

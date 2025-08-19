@@ -223,7 +223,7 @@ draw_program_memory :: () {
 }
 
 draw_program_registers :: () {
-	panel_internal :: (reg: string, val: $T, offset: Vec2, pos: Vec2, size: Vec2) {
+	panel_internal :: (reg: string, val: $T, offset: Vec2, pos: Vec2, size: Vec2, $negative := false) {
 		draw_panel(reg, offset + pos, size);
 
 		s :: size_of(T);
@@ -233,16 +233,20 @@ draw_program_registers :: () {
 
 		draw_text(tprint("0x%", hex), offset + pos + .{9,  8}, FONT_SIZE_NORMAL, settings.themes.general_text);
 		draw_text(tprint("0b%", bin), offset + pos + .{9, 30}, FONT_SIZE_NORMAL, settings.themes.general_text);
-		draw_text(tprint("%",   val), offset + pos + .{9, 52}, FONT_SIZE_NORMAL, settings.themes.general_text);
+
+		draw_text(tprint("%", val), offset + pos + .{9, 52}, FONT_SIZE_NORMAL, settings.themes.general_text);
+		#if negative {
+			draw_text(tprint("/ %", cast,no_check(s8, val)), offset + pos + .{73, 52}, FONT_SIZE_NORMAL, settings.themes.general_text);
+		}
 	}
 
 	offset := Vec2.{vp.width + 40.0 - START_SCREEN_WIDTH / 2, vp.height + 95.0 - START_SCREEN_HEIGHT / 2};
 
 	draw_panel("Registers", offset, .{START_SCREEN_WIDTH / 2 - 50, START_SCREEN_HEIGHT / 4 - 10});
 
-	panel_internal("A", engine.A, offset, .{ 10, 15}, .{176, 76});
-	panel_internal("X", engine.X, offset, .{196, 15}, .{176, 76});
-	panel_internal("Y", engine.Y, offset, .{382, 15}, .{176, 76});
+	panel_internal("A", engine.A, offset, .{ 10, 15}, .{176, 76}, negative = true);
+	panel_internal("X", engine.X, offset, .{196, 15}, .{176, 76}, negative = true);
+	panel_internal("Y", engine.Y, offset, .{382, 15}, .{176, 76}, negative = true);
 
 	panel_internal("PC", engine.PC, offset, .{ 10, 104}, .{362, 76});
 	panel_internal("S",  engine.S,  offset, .{382, 104}, .{175, 76});

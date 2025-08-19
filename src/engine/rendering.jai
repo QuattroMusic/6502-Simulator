@@ -32,7 +32,12 @@ draw_text :: ($$text: string, pos: Vec2, scale: f32, color: Col, $wrap: f32 = 0,
 	do_range_check :: #ifx is_constant(text) then false else range_check;
 
 	for text {
-		#if DEBUG then if it == #char "\n" then log("[WARN] found \\n inside draw_text");
+		if it == #char "\n" {
+			x_pos = 0;
+			y_pos += scale;
+			continue;
+		}
+		
 		draw_character(cast,trunc(u8)it, pos + .{x_pos, y_pos}, scale, color, do_range_check);
 		x_pos += scale;
 		

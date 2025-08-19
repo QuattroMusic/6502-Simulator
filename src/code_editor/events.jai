@@ -118,7 +118,9 @@ event_char :: () {
 
 	idx := get_current_idx();
 	
-	array_insert_at(*content, pressed_char, idx);
+	c := to_lower(pressed_char);
+	
+	array_insert_at(*content, c, idx);
 	rows_length[caret_row] += 1;
 	
 	caret_col += 1;
