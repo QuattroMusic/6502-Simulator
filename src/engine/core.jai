@@ -131,6 +131,12 @@ events_manager :: (hwnd: *void, msg: u32, wparam: u64, lparam: s64) -> s64 #c_ca
 			h := cast,trunc(s32)((lparam >> 16) & 0xFFFF);
 			vp.width = w;
 			vp.height = h;
+			if vp.running {
+				resize_viewport();
+				draw_one_frame();
+				reset_input();
+				focused_uuid = 0;
+			}
 		case WM_SYSKEYDOWN; #through;
 		case WM_KEYDOWN;
 			if wparam <= 0xFF {
