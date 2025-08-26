@@ -119,19 +119,18 @@ events_manager :: (hwnd: *void, msg: u32, wparam: u64, lparam: s64) -> s64 #c_ca
 	if msg == {
 		case WM_CLOSE; #through;
 		case WM_QUIT;  vp.running = false;
-		case WM_SETFOCUS; vp.reduced = false; focused_uuid = 0;
-		case WM_KILLFOCUS; reset_input();
+		case WM_SETFOCUS;
+			vp.reduced = false;
+			focused_uuid = 0;
+		case WM_KILLFOCUS;
+			reset_input();
+			focused_uuid = 0;
+			editor.focused = false;
 		case WM_SIZE;
 			w := cast,trunc(s32)((lparam      ) & 0xFFFF);
 			h := cast,trunc(s32)((lparam >> 16) & 0xFFFF);
 			vp.width = w;
 			vp.height = h;
-			if vp.running {
-				resize_viewport();
-				draw_one_frame();
-				reset_input();
-				focused_uuid = 0;
-			}
 		case WM_SYSKEYDOWN; #through;
 		case WM_KEYDOWN;
 			if wparam <= 0xFF {
@@ -234,6 +233,17 @@ events_manager :: (hwnd: *void, msg: u32, wparam: u64, lparam: s64) -> s64 #c_ca
 			info := cast(*MINMAXINFO, lparam);
 			info.*.minTrackSize.x = MIN_SCREEN_WIDTH;
 			info.*.minTrackSize.y = MIN_SCREEN_HEIGHT;
+		case WM_ENTERSIZEMOVE;
+			SetTimer(hwnd, 1, USER_TIMER_MINIMUM, null);
+		case WM_EXITSIZEMOVE;
+			KillTimer(hwnd, 1);
+		case WM_TIMER;
+			if vp.running {
+				resize_viewport();
+				draw_one_frame();
+				reset_input();
+				focused_uuid = 0;
+			}
 	}
 
 	return DefWindowProcW(hwnd, msg, wparam, lparam);
@@ -292,6 +302,9 @@ GetSystemMetricsForDpi :: (idx: s32, dpi: u32) -> s32 #foreign _user32;
 GetWindowPlacement :: (hwnd: *void, p: *WINDOWPLACEMENT) -> s32 #foreign _user32;
 DragQueryFileA :: (data: *void, idx: u32, name: *u8, length: u32) -> u32 #foreign _shell32;
 
+SetTimer :: (hwnd: *void, nIDEvent: u64, uElapse: u32, lpTimerFunc: *void) -> u64 #foreign _user32;
+KillTimer :: (hwnd: *void, uIDEvent: u64) -> s32 #foreign _user32;
+
 #scope_file
 _user32  :: #system_library "User32";
 _shell32 :: #system_library "Shell32";
@@ -307,3 +320,7 @@ HTTOPRIGHT    :: 14;
 HTBOTTOM      :: 15;
 HTBOTTOMLEFT  :: 16;
 HTBOTTOMRIGHT :: 17;
+
+WM_ENTERSIZEMOVE :: 0x0231;
+WM_EXITSIZEMOVE  :: 0x0232;
+USER_TIMER_MINIMUM  :: 0x0000000A;

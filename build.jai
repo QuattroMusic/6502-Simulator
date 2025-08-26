@@ -67,19 +67,6 @@ compile_type := CompileFlag.DEBUG;
 	
 	init_plugins(plugins_to_create, *plugins, w);
 	
-	assert(plugins_to_create.count == plugins.count);
-	for p: plugins {
-        c := *plugins_to_create[it_index];
-        if p.init {
-            success := p.init(p, c.options);
-			if !success {
-				compiler_set_workspace_status(.FAILED);
-			}
-        } else if c.options {
-            log_error("Plugin '%' takes no options, but these options were given: %\n", c.name, c.options);
-        }
-    }
-	
 	intercept_flags: Intercept_Flags;
 	for plugins if it.before_intercept then it.before_intercept(it, *intercept_flags);
 	

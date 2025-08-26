@@ -187,6 +187,8 @@ ROR :: (addr: u16) {
 
 	data >>= 1;
 	data |= (temp << 7);
+	
+	write_data(addr, data);
 
 	update_N_and_Z(data);
 }
