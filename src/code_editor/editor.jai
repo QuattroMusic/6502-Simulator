@@ -72,8 +72,12 @@ get_width_of_line_count_bar :: inline () -> f32 {
 calculate_rows_length :: () {
 	len: u32 = 0;
 	longest_line: u32 = 0;
+	longest_visually: u32 = 0;
+	visually_longest_line: u32 = 0;
 
 	it_index := 0;
+	
+	editor.rows_length.count = 0;
 	
 	while it_index < editor.content.count {
 		it := editor.content[it_index];
@@ -81,16 +85,24 @@ calculate_rows_length :: () {
 		
 		if it == #char "\n" {
 			array_add(*editor.rows_length, len);
+			
 			longest_line = max(longest_line, len);
+			visually_longest_line = max(visually_longest_line, longest_visually);
+			
 			len = 0;
+			longest_visually = 0;
 			continue;
+		} else if it == #char "\t" {
+			longest_visually += 3;
 		}
 		
 		len += 1;
+		longest_visually += 1;
 	}
 
 	array_add(*editor.rows_length, len);
 	editor.longest_line = longest_line;
+	editor.visually_longest_line = visually_longest_line;
 }
 
 remove_bad_characters :: () {

@@ -65,12 +65,11 @@ event_tab :: () {
 	idx := get_current_idx();
 	
 	array_insert_at(*content, #char "\t", idx);
-	// array_insert_at(*content, #char " ", idx);
-	// array_insert_at(*content, #char " ", idx);
-	// array_insert_at(*content, #char " ", idx);
-	
+
 	rows_length[caret_row] += 1;
 	caret_col += 1;
+	
+	calculate_rows_length();
 }
 
 event_enter :: () {
@@ -99,6 +98,8 @@ event_enter :: () {
 	if rows_delta_from_bottom_of_screen < 6 && rows_delta_from_bottom_of_screen >= 0 {
 		editor.scrollbar_pos.y += FONT_SIZE_NORMAL;
 	}
+	
+	calculate_rows_length();
 }
 
 event_delete :: () {
@@ -119,7 +120,6 @@ event_delete :: () {
 		editor.row_digits = count_digits(xx editor.rows_length.count);
 		
 		// advance scrollbar if pressing delete at the top of the screen
-		
 		rows_on_screen     := editor_content_size.y / FONT_SIZE_NORMAL;
 		first_visible_row  := scrollbar_pos.y       / FONT_SIZE_NORMAL;
 		
@@ -134,6 +134,8 @@ event_delete :: () {
 		
 		caret_col -= 1;
 	}
+	
+	calculate_rows_length();
 }
 
 event_char :: () {
@@ -147,6 +149,8 @@ event_char :: () {
 	rows_length[caret_row] += 1;
 	
 	caret_col += 1;
+	
+	calculate_rows_length();
 }
 
 event_mouse :: () {

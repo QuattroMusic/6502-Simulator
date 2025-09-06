@@ -160,6 +160,7 @@ Code_Editor :: struct {
 	rows_length: [..] u32;
 	
 	longest_line: u32;
+	visually_longest_line: u32;
 	row_digits:   u32;
 	
 	caret_row:  u32 = 0;

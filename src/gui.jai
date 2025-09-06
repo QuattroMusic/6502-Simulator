@@ -95,7 +95,7 @@ draw_code_editor :: () {
 
 	char_per_lines := round_down(editor.size.x / 16) - 2;
 
-	scroll_size := editor.size + .{editor.longest_line * FONT_SIZE_NORMAL, editor.rows_length.count * FONT_SIZE_NORMAL};
+	scroll_size := editor.size + .{(editor.visually_longest_line + 1) * FONT_SIZE_NORMAL, editor.rows_length.count * FONT_SIZE_NORMAL};
 
 	min_size: Vec2 = ---;
 	min_size.x = (char_per_lines - 0) * FONT_SIZE_NORMAL;
