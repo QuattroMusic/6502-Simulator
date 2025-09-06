@@ -76,7 +76,19 @@ event_enter :: () {
 	using editor;
 	
 	idx := get_current_idx();
+	
+	// count tabs on the current line
+	tabs := 0;
+	line_length := rows_length[caret_row];
+	for 0 .. cast(s64, line_length) - 1 {
+		c := content[idx + it - caret_col];
+		if c == #char "\t" then tabs += 1;
+	}
+	
 	array_insert_at(*content, #char "\n", idx);
+	for 0 .. tabs - 1 {
+		array_insert_at(*content, #char "\t", idx + 1);
+	}
 	
 	diff := rows_length[caret_row] - caret_col;
 	array_insert_at(*rows_length, diff, caret_row + 1);
@@ -84,7 +96,7 @@ event_enter :: () {
 	rows_length[caret_row] = caret_col;
 	
 	caret_row += 1;
-	caret_col = 0;
+	caret_col = xx tabs;
 	
 	editor.row_digits = count_digits(xx rows_length.count);
 	
