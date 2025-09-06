@@ -114,7 +114,7 @@ event_enter :: () {
 	calculate_rows_length();
 }
 
-event_delete :: () {
+event_cancel :: () {
 	using editor;
 	
 	idx := get_current_idx();
@@ -148,6 +148,12 @@ event_delete :: () {
 	}
 	
 	calculate_rows_length();
+}
+
+event_delete :: () {
+	// :)
+	event_right();
+	event_cancel();
 }
 
 event_char :: () {
@@ -219,6 +225,13 @@ event_mouse :: () {
 	}
 }
 
+event_end :: () {
+	using editor;
+	
+	line_length := rows_length[caret_row];
+	caret_col = line_length;
+}
+
 handle_code_editor_events :: () {
 	if !editor.file_path then return;
 	
@@ -264,14 +277,16 @@ handle_code_editor_events :: () {
 		case;
 			if pressed_char { event_char(); moved = true; edited = true; }
 
-			if is_key_pressed_or_repeated(KEY_LEFT)   { event_left();   moved = true; }
-			if is_key_pressed_or_repeated(KEY_RIGHT)  { event_right();  moved = true; }
-			if is_key_pressed_or_repeated(KEY_UP)     { event_up();     moved = true; }
-			if is_key_pressed_or_repeated(KEY_DOWN)   { event_down();   moved = true; }
-			if is_key_pressed_or_repeated(KEY_TAB)    { event_tab();    moved = true; edited = true; }
-			if is_key_pressed_or_repeated(KEY_ENTER)  { event_enter();  moved = true; edited = true; }
-			if is_key_pressed_or_repeated(KEY_DELETE) { event_delete(); moved = true; edited = true; }
-			if is_mouse_pressed(0)                    { event_mouse();  moved = true; }
+			if is_key_pressed_or_repeated(KEY_LEFT)  { event_left();   moved = true; }
+			if is_key_pressed_or_repeated(KEY_RIGHT) { event_right();  moved = true; }
+			if is_key_pressed_or_repeated(KEY_UP)    { event_up();     moved = true; }
+			if is_key_pressed_or_repeated(KEY_DOWN)  { event_down();   moved = true; }
+			if is_key_pressed_or_repeated(KEY_TAB)   { event_tab();    moved = true; edited = true; }
+			if is_key_pressed_or_repeated(KEY_ENTER) { event_enter();  moved = true; edited = true; }
+			if is_key_pressed_or_repeated(KEY_CANC)  { event_cancel(); moved = true; edited = true; }
+			if is_key_pressed_or_repeated(KEY_DEL)   { event_delete(); moved = true; edited = true; }
+			if is_key_pressed_or_repeated(KEY_END)   { event_end();    moved = true; }
+			if is_mouse_pressed(0)                   { event_mouse();  moved = true; }
 	}
 
 	if moved {

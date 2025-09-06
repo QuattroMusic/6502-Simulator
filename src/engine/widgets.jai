@@ -471,7 +471,7 @@ input_int :: (pos: Vec2, $s: f32, value: *$T, $$min_value: T, $$max_value: T, it
 			value.* = min(new_value, max_value);
 			widget.edited = true;
 		}
-		if is_key_pressed_or_repeated(KEY_DELETE) {
+		if is_key_pressed_or_repeated(KEY_CANC) {
 			value.* /= 10;
 			widget.edited = true;
 		}
