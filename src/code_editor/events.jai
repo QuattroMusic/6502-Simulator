@@ -88,6 +88,17 @@ event_enter :: () {
 	caret_col = 0;
 	
 	editor.row_digits = count_digits(xx rows_length.count);
+	
+	// advance scrollbar if pressing enter at the bottom of the screen
+	rows_on_screen     := editor_content_size.y / FONT_SIZE_NORMAL;
+	first_visible_row  := scrollbar_pos.y       / FONT_SIZE_NORMAL;
+	
+	relative_row_on_screen := caret_row - first_visible_row;
+	rows_delta_from_bottom_of_screen := rows_on_screen - relative_row_on_screen;
+	
+	if rows_delta_from_bottom_of_screen < 6 && rows_delta_from_bottom_of_screen >= 0 {
+		editor.scrollbar_pos.y += FONT_SIZE_NORMAL;
+	}
 }
 
 event_delete :: () {
@@ -98,7 +109,7 @@ event_delete :: () {
 	
 	array_ordered_remove_by_index(*content, idx - 1);
 	
-	if caret_col == 0 {
+	if caret_col == 0 {  // deleting a row
 		v := rows_length[caret_row];
 		array_ordered_remove_by_index(*rows_length, caret_row);
 		caret_row -= 1;
@@ -106,6 +117,18 @@ event_delete :: () {
 		rows_length[caret_row] += v;
 		
 		editor.row_digits = count_digits(xx editor.rows_length.count);
+		
+		// advance scrollbar if pressing delete at the top of the screen
+		
+		rows_on_screen     := editor_content_size.y / FONT_SIZE_NORMAL;
+		first_visible_row  := scrollbar_pos.y       / FONT_SIZE_NORMAL;
+		
+		relative_row_on_screen := caret_row - first_visible_row;
+		
+		if relative_row_on_screen < 6 && relative_row_on_screen >= 0 {
+			editor.scrollbar_pos.y -= FONT_SIZE_NORMAL;
+			editor.scrollbar_pos.y = max(0.0, editor.scrollbar_pos.y);
+		}
 	} else {
 		rows_length[caret_row] -= 1;
 		
