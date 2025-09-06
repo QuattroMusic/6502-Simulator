@@ -1,5 +1,5 @@
 # 6502-Simulator
-A simple to use 6502 simulator, featuring a code viewer, keyboard input and a display!
+A simple to use 6502 simulator, featuring a code editor, keyboard input and a display!
 
 ![[image]](_data/6502.png)
 
@@ -107,19 +107,15 @@ For a complete list of the implemented intrinsics, you may look at this [cheatsh
 
 ## Installation
 
-1. Download the simulator from this repository
-2. Download the [Vasm compiler](http://www.compilers.de/vasm.html) (`vasm6502_oldstyle.exe`) and add it to the same folder of the executable, or setup environment variables
-3. Enjoy!
+1. Download the most recent version from [this repository](https://github.com/QuattroMusic/6502-Simulator/releases/latest)
+2. Enjoy!
 
 ## How to use
 
 1. Open the simulator
 2. Create a file on your pc
 3. Drag and drop the file on the simulator
-4. Open your favourite IDE and edit the file
-5. Enjoy!
-
-Note: every time you save the file, the program automatically reload it
+4. Start editing and compiling the file
 
 ### Minimal Code
 ```
@@ -146,7 +142,7 @@ init:
 
 ### Version 3.0
 - [x] code editor instead of code viewer
-- [ ] panel for the 6502 instruction set
+- [x] panel for the 6502 instruction set
 
 ### Version 4.0
 - [ ] use an internal 6502 compiler
@@ -163,9 +159,6 @@ You can keep the source code on your devices; you may compile it and use it for 
 #### What this software doesn't allow you to do
 Even if you've modified it, I don't want you to use this product for commercial use or to distribute under your name;
 I put a lot of effort on this project, for learning purposes, and to make it possible for everyone to use a 6502 simulator to learn assembly in the easiest possible way.
-
-#### In short
-Use it wherever you want, but please do not use this project for commercial purposes; it's an educational tool that I want accessible to everyone.
 
 ## Contact me
 
