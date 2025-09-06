@@ -1,6 +1,6 @@
 #scope_file
-passed_tests: int;
-tests_cumulative: int;
+passed_tests: s64;
+tests_cumulative: s64;
 
 print_data :: () {
 	using engine;
@@ -66,7 +66,7 @@ test_handler :: (name: string) #expand {
 		print("Passed % tests '%' in %us\n", passed_tests, name, to_microseconds(delta));
 		tests_cumulative += passed_tests;
 		passed_tests = 0;
-		virtual_cpu_reset();
+		cpu_reset(virtual = true);
 	}
 }
 
@@ -103,7 +103,7 @@ test_AND :: () {
 			assert_reg(A = res);
 			assert_flags(Z = cast(u8)(res == 0), N = cast(u8)((cast,no_check(s8)res) < 0));
 		}
-		virtual_cpu_reset();  // this, or the ROM will overflow
+		cpu_reset(virtual = true);  // this, or the ROM will overflow
 	}
 }
 
@@ -274,7 +274,7 @@ test_DEC :: () {
 	assert_RAM(pos = 0x01, value = 0xFF);
 	assert_flags(N = 1, Z = 0);
 	
-	virtual_cpu_reset();
+	cpu_reset(virtual = true);
 	
 	virtual_exec_operation(.LDX_IMM, 0x10);
 	virtual_exec_operation(.DEX);
@@ -301,7 +301,7 @@ test_DEC :: () {
 	assert_reg(X = 0xFF);
 	assert_flags(N = 1, Z = 0);
 	
-	virtual_cpu_reset();
+	cpu_reset(virtual = true);
 	
 	virtual_exec_operation(.LDY_IMM, 0x10);
 	virtual_exec_operation(.DEY);
@@ -339,7 +339,7 @@ test_EOR :: () {
 			assert_reg(A = res);
 			assert_flags(Z = cast(u8)(res == 0), N = cast(u8)((cast,no_check(s8)res) < 0));
 		}
-		virtual_cpu_reset();  // this, or the ROM will overflow
+		cpu_reset(virtual = true);  // this, or the ROM will overflow
 	}
 }
 
@@ -364,7 +364,7 @@ test_INC :: () {
 	assert_RAM(pos = 0x01, value = 0x00);
 	assert_flags(N = 0, Z = 1);
 	
-	virtual_cpu_reset();
+	cpu_reset(virtual = true);
 	
 	virtual_exec_operation(.LDX_IMM, 0x00);
 	virtual_exec_operation(.INX);
@@ -381,7 +381,7 @@ test_INC :: () {
 	assert_reg(X = 0x80);
 	assert_flags(N = 1, Z = 0);
 	
-	virtual_cpu_reset();
+	cpu_reset(virtual = true);
 	
 	virtual_exec_operation(.LDY_IMM, 0x00);
 	virtual_exec_operation(.INY);
@@ -402,7 +402,7 @@ test_INC :: () {
 test_JMP :: () {
 	test_handler("JMP");
 	
-	virtual_cpu_reset();
+	cpu_reset(virtual = true);
 
 	virtual_write_ROM(engine.PC    , xx Opcode.JMP_ABS);
 	virtual_write_ROM(engine.PC + 1, xx ((engine.PC + 4 ) & 0xFF));
@@ -509,7 +509,7 @@ test_ORA :: () {
 			assert_reg(A = res);
 			assert_flags(Z = cast(u8)(res == 0), N = cast(u8)((cast,no_check(s8)res) < 0));
 		}
-		virtual_cpu_reset();  // this, or the ROM will overflow
+		cpu_reset(virtual = true);  // this, or the ROM will overflow
 	}
 }
 
@@ -667,7 +667,7 @@ test_SBC :: () {
 test_stack :: () {
 	test_handler("stack");
 	
-	virtual_cpu_reset();
+	cpu_reset(virtual = true);
 	virtual_exec_operation(.LDA_IMM, 0x20);
 	virtual_exec_operation(.PHA);
 	
@@ -680,7 +680,7 @@ test_stack :: () {
 	virtual_exec_operation(.PLA);
 	assert_reg(A = 0x20, S = 0xFF);
 	
-	virtual_cpu_reset();
+	cpu_reset(virtual = true);
 	
 	virtual_exec_operation(.CLC);
 	virtual_exec_operation(.LDA_IMM, 0x7F);
@@ -1001,7 +1001,7 @@ test_SUB_decimal :: () {
 #scope_export
 run_all_tests :: () {
 	start := current_time_monotonic();
-	virtual_cpu_init();
+	cpu_init(virtual = true);
 	
 	write_string("---    BITWISE   ---\n");
 	test_AND();

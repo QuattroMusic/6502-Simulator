@@ -2,7 +2,7 @@ read_ROM :: (name: string) {
 	file, res := file_open(name);
 	defer file_close(*file);
 	if !res {
-		display_error_panel(.UNABLE_TO_OPEN_BINARY, "bin error");
+		display_error_window(.UNABLE_TO_OPEN_BINARY, "bin error");
 		return;
 	}
 	
@@ -10,7 +10,7 @@ read_ROM :: (name: string) {
 	result, size := file_tell(file);
 
 	if size != ROM_SIZE {
-		display_error_panel(.INCOMPATIBLE_ROM_SIZE, "rom error");
+		display_error_window(.INCOMPATIBLE_ROM_SIZE, "rom error");
 		return;
 	}
 	file_seek(file, 0, .START);
@@ -50,27 +50,26 @@ handle_input_and_time :: () {
 	time := current_time_consensus();
 	calendar := to_calendar(time, .LOCAL);
 	
-	engine.RAM[MEMORY_YEAR_ADDRESS]            = cast,trunc(u8)(calendar.year & 0xFF);
+	engine.RAM[MEMORY_YEAR_ADDRESS + 0]        = cast,trunc(u8)((calendar.year >> 0) & 0xFF);
 	engine.RAM[MEMORY_YEAR_ADDRESS + 1]        = cast,trunc(u8)((calendar.year >> 8) & 0xFF);
 	engine.RAM[MEMORY_MONTH_ADDRESS]           = cast,no_check(u8)(calendar.month_starting_at_0 + 1);
 	engine.RAM[MEMORY_DAY_ADDRESS]             = cast,no_check(u8)(calendar.day_of_month_starting_at_0 + 1);
 	engine.RAM[MEMORY_HOUR_ADDRESS]            = cast,no_check(u8)calendar.hour;
 	engine.RAM[MEMORY_MINUTE_ADDRESS]          = cast,no_check(u8)calendar.minute;
 	engine.RAM[MEMORY_SECOND_ADDRESS]          = cast,no_check(u8)calendar.second;
-	engine.RAM[MEMORY_MILLISECOND_ADDRESS]     = cast,trunc(u8)(calendar.millisecond & 0xFF);
+	engine.RAM[MEMORY_MILLISECOND_ADDRESS + 0] = cast,trunc(u8)((calendar.millisecond >> 0) & 0xFF);
 	engine.RAM[MEMORY_MILLISECOND_ADDRESS + 1] = cast,trunc(u8)((calendar.millisecond >> 8) & 0xFF);
-
-	if !is_panel_visible(ui.display_panel) then return;
 	
-	c := last_down_char;
-	allowed_chars := (#char "A" <= c && c <= #char "Z") || 
+	if !engine.running then return;
+	
+	c := last_down_key;
+	
+	input_allowed_chars :=
+		(#char "A" <= c && c <= #char "Z") || 
 		(KEY_LEFT <= c && c <= KEY_DOWN) ||
 		c == KEY_SPACE ||
 		#char "0" <= c && c <= #char "9";
 	
-	if allowed_chars && is_key_down(c) {
-		engine.RAM[MEMORY_INPUT_ADDRESS] = c;
-	} else {
-		engine.RAM[MEMORY_INPUT_ADDRESS] = 0;
-	}
+	
+	engine.RAM[MEMORY_INPUT_ADDRESS] = ifx input_allowed_chars && is_key_down(c) then c;
 }

@@ -1,9 +1,11 @@
-round_up :: (n: f32, base: f32) -> f32 {
-	if base != 0 && n != 0 {
+round_up :: (n: f32, $base: f32) -> f32 {
+	#assert base != 0 "base must not be zero";
+	
+	if n != 0 {
 		sign := ifx n > 0 then 1 else -1;
 		n *= sign;
 		n /= base;
-		n = (cast(int)ceil(n)) * base;
+		n = (cast(s64)ceil(n)) * base;
 		n *= sign;
 	}
 	return n;
@@ -14,17 +16,24 @@ round_down :: (x: f32) -> f32 {
 	return cast(f32, cast(s32, x));
 }
 
+round_ignoring_negative :: inline (x: f32) -> f32 {
+	// normal round is
+	// ifx x >= 0 then floor(x + 0.5) else ceil(x - 0.5);
+	// but if we ignore negative, we'll get
+	// floor(x + 0.5);
+	// but again, since floor is ignoring negative
+	return round_down(x + 0.5);
+}
+
 print :: (v: Any) {
 	print("%\n", v);
 }
 
-round_number_power_of_2 :: (n: type_of(Resizable_Array.count)) -> type_of(Resizable_Array.count) {
-	out: type_of(Resizable_Array.count);
-	out = 32;  // min size
-	while out < n {
-		out *= 2;
+printv :: (v: ..Any) {
+	for v {
+		print("% ", it);
 	}
-	return out;
+	write_string("\n");
 }
 
 count_digits :: (x: u32) -> u32 {
@@ -53,16 +62,10 @@ split_from_right :: (s: string, c: u8) -> right: string {
 	return s;
 }
 
-string_length :: (d: *u8) -> s64 {
-	it: int;
-	while d[it] it += 1;
-	return it;
-}
-
-display_error_panel :: (error: Error_Type, title: string) {
+display_error_window :: (error: Error_Type, title: string) {
 	ui.modal_error_type = error;
-	set_panel_name(ui.modal_panel, title);
-	toggle_panel(ui.modal_panel);
+	ui.modal_window.name = title;
+	toggle_window(ui.modal_window, centered = true);
 }
 
 RGB_to_HSV :: (c: Col) -> Vec3 {
@@ -70,7 +73,7 @@ RGB_to_HSV :: (c: Col) -> Vec3 {
 	g := c.g / 255.0;
 	b := c.b / 255.0;
 	
-	h, s, v: f32;
+	h, s, v: f32 = ---;
 	
 	cmax := max(r, max(g, b));
 	cmin := min(r, min(g, b));
@@ -139,15 +142,27 @@ operator + :: (a: Col, b: Col) -> Col {
 	return out;
 }
 
-operator == :: (a: Col, b: Col) -> bool {
+operator == :: inline (a: Col, b: Col) -> bool {
 	return a.data == b.data;
 }
 
-is_mouse_inside_rect :: (pos: Vec2, size: Vec2) -> bool {
-	return (xx pos.x <= mouse_x) && (mouse_x < xx (pos.x + size.x)) && (xx pos.y <= mouse_y) && (mouse_y < xx (pos.y + size.y));
+is_inside_rect :: (p: Vec2, pos: Vec2, size: Vec2) -> bool {
+	return (pos.x <= p.x) && (p.x < (pos.x + size.x)) && (pos.y <= p.y) && (p.y < (pos.y + size.y));
 }
 
-_profile_ident: int;
+is_mouse_inside_rect :: inline (pos: Vec2, size: Vec2) -> bool {
+	return is_inside_rect(.{cast(f32, mouse_x), cast(f32, mouse_y)}, pos, size);
+}
+
+clamp :: (v: Vec3, x: f32, y: f32) -> Vec3 {
+	return .{clamp(v.x, x, y), clamp(v.y, x, y), clamp(v.z, x, y)};
+}
+
+frac :: (v: Vec3) -> Vec3 {
+	return .{frac(v.x), frac(v.y), frac(v.z)};
+}
+
+_profile_ident: s64;
 
 profile_block :: () #expand {
 	`_start := current_time_monotonic();
