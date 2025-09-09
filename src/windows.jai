@@ -3,7 +3,7 @@ draw_display :: (panel: *Window) {
 
 	parent := fetch_parent();
 	draw_rect_lines(parent + .{padding, padding}, .{DISPLAY_WIDTH * 8, DISPLAY_HEIGHT * 8}, settings.themes.platform_widget_border_normal, 1);
-
+	
 	width: s64;
 	row_data: u8 = engine.RAM[0x0200];  // first value
 	row_x := parent.x + padding;

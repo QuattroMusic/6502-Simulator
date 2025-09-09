@@ -25,7 +25,7 @@ draw_header :: () {
 }
 
 draw_buttons_controls :: () {
-	if !engine.thread_running {
+	if !engine.running {
 		if button("Compile and run", .{10, 40}, .{170, 25}, FONT_SIZE_SMALL) {
 			compile_program();
 			if engine.compilation_successful {
@@ -50,21 +50,21 @@ draw_buttons_controls :: () {
 		}
 	} else {
 		// we're doing this just to update the variable the next cycle
-		running := engine.running;
+		paused := engine.paused;
 		if !engine.debug {
-			if engine.running {
-				if button("Pause", .{100, 40}, .{80, 25}, FONT_SIZE_SMALL) {
-					running = false;
+			if engine.paused {
+				if button("Resume", .{100, 40}, .{80, 25}, FONT_SIZE_SMALL) {
+					paused = false;
 					editor.focused = true;
 				}
 			} else {
-				if button("Resume", .{100, 40}, .{80, 25}, FONT_SIZE_SMALL) {
-					running = true;
+				if button("Pause", .{100, 40}, .{80, 25}, FONT_SIZE_SMALL) {
+					paused = true;
 					editor.focused = true;
 				}
 			}
 		}
-		engine.running = running;
+		engine.paused = paused;
 		if button("Stop", .{10, 40}, .{80, 25}, FONT_SIZE_SMALL) {
 			cpu_stop();
 			editor.focused = true;
@@ -112,28 +112,27 @@ draw_code_editor :: () {
 	draw_line_count_bar(x_visible);
 	
 	// caret
-	if editor.focused {
-		// Todo - Quattro - 3 and 5 is padding, make it more robust
-		// Also make more robust the 16.0
-		w := get_width_of_line_count_bar();
-		
-		// check if there are tabs in a row, offset the caret accordingly
-		x_offset: f32;
-		cursor_start_row: u32 = 0;
-		for 0 .. cast(s64, editor.caret_row) - 1 cursor_start_row += editor.rows_length[it] + 1;
-		for cursor_start_row .. (cast(s64, cursor_start_row + editor.caret_col) - 1) {
-			c := editor.content[it];
-			if c == #char "\t" then x_offset += FONT_SIZE_NORMAL * 3;  // Todo - Quattro - tab size in settings
-		}
-		
-		x := editor.pos.x + editor.caret_col * FONT_SIZE_NORMAL + 3 - editor.scrollbar_pos.x + w + x_offset;
-		y := editor.pos.y + editor.caret_row * FONT_SIZE_NORMAL + 5 - editor.scrollbar_pos.y;
+	// Todo - Quattro - 3 and 5 is padding, make it more robust
+	// Also make more robust the 16.0
+	w := get_width_of_line_count_bar();
+	
+	// check if there are tabs in a row, offset the caret accordingly
+	x_offset: f32;
+	cursor_start_row: u32 = 0;
+	for 0 .. cast(s64, editor.caret_row) - 1 cursor_start_row += editor.rows_length[it] + 1;
+	for cursor_start_row .. (cast(s64, cursor_start_row + editor.caret_col) - 1) {
+		c := editor.content[it];
+		if c == #char "\t" then x_offset += FONT_SIZE_NORMAL * 3;  // Todo - Quattro - tab size in settings
+	}
+	
+	x := editor.pos.x + editor.caret_col * FONT_SIZE_NORMAL + 3 - editor.scrollbar_pos.x + w + x_offset;
+	y := editor.pos.y + editor.caret_row * FONT_SIZE_NORMAL + 5 - editor.scrollbar_pos.y;
 
-		if x > (editor.pos.x + w) && x < (editor.pos.x + editor.size.x) && y > editor.pos.y && y < (editor.pos.y + editor.size.y - 18) {
-			draw_rect(.{editor.pos.x - editor.scrollbar_pos.x + w, y}, .{editor.size.x - w, FONT_SIZE_NORMAL}, settings.themes.platform_widget_bg_normal);
+	if x > (editor.pos.x + w) && x < (editor.pos.x + editor.size.x) && y > editor.pos.y && y < (editor.pos.y + editor.size.y - 18) {
+		draw_rect(.{editor.pos.x - editor.scrollbar_pos.x + w, y}, .{editor.size.x - w, FONT_SIZE_NORMAL}, settings.themes.platform_widget_bg_normal);
 		
+		if editor.focused {
 			time := (ms_since_init() - editor.caret_time) % 1000;
-			
 			if time < 500 then draw_rect(.{x, y}, .{1, FONT_SIZE_NORMAL}, .{255, 255, 255, 255});
 		}
 	}
@@ -174,7 +173,7 @@ draw_RAM_content :: (offset: Vec2, start: s64, end: s64, pos_y: f32, height: f32
 				col = ifx data then settings.themes.memory_stack_used else settings.themes.memory_stack_empty;
 			} else if 32 <= y && y < 632 {
 				col = ifx data then settings.themes.memory_display_used else settings.themes.memory_display_empty;
-			} else if y == 632 && x <= 9 {
+			} else if y == 632 && x < 13 {
 				col = settings.themes.memory_input;
 			} else if data {
 				col = settings.themes.memory_normal_used;
@@ -280,7 +279,7 @@ draw_program_debug :: () {
 	draw_panel("Debug", offset, .{190, START_SCREEN_HEIGHT / 4 - 105.0});
 
 	checkbox("debugger", offset + .{15, 15}, .{20, 20}, *engine.debug);
-	if engine.debug && engine.thread_running {
+	if engine.debug && engine.running {
 		if button("Step", offset + .{120, 13}, .{60, 25}, FONT_SIZE_SMALL) {
 			next_instruction();
 		}
@@ -308,7 +307,7 @@ draw_input :: () {
 	offset := Vec2.{vp.width - START_SCREEN_WIDTH / 2 + 240.0, vp.height - START_SCREEN_HEIGHT / 4 + 150.0};
 	draw_panel("Input", offset, .{vp.width - 220.0 - offset.x, 40});
 
-	data := engine.RAM[MEMORY_INPUT_ADDRESS];
+	data := engine.RAM[MEMORY_KEYBOARD];
 
 	fmt: string = ---;
 	if data == {
@@ -345,7 +344,7 @@ draw_program_frequency :: () {
 		MHz(1), MHz(2), MHz(5), MHz(10), MHz(20), MHz(50), MHz(100), MHz(200), MHz(500), GHz(1)
 	];
 
-	found, idx := array_find(freqs, freq);
+	found, idx := array_find(freqs, freq);  // Todo - Quattro - try to remove this
 	draw_step_hslider(offset + .{20, 55}, .{160, 20}, freqs.count, *idx, disabled = engine.metrics.unlock);
 	engine.metrics.update_rate = freqs[idx];
 

@@ -121,7 +121,7 @@ parse_options_file :: () {
 	
 	if maj_version == 2 && (min_version == 0 || min_version == 1) {
 		parse_settings_version_2(*file);
-	} else if maj_version == 3 && min_version == 0 {
+	} else if maj_version == 3 && (min_version == 0 || min_version == 1) {
 		parse_settings_version_3(*file);
 	} else {
 		assert(false, "Unable to read settings file, corrupted");
@@ -138,7 +138,7 @@ parse_theme_file :: () {
 	
 	if maj_version == 2 && (min_version == 0 || min_version == 1) {
 		parse_theming_version_2(*file);
-	} else if maj_version == 3 && min_version == 0 {
+	} else if maj_version == 3 && (min_version == 0 || min_version == 1) {
 		parse_theming_version_2(*file);  // still the same
 	} else {
 		assert(false, "Unable to read theming file, corrupted");

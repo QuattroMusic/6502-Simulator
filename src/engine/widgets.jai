@@ -1010,4 +1010,4 @@ ID :: #type u32;
 WIDGET_HEADER_HEIGHT  :: 24;
 WIDGET_SCROLLBAR_SIZE :: 12;
 
-focused_uuid: ID;
+focused_uuid: ID #align 8;

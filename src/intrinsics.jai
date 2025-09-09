@@ -1,6 +1,7 @@
 #scope_file
 ADC :: (data: u8) {
-	temp: u16;
+	temp: u16 = ---;
+	
 	if engine.flags.D {
 		temp = (engine.A & 0xF) + (data & 0xF) + cast(u8)engine.flags.C;
 		if temp >= 0x0A then temp = 0x10 | ((temp + 6) & 0xF);
@@ -213,7 +214,7 @@ RTS :: () {
 }
 
 SBC :: (data: u8) {
-	temp: u16;
+	temp: u16 = ---;
 
 	if engine.flags.D {
 		temp = 0xF + (engine.A & 0xF) - (data & 0xF) + cast(u8)engine.flags.C;

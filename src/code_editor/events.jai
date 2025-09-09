@@ -33,6 +33,7 @@ event_right :: () {
 }
 
 event_up :: () {
+	// Todo - Quattro - move the visual
 	using editor;
 	
 	if caret_row == 0 then return;
@@ -45,6 +46,7 @@ event_up :: () {
 }
 
 event_down :: () {
+	// Todo - Quattro - move the visual
 	using editor;
 	
 	if caret_row == rows_length.count - 1 {

@@ -182,36 +182,46 @@ Code_Editor :: struct {
 }
 
 Status_Flags :: struct {
-	N, V, B, D, I, Z, C: bool;
-}
-
-Metrics :: struct {
-	update_rate: s64 = 1_000;
-	last_counter: s64;
-
-	unlock: bool;
+	N: bool #align 8;
+	V: bool #align 8;
+	B: bool #align 8;
+	D: bool #align 8;
+	I: bool #align 8;
+	Z: bool #align 8;
+	C: bool #align 8;
 }
 
 Emulator :: struct {
-	ROM: [ROM_SIZE] u8 = ---;
-	RAM: [RAM_SIZE] u8 = ---;
-	A:  u8;
-	X:  u8;
-	Y:  u8;
-	S:  u8;
-	PC: u16;
+	// Atomic values needs to be 8 byte aligned on x64 machines.
+	// Note that rather filling the whole program with `atomic_read` or `atomic_write`
+	// we're just aligning the data.
+	// If you look at the implementation, it's just a common read or write.
+
+	ROM: [ROM_SIZE] u8 = --- #align 8;
+	RAM: [RAM_SIZE] u8 = --- #align 8;
+	
+	A:  u8  #align 8;
+	X:  u8  #align 8;
+	Y:  u8  #align 8;
+	S:  u8  #align 8;
+	PC: u16 #align 8;
 
 	compilation_successful: bool;
-	current_instruction: Opcode;
+	current_instruction: Opcode #align 8;
 
 	flags: Status_Flags;
 
 	cpu_thread: Thread;
-	metrics: Metrics;
+	metrics: struct {
+		update_rate: s64 = 1_000 #align 8;
+		last_counter: s64;
 
-	running: bool;
-	debug: bool;
-	thread_running: bool;  // could be `true` when 6502 is paused
+		unlock: bool #align 8;
+	};
+
+	paused:  bool #align 8;
+	debug:   bool #align 8;
+	running: bool #align 8;
 }
 
 Hz  :: (f: type_of(engine.metrics.update_rate)) -> type_of(engine.metrics.update_rate) { return f; }
@@ -268,8 +278,8 @@ unpack_P :: (data: u8) {
 }
 
 cpu_stop :: () {
+	engine.paused = true;
 	engine.running = false;
-	engine.thread_running = false;
 	
 	engine.current_instruction = 0xFF;  // intentionally out of range
 }
@@ -307,10 +317,12 @@ next_instruction :: () {
 
 cpu_start :: () {
 	threaded_func :: (t: *Thread) -> s64 {
+		handle_time();
+		
 		PC_jump(read_address(engine.PC));
-		while engine.thread_running {
+		while engine.running {
 			if !engine.metrics.unlock then lock_frame_rate_6502();
-			if engine.running && !engine.debug then next_instruction();
+			if !engine.paused && !engine.debug then next_instruction();
 		}
 		
 		focused_uuid = 0;  // some sorta cheat
@@ -320,9 +332,9 @@ cpu_start :: () {
 		return 0;
 	}
 
-	if !engine.thread_running {
-		engine.thread_running = true;
+	if !engine.running {
 		engine.running = true;
+		engine.paused = false;
 		thread_init(*engine.cpu_thread, threaded_func);
 		thread_start(*engine.cpu_thread);
 	}
