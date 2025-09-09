@@ -182,6 +182,8 @@ Code_Editor :: struct {
 }
 
 Status_Flags :: struct {
+	// Todo - Quattro - Maybe i could just use a single aligned u8.
+	// But I need to check for performance first
 	N: bool #align 8;
 	V: bool #align 8;
 	B: bool #align 8;

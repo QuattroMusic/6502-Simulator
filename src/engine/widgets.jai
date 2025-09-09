@@ -727,7 +727,6 @@ window :: (p: *Window) -> want_a_rise: bool {
 
 	want_a_rise := false;
 
-	// if it's modal, you cannot move it
 	if state == {
 		case .PRESSED;
 			p.pressed = true;

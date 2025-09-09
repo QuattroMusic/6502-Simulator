@@ -299,7 +299,8 @@ draw:
 	
 	lda #3  ; white
 	ldx #0
-	sta (coords, X)
+	sta (coords, x)
+	
 	
 	; load context
 	lda prev_a
@@ -326,38 +327,38 @@ calculate_abs_coords:
 
     ; y1 = y << 7
     sty coords
-    clc
-    rol coords
+    
+    asl coords
     rol coords + 1
-    clc
-    rol coords
+    
+    asl coords
     rol coords + 1
-    clc
-    rol coords
+    
+    asl coords
     rol coords + 1
-    clc
-    rol coords
+    
+    asl coords
     rol coords + 1
-    clc
-    rol coords
+    
+    asl coords
     rol coords + 1
-    clc
-    rol coords
+    
+    asl coords
     rol coords + 1
-    clc
-    rol coords
+    
+    asl coords
     rol coords + 1
 
     ; y2 = y << 3
     sty temp_coords
-    clc
-    rol temp_coords
+    
+    asl temp_coords
     rol temp_coords + 1
-    clc
-    rol temp_coords
+    
+    asl temp_coords
     rol temp_coords + 1
-    clc
-    rol temp_coords
+    
+    asl temp_coords
     rol temp_coords + 1
 
     ; y = y1 - y2
@@ -377,6 +378,7 @@ calculate_abs_coords:
     lda #$02  ; display offset (0x200)
     adc coords + 1
     sta coords + 1
+	
     rts
 
 	.org $FFFC

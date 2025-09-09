@@ -37,7 +37,7 @@ temp_col_next = 13
 screen_width = 120
 screen_height = 80
 
-input_addr = $2780
+input_addr = $278a
 
 key_space = 32
 
@@ -236,38 +236,38 @@ calculate_abs_coords:
 
     ; y1 = y << 7
     sty coords
-    clc
-    rol coords
+    
+    asl coords
     rol coords + 1
-    clc
-    rol coords
+    
+    asl coords
     rol coords + 1
-    clc
-    rol coords
+    
+    asl coords
     rol coords + 1
-    clc
-    rol coords
+    
+    asl coords
     rol coords + 1
-    clc
-    rol coords
+    
+    asl coords
     rol coords + 1
-    clc
-    rol coords
+    
+    asl coords
     rol coords + 1
-    clc
-    rol coords
+    
+    asl coords
     rol coords + 1
 
     ; y2 = y << 3
     sty temp_coords
-    clc
-    rol temp_coords
+    
+    asl temp_coords
     rol temp_coords + 1
-    clc
-    rol temp_coords
+    
+    asl temp_coords
     rol temp_coords + 1
-    clc
-    rol temp_coords
+    
+    asl temp_coords
     rol temp_coords + 1
 
     ; y = y1 - y2
