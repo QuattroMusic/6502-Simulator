@@ -112,28 +112,30 @@ draw_code_editor :: () {
 	draw_line_count_bar(x_visible);
 	
 	// caret
-	// Todo - Quattro - 3 and 5 is padding, make it more robust
-	// Also make more robust the 16.0
-	w := get_width_of_line_count_bar();
-	
-	// check if there are tabs in a row, offset the caret accordingly
-	x_offset: f32;
-	cursor_start_row: u32 = 0;
-	for 0 .. cast(s64, editor.caret_row) - 1 cursor_start_row += editor.rows_length[it] + 1;
-	for cursor_start_row .. (cast(s64, cursor_start_row + editor.caret_col) - 1) {
-		c := editor.content[it];
-		if c == #char "\t" then x_offset += FONT_SIZE_NORMAL * 3;  // Todo - Quattro - tab size in settings
-	}
-	
-	x := editor.pos.x + editor.caret_col * FONT_SIZE_NORMAL + 3 - editor.scrollbar_pos.x + w + x_offset;
-	y := editor.pos.y + editor.caret_row * FONT_SIZE_NORMAL + 5 - editor.scrollbar_pos.y;
-
-	if x > (editor.pos.x + w) && x < (editor.pos.x + editor.size.x) && y > editor.pos.y && y < (editor.pos.y + editor.size.y - 18) {
-		draw_rect(.{editor.pos.x - editor.scrollbar_pos.x + w, y}, .{editor.size.x - w, FONT_SIZE_NORMAL}, settings.themes.platform_widget_bg_normal);
+	if editor.file_path {
+		// Todo - Quattro - 3 and 5 is padding, make it more robust
+		// Also make more robust the 16.0
+		w := get_width_of_line_count_bar();
 		
-		if editor.focused {
-			time := (ms_since_init() - editor.caret_time) % 1000;
-			if time < 500 then draw_rect(.{x, y}, .{1, FONT_SIZE_NORMAL}, .{255, 255, 255, 255});
+		// check if there are tabs in a row, offset the caret accordingly
+		x_offset: f32;
+		cursor_start_row: u32 = 0;
+		for 0 .. cast(s64, editor.caret_row) - 1 cursor_start_row += editor.rows_length[it] + 1;
+		for cursor_start_row .. (cast(s64, cursor_start_row + editor.caret_col) - 1) {
+			c := editor.content[it];
+			if c == #char "\t" then x_offset += FONT_SIZE_NORMAL * 3;  // Todo - Quattro - tab size in settings
+		}
+		
+		x := editor.pos.x + editor.caret_col * FONT_SIZE_NORMAL + 3 - editor.scrollbar_pos.x + w + x_offset;
+		y := editor.pos.y + editor.caret_row * FONT_SIZE_NORMAL + 5 - editor.scrollbar_pos.y;
+
+		if x > (editor.pos.x + w) && x < (editor.pos.x + editor.size.x) && y > editor.pos.y && y < (editor.pos.y + editor.size.y - 18) {
+			draw_rect(.{editor.pos.x - editor.scrollbar_pos.x + w, y}, .{editor.size.x - w, FONT_SIZE_NORMAL}, settings.themes.platform_widget_bg_normal);
+			
+			if editor.focused {
+				time := (ms_since_init() - editor.caret_time) % 1000;
+				if time < 500 then draw_rect(.{x, y}, .{1, FONT_SIZE_NORMAL}, .{255, 255, 255, 255});
+			}
 		}
 	}
 	
