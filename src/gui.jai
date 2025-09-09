@@ -175,7 +175,7 @@ draw_RAM_content :: (offset: Vec2, start: s64, end: s64, pos_y: f32, height: f32
 				col = ifx data then settings.themes.memory_stack_used else settings.themes.memory_stack_empty;
 			} else if 32 <= y && y < 632 {
 				col = ifx data then settings.themes.memory_display_used else settings.themes.memory_display_empty;
-			} else if y == 632 && x < 13 {
+			} else if y == 632 && x < 14 {
 				col = settings.themes.memory_input;
 			} else if data {
 				col = settings.themes.memory_normal_used;

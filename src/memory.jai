@@ -80,7 +80,7 @@ handle_input :: () {
 		data := ptr.*;
 		
 		// left untouched common memory and milli
-		data &= ~(MEMORY_KEYBOARD_MASK | MEMORY_MOUSE_X_MASK | MEMORY_MOUSE_Y_MASK);
+		data &= ~(MEMORY_KEYBOARD_MASK | MEMORY_MOUSE_X_MASK | MEMORY_MOUSE_Y_MASK | MEMORY_MOUSE_INPUT_MASK);
 		
 		ptr.* = data;
 		return;
@@ -110,13 +110,15 @@ handle_input :: () {
 		
 		x := floor(relative.x);
 		y := floor(relative.y);
+		input := cast(u64, is_mouse_down(0)) | (cast(u64, is_mouse_down(1)) << 1) | (cast(u64, is_mouse_down(2)) << 2);
 		
 		data := ptr.*;
-		data &= ~(MEMORY_MOUSE_X_MASK | MEMORY_MOUSE_Y_MASK);
+		data &= ~(MEMORY_MOUSE_X_MASK | MEMORY_MOUSE_Y_MASK | MEMORY_MOUSE_INPUT_MASK);
 		
 		if x >= 0 && x < DISPLAY_WIDTH && y >= 0 && y < DISPLAY_HEIGHT {
-			data |= cast(u64, x) << MEMORY_MOUSE_X_OFFSET;
-			data |= cast(u64, y) << MEMORY_MOUSE_Y_OFFSET;
+			data |= cast(u64, x)     << MEMORY_MOUSE_X_OFFSET;
+			data |= cast(u64, y)     << MEMORY_MOUSE_Y_OFFSET;
+			data |= cast(u64, input) << MEMORY_MOUSE_INPUT_OFFSET;
 		}
 		
 		ptr.* = data;

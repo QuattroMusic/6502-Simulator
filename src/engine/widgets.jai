@@ -720,10 +720,10 @@ window :: (p: *Window) -> want_a_rise: bool {
 	if p.draw_func then p.draw_func(p);
 
 	current_panel_uuid = 0;
-	stack.count      -= 1;
+	stack.count       -= 1;
 
-	// after drawing the inside, handle the movement
-	state := create_selectable_region(.WINDOW, p.pos, p.size, p.uuid);
+	interaction_size := Vec2.{p.size.x, ifx p.flags & .HEADER_DRAG_ONLY then WIDGET_HEADER_HEIGHT else p.size.y};
+	state := create_selectable_region(.WINDOW, p.pos, interaction_size, p.uuid);
 
 	want_a_rise := false;
 
@@ -750,7 +750,7 @@ window :: (p: *Window) -> want_a_rise: bool {
 	return want_a_rise;
 }
 
-create_new_window :: (draw: (*Window) -> (), name: string, size: Vec2, on_close: () -> () = null, it: s64 = 0, loc := #caller_location) -> *Window {
+create_new_window :: (draw: (*Window) -> (), name: string, size: Vec2, flags: Window_Flags = 0, on_close: () -> () = null, it: s64 = 0, loc := #caller_location) -> *Window {
 	uuid := hash_widget(loc, it);
 
 	#if DEBUG {
@@ -767,6 +767,7 @@ create_new_window :: (draw: (*Window) -> (), name: string, size: Vec2, on_close:
 	p.*.name      = name;
 	p.*.on_close  = on_close;
 	p.*.uuid      = uuid;
+	p.*.flags     = flags;
 
 	array_add(*windows_order, p);
 
@@ -989,6 +990,10 @@ Interaction_State :: enum {
 	RELEASE_NON_HOVER;
 }
 
+Window_Flags :: enum_flags u16 {
+	HEADER_DRAG_ONLY;
+}
+
 Window :: struct {
 	pos: Vec2;
 	size: Vec2;
@@ -996,9 +1001,11 @@ Window :: struct {
 	uuid: ID;
 
 	pressed_pos: Vec2;
+	
 	pressed: bool;
-
 	visible: bool;
+	flags: Window_Flags;
+	
 	name: string;
 
 	draw_func: (*Window) -> ();
