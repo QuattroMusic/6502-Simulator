@@ -182,22 +182,23 @@ draw_settings :: (panel: *Window) {
 				internal_selectable("debug stack full",  pos, 300,  *y, *general_debug_stack_full);
 				internal_selectable("stack focus",       pos, 300,  *y, *general_stack_focus);
 
-				internal_separator("platform",                  pos,      *y);
-				internal_selectable("widget background normal", pos, 410, *y, *platform_widget_bg_normal);
-				internal_selectable("widget background hover",  pos, 410, *y, *platform_widget_bg_hover);
-				internal_selectable("widget background press",  pos, 410, *y, *platform_widget_bg_press);
-				internal_selectable("widget border normal",     pos, 410, *y, *platform_widget_border_normal);
-				internal_selectable("widget border hover",      pos, 410, *y, *platform_widget_border_hover);
-				internal_selectable("widget border press",      pos, 410, *y, *platform_widget_border_press);
-				internal_selectable("text normal",              pos, 410, *y, *platform_text_normal);
-				internal_selectable("text hover",               pos, 410, *y, *platform_text_hover);
-				internal_selectable("text press",               pos, 410, *y, *platform_text_press);
-				internal_selectable("background",               pos, 410, *y, *platform_background);
-				internal_selectable("deep background",          pos, 410, *y, *platform_deep_background);
-				internal_selectable("line",                     pos, 410, *y, *platform_line);
-				internal_selectable("disabled",                 pos, 410, *y, *platform_disabled);
+				internal_separator("platform",                    pos,      *y);
+				internal_selectable("widget background normal",   pos, 410, *y, *platform_widget_bg_normal);
+				internal_selectable("widget background hover",    pos, 410, *y, *platform_widget_bg_hover);
+				internal_selectable("widget background press",    pos, 410, *y, *platform_widget_bg_press);
+				internal_selectable("widget background selected", pos, 410, *y, *platform_widget_bg_selected);
+				internal_selectable("widget border normal",       pos, 410, *y, *platform_widget_border_normal);
+				internal_selectable("widget border hover",        pos, 410, *y, *platform_widget_border_hover);
+				internal_selectable("widget border press",        pos, 410, *y, *platform_widget_border_press);
+				internal_selectable("text normal",                pos, 410, *y, *platform_text_normal);
+				internal_selectable("text hover",                 pos, 410, *y, *platform_text_hover);
+				internal_selectable("text press",                 pos, 410, *y, *platform_text_press);
+				internal_selectable("background",                 pos, 410, *y, *platform_background);
+				internal_selectable("deep background",            pos, 410, *y, *platform_deep_background);
+				internal_selectable("line",                       pos, 410, *y, *platform_line);
+				internal_selectable("disabled",                   pos, 410, *y, *platform_disabled);
 
-				internal_separator("code viewer",  pos,      *y);
+				internal_separator("keywords",     pos,      *y);
 				internal_selectable("text",        pos, 210, *y, *viewer_text);
 				internal_selectable("number",      pos, 210, *y, *viewer_number);
 				internal_selectable("comment",     pos, 210, *y, *viewer_comment);

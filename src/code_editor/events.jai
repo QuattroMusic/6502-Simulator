@@ -173,7 +173,7 @@ event_char :: () {
 	calculate_rows_length();
 }
 
-event_mouse :: () {
+event_mouse_down :: () {
 	using editor;
 	
 	x := cast(s32, mouse_x - pos.x);
@@ -190,8 +190,8 @@ event_mouse :: () {
 	x += cast(s32, editor.scrollbar_pos.x);
 	y += cast(s32, editor.scrollbar_pos.y);
 	
-	// Todo - Quattro - 3 and 5 is because of padding, make it more robust
-	x -= 3 + cast(s32, get_width_of_line_count_bar());
+	// Todo - Quattro - 5 is because of padding, make it more robust
+	x -= cast(s32, get_width_of_line_count_bar());
 	y -= 5;
 	
 	y /= 16;
@@ -224,6 +224,11 @@ event_mouse :: () {
 		caret_col = rows_length[caret_row];
 	} else {
 		caret_col = xx x;  // :)
+	}
+	
+	if is_mouse_pressed(0) {
+		caret_col_selection = caret_col;
+		caret_row_selection = caret_row;
 	}
 }
 
@@ -279,20 +284,25 @@ handle_code_editor_events :: () {
 		case;
 			if pressed_char { event_char(); moved = true; edited = true; }
 
-			if is_key_pressed_or_repeated(KEY_LEFT)  { event_left();   moved = true; }
-			if is_key_pressed_or_repeated(KEY_RIGHT) { event_right();  moved = true; }
-			if is_key_pressed_or_repeated(KEY_UP)    { event_up();     moved = true; }
-			if is_key_pressed_or_repeated(KEY_DOWN)  { event_down();   moved = true; }
-			if is_key_pressed_or_repeated(KEY_TAB)   { event_tab();    moved = true; edited = true; }
-			if is_key_pressed_or_repeated(KEY_ENTER) { event_enter();  moved = true; edited = true; }
-			if is_key_pressed_or_repeated(KEY_CANC)  { event_cancel(); moved = true; edited = true; }
-			if is_key_pressed_or_repeated(KEY_DEL)   { event_delete(); moved = true; edited = true; }
-			if is_key_pressed_or_repeated(KEY_END)   { event_end();    moved = true; }
-			if is_mouse_pressed(0)                   { event_mouse();  moved = true; }
+			if is_key_pressed_or_repeated(KEY_LEFT)  { event_left();        moved = true; }
+			if is_key_pressed_or_repeated(KEY_RIGHT) { event_right();       moved = true; }
+			if is_key_pressed_or_repeated(KEY_UP)    { event_up();          moved = true; }
+			if is_key_pressed_or_repeated(KEY_DOWN)  { event_down();        moved = true; }
+			if is_key_pressed_or_repeated(KEY_TAB)   { event_tab();         moved = true; edited = true; }
+			if is_key_pressed_or_repeated(KEY_ENTER) { event_enter();       moved = true; edited = true; }
+			if is_key_pressed_or_repeated(KEY_CANC)  { event_cancel();      moved = true; edited = true; }
+			if is_key_pressed_or_repeated(KEY_DEL)   { event_delete();      moved = true; edited = true; }
+			if is_key_pressed_or_repeated(KEY_END)   { event_end();         moved = true; }
+			if is_mouse_down(0)                      { event_mouse_down();  moved = true; }
 	}
 
 	if moved {
 		editor.caret_time = ms_since_init();
+		
+		if !is_mouse_down(0) {
+			editor.caret_col_selection = editor.caret_col;
+			editor.caret_row_selection = editor.caret_row;
+		}
 	}
 	
 	if edited {
@@ -300,7 +310,6 @@ handle_code_editor_events :: () {
 		update_code_editor_coloring();
 		
 		if settings.editor.when_to_save == .EACH_EDIT then save_editor_file();
-		
 		if settings.editor.when_to_save == .EVERY_MS then editor.asked_to_save = true;
 	}
 	

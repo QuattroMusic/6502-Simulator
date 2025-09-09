@@ -85,6 +85,40 @@ draw_buttons_controls :: () {
 	}
 }
 
+get_tab_offset :: (row: u32, col: u32) -> f32 {
+	x_offset: f32;
+	cursor_start_row: u32 = 0;
+	
+	for 0 .. cast(s64, row) - 1 cursor_start_row += editor.rows_length[it] + 1;
+	
+	for cursor_start_row .. (cast(s64, cursor_start_row + col) - 1) {
+		c := editor.content[it];
+		if c == #char "\t" then x_offset += FONT_SIZE_NORMAL * 3;  // Todo - Quattro - tab size in settings
+	}
+	
+	return x_offset;
+}
+
+draw_selected_line :: (row: u32, from_col: u32, to_col: u32, end_padding: f32 = 0) {
+	global_x := editor.pos.x - editor.scrollbar_pos.x + get_width_of_line_count_bar();
+	global_y := editor.pos.y - editor.scrollbar_pos.y + 5;
+
+	start_tab_offset := get_tab_offset(row, from_col);
+	end_tab_offset   := get_tab_offset(row, to_col);
+	
+	x1 := global_x + from_col * FONT_SIZE_NORMAL + start_tab_offset;
+	x2 := global_x + to_col   * FONT_SIZE_NORMAL + end_tab_offset + end_padding;
+	
+	y1 := global_y + row * FONT_SIZE_NORMAL;
+	
+	// Todo - Quattro - simplify
+	draw_rect(.{x1, y1}, .{x2 - x1, FONT_SIZE_NORMAL}, settings.themes.platform_widget_bg_selected);
+}
+
+character_visible :: (row: u32, col: u32) -> bool {
+	
+}
+
 draw_code_editor :: () {
 	offset :: Vec2.{10, 74};
 
@@ -113,29 +147,60 @@ draw_code_editor :: () {
 	
 	// caret
 	if editor.file_path {
+		
 		// Todo - Quattro - 3 and 5 is padding, make it more robust
 		// Also make more robust the 16.0
 		w := get_width_of_line_count_bar();
-		
-		// check if there are tabs in a row, offset the caret accordingly
-		x_offset: f32;
-		cursor_start_row: u32 = 0;
-		for 0 .. cast(s64, editor.caret_row) - 1 cursor_start_row += editor.rows_length[it] + 1;
-		for cursor_start_row .. (cast(s64, cursor_start_row + editor.caret_col) - 1) {
-			c := editor.content[it];
-			if c == #char "\t" then x_offset += FONT_SIZE_NORMAL * 3;  // Todo - Quattro - tab size in settings
-		}
-		
-		x := editor.pos.x + editor.caret_col * FONT_SIZE_NORMAL + 3 - editor.scrollbar_pos.x + w + x_offset;
-		y := editor.pos.y + editor.caret_row * FONT_SIZE_NORMAL + 5 - editor.scrollbar_pos.y;
 
-		if x > (editor.pos.x + w) && x < (editor.pos.x + editor.size.x) && y > editor.pos.y && y < (editor.pos.y + editor.size.y - 18) {
+		x_offset := get_tab_offset(editor.caret_row, editor.caret_col);
+		
+		global_x := editor.pos.x - editor.scrollbar_pos.x + w;
+		global_y := editor.pos.y - editor.scrollbar_pos.y + 5;
+		
+		x := global_x + editor.caret_col * FONT_SIZE_NORMAL + x_offset;
+		y := global_y + editor.caret_row * FONT_SIZE_NORMAL;
+
+		if (editor.pos.x + w) <= x && x < (editor.pos.x + editor.size.x) && editor.pos.y < y && y < (editor.pos.y + editor.size.y - 18) {
 			draw_rect(.{editor.pos.x - editor.scrollbar_pos.x + w, y}, .{editor.size.x - w, FONT_SIZE_NORMAL}, settings.themes.platform_widget_bg_normal);
 			
 			if editor.focused {
 				time := (ms_since_init() - editor.caret_time) % 1000;
 				if time < 500 then draw_rect(.{x, y}, .{1, FONT_SIZE_NORMAL}, .{255, 255, 255, 255});
 			}
+		}
+		
+		// draw selection
+		if editor.caret_row != editor.caret_row_selection {
+			start_col: u32 = ---;
+			end_col:   u32 = ---;
+			
+			start_row := min(editor.caret_row, editor.caret_row_selection);
+			end_row := max(editor.caret_row, editor.caret_row_selection);
+			
+			if editor.caret_row < editor.caret_row_selection {
+				// reverse selection
+				start_col = editor.caret_col;
+				end_col   = editor.caret_col_selection;
+			}
+			if editor.caret_row > editor.caret_row_selection {
+				// forward selection
+				start_col = editor.caret_col_selection;
+				end_col   = editor.caret_col;
+			}
+			
+			for row: start_row .. cast(s64, end_row) {
+				
+				
+				if row == start_row {
+					draw_selected_line(start_row, start_col, editor.rows_length[start_row], FONT_SIZE_SMALL);
+				} else if row == end_row {
+					draw_selected_line(end_row, 0, end_col);
+				} else {
+					draw_selected_line(xx row, 0, editor.rows_length[row], FONT_SIZE_SMALL);
+				}
+			}
+		} else {
+			draw_selected_line(editor.caret_row, editor.caret_col, editor.caret_col_selection);
 		}
 	}
 	
@@ -167,7 +232,7 @@ draw_RAM_content :: (offset: Vec2, start: s64, end: s64, pos_y: f32, height: f32
 		draw_character(#char ":", offset + .{5 + 32, 9.0 + y * 16}, FONT_SIZE_SMALL, settings.themes.platform_text_normal, range_check = false);
 
 		// draw values
-		for x: 0..15 {
+		for x: 0 .. 15 {  // Todo - Quattro - optimize this
 			data := engine.RAM[y * 16 + x];
 
 			col: Col = ---;

@@ -138,8 +138,10 @@ parse_theme_file :: () {
 	
 	if maj_version == 2 && (min_version == 0 || min_version == 1) {
 		parse_theming_version_2(*file);
-	} else if maj_version == 3 && (min_version == 0 || min_version == 1) {
+	} else if maj_version == 3 && min_version == 0 {
 		parse_theming_version_2(*file);  // still the same
+	} else if maj_version == 3 && min_version == 1 {
+		parse_theming_version_3(*file);
 	} else {
 		assert(false, "Unable to read theming file, corrupted");
 	}
@@ -248,6 +250,72 @@ parse_theming_version_2 :: (file: *File) {
 	platform_widget_bg_normal     = read_color_from_file(file);
 	platform_widget_bg_hover      = read_color_from_file(file);
 	platform_widget_bg_press      = read_color_from_file(file);
+	platform_widget_border_normal = read_color_from_file(file);
+	platform_widget_border_hover  = read_color_from_file(file);
+	platform_widget_border_press  = read_color_from_file(file);
+	platform_text_normal          = read_color_from_file(file);
+	platform_text_hover           = read_color_from_file(file);
+	platform_text_press           = read_color_from_file(file);
+	platform_background           = read_color_from_file(file);
+	platform_deep_background      = read_color_from_file(file);
+	platform_line                 = read_color_from_file(file);
+	platform_disabled             = read_color_from_file(file);
+	
+	viewer_text        = read_color_from_file(file);
+	viewer_number      = read_color_from_file(file);
+	viewer_comment     = read_color_from_file(file);
+	viewer_dotdir      = read_color_from_file(file);
+	viewer_label       = read_color_from_file(file);
+	viewer_instruction = read_color_from_file(file);
+	viewer_string      = read_color_from_file(file);
+	
+	memory_normal_empty  = read_color_from_file(file);
+	memory_normal_used   = read_color_from_file(file);
+	memory_stack_empty   = read_color_from_file(file);
+	memory_stack_used    = read_color_from_file(file);
+	memory_display_empty = read_color_from_file(file);
+	memory_display_used  = read_color_from_file(file);
+	memory_input         = read_color_from_file(file);
+	
+	display_col0  = read_color_from_file(file);
+	display_col1  = read_color_from_file(file);
+	display_col2  = read_color_from_file(file);
+	display_col3  = read_color_from_file(file);
+	display_col4  = read_color_from_file(file);
+	display_col5  = read_color_from_file(file);
+	display_col6  = read_color_from_file(file);
+	display_col7  = read_color_from_file(file);
+	display_col8  = read_color_from_file(file);
+	display_col9  = read_color_from_file(file);
+	display_col10 = read_color_from_file(file);
+	display_col11 = read_color_from_file(file);
+	display_col12 = read_color_from_file(file);
+	display_col13 = read_color_from_file(file);
+	display_col14 = read_color_from_file(file);
+	display_col15 = read_color_from_file(file);
+	
+	memcpy(*settings.themes_saved_state, *settings.themes, size_of(Theming));
+}
+
+parse_theming_version_3 :: (file: *File) {
+	size, success := file_length(file);  // don't move the cursor!
+	
+	assert(success, "Unable to read theming file");
+	assert(size == 153, "Unable to read theming file, corrupted");
+
+	using settings.themes;
+
+	general_text              = read_color_from_file(file);
+	general_flag_off          = read_color_from_file(file);
+	general_flag_on           = read_color_from_file(file);
+	general_debug_stack_empty = read_color_from_file(file);
+	general_debug_stack_full  = read_color_from_file(file);
+	general_stack_focus       = read_color_from_file(file);
+	
+	platform_widget_bg_normal     = read_color_from_file(file);
+	platform_widget_bg_hover      = read_color_from_file(file);
+	platform_widget_bg_press      = read_color_from_file(file);
+	platform_widget_bg_selected   = read_color_from_file(file);
 	platform_widget_border_normal = read_color_from_file(file);
 	platform_widget_border_hover  = read_color_from_file(file);
 	platform_widget_border_press  = read_color_from_file(file);

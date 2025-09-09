@@ -91,7 +91,7 @@ draw_line_count_bar :: (x_visible: bool) {
 
 draw_colored_text :: (x_visible: bool) {
 	off := editor.pos;
-	off.x += get_width_of_line_count_bar() + 4 - editor.scrollbar_pos.x;
+	off.x += get_width_of_line_count_bar() - editor.scrollbar_pos.x;
 	off.y += 5 - editor.scrollbar_pos.y;
 
 	start: s64 = xx (editor.scrollbar_pos.y / FONT_SIZE_NORMAL);
@@ -109,12 +109,12 @@ draw_colored_text :: (x_visible: bool) {
 			color  := parse_token(editor.text_color[it_index]);
 
 			y := off.y + it * FONT_SIZE_NORMAL;
-			x := off.x + column * FONT_SIZE_NORMAL;
+			x := off.x + column * FONT_SIZE_NORMAL + 1;
 			str := string.{length, editor.content.data + index};
 
 			for cast([]u8)str {
 				p := x + it_index * FONT_SIZE_NORMAL;
-				if (p <= editor.pos.x + w) || (p >= editor.pos.x + editor.size.x - FONT_SIZE_NORMAL) then continue;
+				if (p < editor.pos.x + w) || (p >= editor.pos.x + editor.size.x - FONT_SIZE_NORMAL) then continue;
 
 				draw_character(it, .{x + it_index * FONT_SIZE_NORMAL, y}, FONT_SIZE_NORMAL, color);
 			}

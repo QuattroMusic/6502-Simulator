@@ -12,6 +12,7 @@ Theming :: struct {
 	platform_widget_bg_normal:     Col = .{ 73,  62,  51, 255};
 	platform_widget_bg_hover:      Col = .{188, 126,  59, 255};
 	platform_widget_bg_press:      Col = .{246, 164,  76, 255};
+	platform_widget_bg_selected:   Col = .{101,  91,  81, 255};
 	platform_widget_border_normal: Col = .{196, 126,  43, 255};
 	platform_widget_border_hover:  Col = .{ 49,  43,  40, 255};
 	platform_widget_border_press:  Col = .{ 80,  77,  73, 255};
@@ -175,6 +176,9 @@ Code_Editor :: struct {
 	text_color:  [..] Color_Tokens;
 	
 	focused: bool;
+	
+	caret_col_selection: u32;
+	caret_row_selection: u32;
 	
 	// when it's set to save every x milliseconds
 	asked_to_save: bool;
