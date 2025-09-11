@@ -152,7 +152,7 @@ Code_Editor :: struct {
 	pos:                 Vec2;
 	size:                Vec2;
 	scrollbar_pos:       Vec2;
-	editor_content_size: Vec2;
+	editor_content_size: Vec2;  // size without scrollbars
 
 	file_path: string;
 	file_name: string;  // string view
@@ -164,9 +164,9 @@ Code_Editor :: struct {
 	visually_longest_line: u32;
 	row_digits:   u32;
 	
-	caret_row:  u32 = 0;
-	caret_col:  u32 = 0;
-	caret_time: s64 = 0;
+	caret_row:  u32;
+	caret_col:  u32;
+	caret_time: s64;
 	
 	// coloring, stored as SoA
 	text_index:  [..] u32;
@@ -183,6 +183,8 @@ Code_Editor :: struct {
 	// when it's set to save every x milliseconds
 	asked_to_save: bool;
 	last_saved_time: s64;
+	
+	TOP_PADDING :: 5;
 }
 
 Status_Flags :: struct {

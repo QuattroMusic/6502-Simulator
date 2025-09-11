@@ -1,14 +1,59 @@
-get_current_idx :: () -> u32 {
-	using editor;
-	
-	idx := caret_col;
-	for 1..caret_row idx += rows_length[it - 1] + 1;
+get_caret_pos :: (row: u32, col: u32) -> u32 {
+	idx := col;
+	for 1 .. row idx += rows_length[it - 1] + 1;
 	return idx;
 }
 
-event_left :: () {
-	using editor;
+area_selecting :: () -> bool {
+	return caret_col != caret_col_selection || caret_row != caret_row_selection;
+}
+
+calculate_row_length :: (row: u32) {
+	caret := get_caret_pos(row, 0);
 	
+	line_length: u32 = 0;
+	while caret < content.count {
+		line_length += 1;
+		caret += 1;
+		if content.data[caret] == #char "\n" then break;
+	}
+	
+	rows_length[row] = line_length;
+}
+
+remove_selected_area :: (current_caret: *u32) {
+	other_caret := get_caret_pos(caret_row_selection, caret_col_selection);
+	forward := current_caret.* > other_caret;
+	
+	first_cursor: *void = ---;
+	last_cursor:  *void = ---;
+	distance:      s64  = ---;
+	amount:        s64  = ---;
+	
+	// If it's forward, the other caret is in the back.
+	// Otherwise, it's in the front
+	if forward {
+		distance     = current_caret.* - other_caret;
+		amount       = content.count   - current_caret.*;
+		first_cursor = content.data    + other_caret;
+		last_cursor  = content.data    + current_caret.*;
+		
+		// override caret with the back one
+		current_caret.* = other_caret;
+		caret_col = caret_col_selection;
+		caret_row = caret_row_selection;
+	} else {
+		distance     = other_caret   - current_caret.*;
+		amount       = content.count - other_caret;
+		first_cursor = content.data  + current_caret.*;
+		last_cursor  = content.data  + other_caret;
+	}
+	
+	copy(first_cursor, last_cursor, amount);
+	content.count -= distance;
+}
+
+event_left :: () {
 	if caret_row == 0 && caret_col == 0 then return;
 	
 	if caret_col == 0 {
@@ -20,8 +65,6 @@ event_left :: () {
 }
 
 event_right :: () {
-	using editor;
-	
 	if caret_col == rows_length[caret_row] {
 		if caret_row == rows_length.count - 1 then return;
 
@@ -34,8 +77,6 @@ event_right :: () {
 
 event_up :: () {
 	// Todo - Quattro - move the visual
-	using editor;
-	
 	if caret_row == 0 then return;
 	
 	caret_row -= 1;
@@ -47,8 +88,6 @@ event_up :: () {
 
 event_down :: () {
 	// Todo - Quattro - move the visual
-	using editor;
-	
 	if caret_row == rows_length.count - 1 {
 		caret_col = rows_length[rows_length.count - 1];
 		return;
@@ -62,27 +101,26 @@ event_down :: () {
 }
 
 event_tab :: () {
-	using editor;
-	
-	idx := get_current_idx();
+	idx := get_caret_pos(caret_row, caret_col);
+	if area_selecting() then remove_selected_area(*idx);
 	
 	array_insert_at(*content, #char "\t", idx);
-
-	rows_length[caret_row] += 1;
 	caret_col += 1;
-	
+
 	calculate_rows_length();
 }
 
 event_enter :: () {
-	using editor;
+	idx := get_caret_pos(caret_row, caret_col);
 	
-	idx := get_current_idx();
+	if area_selecting() {
+		remove_selected_area(*idx);
+		calculate_row_length(caret_row);
+	}
 	
 	// count tabs on the current line
 	tabs := 0;
-	line_length := rows_length[caret_row];
-	for 0 .. cast(s64, line_length) - 1 {
+	for 0 .. cast(s64, caret_col) - 1 {
 		c := content[idx + it - caret_col];
 		if c == #char "\t" then tabs += 1;
 	}
@@ -94,8 +132,6 @@ event_enter :: () {
 	
 	diff := rows_length[caret_row] - caret_col;
 	array_insert_at(*rows_length, diff, caret_row + 1);
-	
-	rows_length[caret_row] = caret_col;
 	
 	caret_row += 1;
 	caret_col = xx tabs;
@@ -117,10 +153,14 @@ event_enter :: () {
 }
 
 event_cancel :: () {
-	using editor;
-	
-	idx := get_current_idx();
-	if idx == 0 then return;
+	idx := get_caret_pos(caret_row, caret_col);
+	if area_selecting() {
+		remove_selected_area(*idx);
+		calculate_rows_length();
+		return;
+	} else {
+		if idx == 0 then return;
+	}
 	
 	array_ordered_remove_by_index(*content, idx - 1);
 	
@@ -153,15 +193,20 @@ event_cancel :: () {
 }
 
 event_delete :: () {
-	// :)
-	event_right();
+	if !area_selecting() {
+		// reject the movement if the area is selected
+		event_right();
+	}
+	
 	event_cancel();
 }
 
 event_char :: () {
-	using editor;
-
-	idx := get_current_idx();
+	idx := get_caret_pos(caret_row, caret_col);
+	
+	if area_selecting() {
+		remove_selected_area(*idx);
+	}
 	
 	c := to_lower(pressed_char);
 	
@@ -174,8 +219,6 @@ event_char :: () {
 }
 
 event_mouse_down :: () {
-	using editor;
-	
 	x := cast(s32, mouse_x - pos.x);
 	y := cast(s32, mouse_y - pos.y);
 	
@@ -233,8 +276,6 @@ event_mouse_down :: () {
 }
 
 event_end :: () {
-	using editor;
-	
 	line_length := rows_length[caret_row];
 	caret_col = line_length;
 }
@@ -293,15 +334,15 @@ handle_code_editor_events :: () {
 			if is_key_pressed_or_repeated(KEY_CANC)  { event_cancel();      moved = true; edited = true; }
 			if is_key_pressed_or_repeated(KEY_DEL)   { event_delete();      moved = true; edited = true; }
 			if is_key_pressed_or_repeated(KEY_END)   { event_end();         moved = true; }
-			if is_mouse_down(0)                      { event_mouse_down();  moved = true; }
+			if is_mouse_down(0) && !focused_uuid     { event_mouse_down();  moved = true; }
 	}
 
 	if moved {
 		editor.caret_time = ms_since_init();
 		
 		if !is_mouse_down(0) {
-			editor.caret_col_selection = editor.caret_col;
-			editor.caret_row_selection = editor.caret_row;
+			caret_col_selection = caret_col;
+			caret_row_selection = caret_row;
 		}
 	}
 	
@@ -316,7 +357,7 @@ handle_code_editor_events :: () {
 	if editor.asked_to_save {
 		time := ms_since_init();
 		
-		if time - editor.last_saved_time > settings.editor.save_interval_in_ms {
+		if time - last_saved_time > settings.editor.save_interval_in_ms {
 			editor.last_saved_time = time;
 			editor.asked_to_save = false;
 			
@@ -324,3 +365,6 @@ handle_code_editor_events :: () {
 		}
 	}
 }
+
+#scope_file
+using editor;

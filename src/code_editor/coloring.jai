@@ -77,7 +77,7 @@ draw_line_count_bar :: (x_visible: bool) {
 	draw_rect(off, .{w, editor.size.y}, settings.themes.platform_widget_bg_normal);
 
 	start: s64 = xx (editor.scrollbar_pos.y / FONT_SIZE_NORMAL);
-	end:   s64 = xx ((editor.scrollbar_pos.y + editor.size.y - 8) / FONT_SIZE_NORMAL);
+	end:   s64 = xx ((editor.scrollbar_pos.y + editor.editor_content_size.y - editor.TOP_PADDING) / FONT_SIZE_NORMAL);
 
 	for start..end - 1 {
 		if it == editor.rows_length.count then return;

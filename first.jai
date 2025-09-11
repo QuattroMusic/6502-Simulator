@@ -77,6 +77,7 @@ main :: () {
 		
 		draw_one_frame();
 	}
+	
 	deinit_window();
 
 	// run_all_tests();
@@ -187,6 +188,7 @@ Col :: struct {
 #import "Process";
 #import "Hash";
 #import "Hash_Table";
+#import "Memory";
 
 #import "DX11";
 #import "d3d_compiler";

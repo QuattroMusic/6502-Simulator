@@ -106,17 +106,19 @@ draw_selected_line :: (row: u32, from_col: u32, to_col: u32, end_padding: f32 = 
 	start_tab_offset := get_tab_offset(row, from_col);
 	end_tab_offset   := get_tab_offset(row, to_col);
 	
-	x1 := global_x + from_col * FONT_SIZE_NORMAL + start_tab_offset;
-	x2 := global_x + to_col   * FONT_SIZE_NORMAL + end_tab_offset + end_padding;
+	x := global_x + from_col * FONT_SIZE_NORMAL + start_tab_offset;
+	width := (cast(s64, to_col) - cast(s64, from_col)) * FONT_SIZE_NORMAL + (end_tab_offset - start_tab_offset) + end_padding;
 	
-	y1 := global_y + row * FONT_SIZE_NORMAL;
+	y := global_y + row * FONT_SIZE_NORMAL;
 	
-	// Todo - Quattro - simplify
-	draw_rect(.{x1, y1}, .{x2 - x1, FONT_SIZE_NORMAL}, settings.themes.platform_widget_bg_selected);
+	draw_rect(.{x, y}, .{width, FONT_SIZE_NORMAL}, settings.themes.platform_widget_bg_selected);
 }
 
-character_visible :: (row: u32, col: u32) -> bool {
+line_visible :: (row: s64) -> bool {
+	first_visible_row: s64 = xx (editor.scrollbar_pos.y / FONT_SIZE_NORMAL);
+	last_visible_row:  s64 = xx ((editor.scrollbar_pos.y + editor.editor_content_size.y - editor.TOP_PADDING) / FONT_SIZE_NORMAL);
 	
+	return first_visible_row <= row && row < last_visible_row;
 }
 
 draw_code_editor :: () {
@@ -142,12 +144,10 @@ draw_code_editor :: () {
 	}
 
 	x_visible := min_size.x + editor.size.x < scroll_size.x;
-
 	draw_line_count_bar(x_visible);
-	
+
 	// caret
 	if editor.file_path {
-		
 		// Todo - Quattro - 3 and 5 is padding, make it more robust
 		// Also make more robust the 16.0
 		w := get_width_of_line_count_bar();
@@ -155,12 +155,13 @@ draw_code_editor :: () {
 		x_offset := get_tab_offset(editor.caret_row, editor.caret_col);
 		
 		global_x := editor.pos.x - editor.scrollbar_pos.x + w;
-		global_y := editor.pos.y - editor.scrollbar_pos.y + 5;
+		global_y := editor.pos.y - editor.scrollbar_pos.y + editor.TOP_PADDING;
 		
 		x := global_x + editor.caret_col * FONT_SIZE_NORMAL + x_offset;
 		y := global_y + editor.caret_row * FONT_SIZE_NORMAL;
 
-		if (editor.pos.x + w) <= x && x < (editor.pos.x + editor.size.x) && editor.pos.y < y && y < (editor.pos.y + editor.size.y - 18) {
+		size := editor.editor_content_size;
+		if (editor.pos.x + w) <= x && x < (editor.pos.x + size.x) && editor.pos.y < y && y <= (editor.pos.y + size.y - FONT_SIZE_NORMAL) {
 			draw_rect(.{editor.pos.x - editor.scrollbar_pos.x + w, y}, .{editor.size.x - w, FONT_SIZE_NORMAL}, settings.themes.platform_widget_bg_normal);
 			
 			if editor.focused {
@@ -189,7 +190,8 @@ draw_code_editor :: () {
 			}
 			
 			for row: start_row .. cast(s64, end_row) {
-				
+				// Todo - Quattro - perf - iter only the visible rows
+				if !line_visible(row) then continue;
 				
 				if row == start_row {
 					draw_selected_line(start_row, start_col, editor.rows_length[start_row], FONT_SIZE_SMALL);
