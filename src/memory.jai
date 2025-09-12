@@ -44,16 +44,26 @@ read_address :: (addr: u16) -> u16 {
 }
 
 handle_time :: () {
-	byte_control := engine.RAM[MEMORY_LOCK];
-	if byte_control then return;
+	byte_control := engine.RAM[MEMORY_CONTROL];
+	if byte_control & MEMORY_CONTROL_LOCK then return;
 
 	time     := current_time_consensus();
 	calendar := to_calendar(time, .LOCAL);
 	
-	hi_ptr_as_u64 := cast(*u64, engine.RAM.data + MEMORY_TIME_AND_INPUT_HI);
+	lo_ptr_as_u64 := cast(*u64, engine.RAM.data + MEMORY_TIME_AND_INPUT_LO);
+	lo := lo_ptr_as_u64.*;
 	
+	lo &= ~(MEMORY_MILLI_LO_MASK | MEMORY_MILLI_HI_MASK);  // do not pollute RAM
+	lo |= cast(u64, (calendar.millisecond >> 0) & 0xFF) << MEMORY_MILLI_OFFSET_LO;
+	lo |= cast(u64, (calendar.millisecond >> 8) & 0xFF) << MEMORY_MILLI_OFFSET_HI;
+
+	lo_ptr_as_u64.* = lo;
+	
+	// write this lastly, because of the control byte
+	hi_ptr_as_u64 := cast(*u64, engine.RAM.data + MEMORY_TIME_AND_INPUT_HI);
 	hi: u64 = 0;
-	// lock control should be left unchanged, but since we're here, it's zero.
+	
+	hi |= cast(u64, MEMORY_CONTROL_READY)                    << MEMORY_CONTROL_OFFSET;
 	hi |= cast(u64, (calendar.year >> 0) & 0xFF)             << MEMORY_YEAR_OFFSET_LO;
 	hi |= cast(u64, (calendar.year >> 8) & 0xFF)             << MEMORY_YEAR_OFFSET_HI;
 	hi |= cast(u64, calendar.month_starting_at_0 + 1)        << MEMORY_MONTH_OFFSET;
@@ -62,15 +72,6 @@ handle_time :: () {
 	hi |= cast(u64, calendar.minute)                         << MEMORY_MINUTE_OFFSET;
 	hi |= cast(u64, calendar.second)                         << MEMORY_SECOND_OFFSET;
 	hi_ptr_as_u64.* = hi;
-	
-	lo_ptr_as_u64 := cast(*u64, engine.RAM.data + MEMORY_TIME_AND_INPUT_LO);
-	lo := lo_ptr_as_u64.*;
-	
-	lo &= ~(MEMORY_MILLI_LO_MASK | MEMORY_MILLI_HI_MASK);
-	lo |= cast(u64, (calendar.millisecond >> 0) & 0xFF) << MEMORY_MILLI_OFFSET_LO;
-	lo |= cast(u64, (calendar.millisecond >> 8) & 0xFF) << MEMORY_MILLI_OFFSET_HI;
-
-	lo_ptr_as_u64.* = lo;
 }
 
 handle_input :: () {

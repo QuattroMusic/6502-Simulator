@@ -5,7 +5,7 @@ max = $ff
 
     .org $8000
 setup:
-    lda $2788 ; random seed from ms
+    lda $2788 ; random seed from time
     ldx #0
 
 generate_rnd: ; given A as the seed
