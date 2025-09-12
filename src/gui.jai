@@ -148,8 +148,6 @@ draw_code_editor :: () {
 
 	// caret
 	if editor.file_path {
-		// Todo - Quattro - 3 and 5 is padding, make it more robust
-		// Also make more robust the 16.0
 		w := get_width_of_line_count_bar();
 
 		x_offset := get_tab_offset(editor.caret_row, editor.caret_col);
@@ -402,18 +400,32 @@ draw_program_frequency :: () {
 	str: string;
 	freq := engine.metrics.update_rate;
 
-	     if freq < kHz(1) str = tprint(" %Hz", formatInt(freq,                 minimum_digits = 3, padding = #char " "));
-	else if freq < MHz(1) str = tprint("%kHz", formatInt(freq / 1_000,         minimum_digits = 3, padding = #char " "));
-	else if freq < GHz(1) str = tprint("%MHz", formatInt(freq / 1_000_000,     minimum_digits = 3, padding = #char " "));
-	else                  str = tprint("%GHz", formatInt(freq / 1_000_000_000, minimum_digits = 3, padding = #char " "));
+	fmt :: #bake_arguments formatInt(minimum_digits = 3, padding = #char " ");
 
-	freqs :: #run s64.[
-		1,          2,      5,      10,      20,      50,      100,      200,      500,
-		kHz(1), kHz(2), kHz(5), kHz(10), kHz(20), kHz(50), kHz(100), kHz(200), kHz(500),
-		MHz(1), MHz(2), MHz(5), MHz(10), MHz(20), MHz(50), MHz(100), MHz(200), MHz(500), GHz(1)
+	     if freq < kHz(1) str = tprint(" %Hz", fmt(freq));
+	else if freq < MHz(1) str = tprint("%kHz", fmt(freq / 1_000));
+	else if freq < GHz(1) str = tprint("%MHz", fmt(freq / 1_000_000));
+	else                  str = tprint("%GHz", fmt(freq / 1_000_000_000));
+
+	// A fast approach rather than using array_find.
+	// Note that bit_scan_reverse returns the index, except for the 12 and the 22.
+	freqs :: s64.[
+		            1,           2,           5,
+		           10,          20,          50,
+		          100,         200,         500,
+		        1_000,       2_000,       5_000,
+		       10_000,      20_000,      50_000,
+		      100_000,     200_000,     500_000,
+		    1_000_000,   2_000_000,   5_000_000,
+		   10_000_000,  20_000_000,  50_000_000,
+		  100_000_000, 200_000_000, 500_000_000,
+		1_000_000_000
 	];
-
-	found, idx := array_find(freqs, freq);  // Todo - Quattro - try to remove this
+	
+	idx := bit_scan_reverse(freq) - 1;  // zero-normalized
+	idx -= cast(s32, idx >= 21);
+	idx -= cast(s32, idx >= 11);
+	
 	draw_step_hslider(offset + .{20, 55}, .{160, 20}, freqs.count, *idx, disabled = engine.metrics.unlock);
 	engine.metrics.update_rate = freqs[idx];
 

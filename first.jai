@@ -188,6 +188,7 @@ Col :: struct {
 #import "Process";
 #import "Hash";
 #import "Hash_Table";
+#import "Bit_Operations";
 #import "Memory";
 
 #import "DX11";

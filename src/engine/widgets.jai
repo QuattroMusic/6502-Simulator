@@ -113,7 +113,7 @@ checkbox :: ($$text: string, pos: Vec2, size: Vec2, value: *bool, it: s64 = 0, l
 	return state == .RELEASE;
 }
 
-draw_step_hslider :: (pos: Vec2, size: Vec2, amt: s32, value: *s64, disabled: bool = false, it: s64 = 0, loc := #caller_location) {
+draw_step_hslider :: (pos: Vec2, size: Vec2, amt: s32, value: *$T, disabled: bool = false, it: s64 = 0, loc := #caller_location) {
 	draw_rect(pos + .{0, size.y / 2 - 1}, .{size.x, 2}, ifx disabled then settings.themes.platform_disabled else settings.themes.platform_line);
 
 	col_main: Col = ---;
