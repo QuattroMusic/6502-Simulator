@@ -25,12 +25,10 @@ reset_input :: () {
 }
 
 is_mouse_down     :: (key: u8) -> bool { return cast(bool, input_mouse_states[key] & .DOWN);     }
-is_mouse_up       :: (key: u8) -> bool { return cast(bool, input_mouse_states[key] & .UP);       }
 is_mouse_pressed  :: (key: u8) -> bool { return cast(bool, input_mouse_states[key] & .PRESSED);  }
 is_mouse_released :: (key: u8) -> bool { return cast(bool, input_mouse_states[key] & .RELEASED); }
 
 is_key_down     :: (key: u8) -> bool { return cast(bool, input_keyboard_states[key] & .DOWN);     }
-is_key_up       :: (key: u8) -> bool { return cast(bool, input_keyboard_states[key] & .UP);       }
 is_key_pressed  :: (key: u8) -> bool { return cast(bool, input_keyboard_states[key] & .PRESSED);  }
 is_key_released :: (key: u8) -> bool { return cast(bool, input_keyboard_states[key] & .RELEASED); }
 is_key_pressed_or_repeated :: (key: u8) -> bool {
@@ -69,4 +67,6 @@ KEY_UP    :: 38;
 KEY_RIGHT :: 39;
 KEY_DOWN  :: 40;
 KEY_DEL   :: 46;
+KEY_C     :: 67;
 KEY_S     :: 83;
+KEY_V     :: 86;

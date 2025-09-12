@@ -37,37 +37,7 @@ deinit_code_editor :: () {
 	deinit_code_editor_coloring();
 }
 
-handle_displayed_file :: () {
-	// Todo - Quattro - change from polling to File_Wiewer
-	// if !viewer.file_path then return;
-
-	// modtime := file_modtime_and_size(viewer.file_path);
-
-	// if compare_apollo_times(modtime, viewer.file_modtime) {
-		// viewer.file_modtime = modtime;
-
-		// init := seconds_since_init();
-
-		// while true {
-			// file, success := file_open(viewer.file_path);
-			// if success {
-				// file_close(*file);
-				// break;
-			// }
-			// if seconds_since_init() - init > 1 {  // time out if operation took more than 1 second
-				// display_error_panel(.READING_FILE_TIMED_OUT, "timed out");
-				// deinit_code_viewer();
-				// return;
-			// }
-		// }
-
-		// t := copy_string(viewer.file_path,, allocator = temp);
-		// deinit_code_viewer();
-		// init_code_viewer(t);
-	// }
-}
-
-get_width_of_line_count_bar :: inline () -> f32 {
+get_width_of_line_count_bar :: () -> f32 {
 	// Todo - Quattro - robustness
 	return (editor.row_digits + 1.0) * FONT_SIZE_SMALL + 5;
 }
@@ -109,15 +79,13 @@ calculate_rows_length :: () {
 }
 
 remove_bad_characters :: () {
-	it_index := 0;
+	it_index := editor.content.count - 1;
 	
-	while it_index < editor.content.count {
+	while it_index >= 0 {
 		it := editor.content[it_index];
-		defer it_index += 1;
+		defer it_index -= 1;
 		
-		if it == #char "\r" {
-			array_ordered_remove_by_index(*editor.content, it_index);
-		}
+		if it == #char "\r" then array_ordered_remove_by_index(*editor.content, it_index);
 	}
 }
 

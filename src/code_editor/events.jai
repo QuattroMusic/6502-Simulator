@@ -23,7 +23,6 @@ calculate_row_length :: (row: u32) {
 
 remove_selected_area :: (current_caret: *u32) {
 	other_caret := get_caret_pos(caret_row_selection, caret_col_selection);
-	forward := current_caret.* > other_caret;
 	
 	first_cursor: *void = ---;
 	last_cursor:  *void = ---;
@@ -32,7 +31,7 @@ remove_selected_area :: (current_caret: *u32) {
 	
 	// If it's forward, the other caret is in the back.
 	// Otherwise, it's in the front
-	if forward {
+	if current_caret.* > other_caret {  // forward
 		distance     = current_caret.* - other_caret;
 		amount       = content.count   - current_caret.*;
 		first_cursor = content.data    + other_caret;
@@ -42,7 +41,7 @@ remove_selected_area :: (current_caret: *u32) {
 		current_caret.* = other_caret;
 		caret_col = caret_col_selection;
 		caret_row = caret_row_selection;
-	} else {
+	} else {  // reverse
 		distance     = other_caret   - current_caret.*;
 		amount       = content.count - other_caret;
 		first_cursor = content.data  + current_caret.*;
@@ -53,8 +52,8 @@ remove_selected_area :: (current_caret: *u32) {
 	content.count -= distance;
 }
 
-event_left :: () {
-	if caret_row == 0 && caret_col == 0 then return;
+event_left :: () -> Editor_Interaction {
+	if caret_row == 0 && caret_col == 0 then return .RESET_CARET | .RESET_SELECTION;
 	
 	if caret_col == 0 {
 		caret_row -= 1;
@@ -62,35 +61,41 @@ event_left :: () {
 	} else {
 		caret_col -= 1;
 	}
+	
+	return .RESET_CARET | .RESET_SELECTION;
 }
 
-event_right :: () {
+event_right :: () -> Editor_Interaction {
 	if caret_col == rows_length[caret_row] {
-		if caret_row == rows_length.count - 1 then return;
+		if caret_row == rows_length.count - 1 then return .RESET_CARET | .RESET_SELECTION;
 
 		caret_col = 0;
 		caret_row += 1;
 	} else {
 		caret_col += 1;
 	}
+	
+	return .RESET_CARET | .RESET_SELECTION;
 }
 
-event_up :: () {
+event_up :: () -> Editor_Interaction {
 	// Todo - Quattro - move the visual
-	if caret_row == 0 then return;
+	if caret_row == 0 then return .RESET_CARET | .RESET_SELECTION;
 	
 	caret_row -= 1;
 	
 	if rows_length[caret_row] < caret_col {
 		caret_col = rows_length[caret_row];
 	}
+	
+	return .RESET_CARET | .RESET_SELECTION;
 }
 
-event_down :: () {
+event_down :: () -> Editor_Interaction {
 	// Todo - Quattro - move the visual
 	if caret_row == rows_length.count - 1 {
 		caret_col = rows_length[rows_length.count - 1];
-		return;
+		return .RESET_CARET | .RESET_SELECTION;
 	}
 	
 	caret_row += 1;
@@ -98,9 +103,11 @@ event_down :: () {
 	if rows_length[caret_row] < caret_col {
 		caret_col = rows_length[caret_row];
 	}
+	
+	return .RESET_CARET | .RESET_SELECTION;
 }
 
-event_tab :: () {
+event_tab :: () -> Editor_Interaction {
 	idx := get_caret_pos(caret_row, caret_col);
 	if area_selecting() then remove_selected_area(*idx);
 	
@@ -108,9 +115,11 @@ event_tab :: () {
 	caret_col += 1;
 
 	calculate_rows_length();
+	
+	return .UPDATE_COLORING | .RESET_CARET | .RESET_SELECTION;
 }
 
-event_enter :: () {
+event_enter :: () -> Editor_Interaction {
 	idx := get_caret_pos(caret_row, caret_col);
 	
 	if area_selecting() {
@@ -150,16 +159,19 @@ event_enter :: () {
 	}
 	
 	calculate_rows_length();
+	
+	return .UPDATE_COLORING | .RESET_CARET | .RESET_SELECTION;
 }
 
-event_cancel :: () {
+event_cancel :: () -> Editor_Interaction {
 	idx := get_caret_pos(caret_row, caret_col);
+
 	if area_selecting() {
 		remove_selected_area(*idx);
 		calculate_rows_length();
-		return;
+		return .UPDATE_COLORING | .RESET_CARET | .RESET_SELECTION;
 	} else {
-		if idx == 0 then return;
+		if idx == 0 then return 0;
 	}
 	
 	array_ordered_remove_by_index(*content, idx - 1);
@@ -190,18 +202,22 @@ event_cancel :: () {
 	}
 	
 	calculate_rows_length();
+	
+	return .UPDATE_COLORING | .RESET_CARET | .RESET_SELECTION;
 }
 
-event_delete :: () {
+event_delete :: () -> Editor_Interaction {
 	if !area_selecting() {
 		// reject the movement if the area is selected
 		event_right();
 	}
 	
 	event_cancel();
+	
+	return .UPDATE_COLORING | .RESET_CARET | .RESET_SELECTION;
 }
 
-event_char :: () {
+event_char :: () -> Editor_Interaction {
 	idx := get_caret_pos(caret_row, caret_col);
 	
 	if area_selecting() {
@@ -216,16 +232,18 @@ event_char :: () {
 	caret_col += 1;
 	
 	calculate_rows_length();
+	
+	return .RESET_CARET | .RESET_SELECTION | .UPDATE_COLORING;
 }
 
-event_mouse_down :: () {
+event_mouse_down :: () -> Editor_Interaction {
 	x := cast(s32, mouse_x - pos.x);
 	y := cast(s32, mouse_y - pos.y);
 	
 	size_x, size_y := editor_content_size.x, editor_content_size.y;
 	
 	// if the mouse is inside the area
-	if x < 0 || x > cast(s32, size_x) || y < 0 || y > cast(s32, size_y) then return;
+	if x < 0 || x > cast(s32, size_x) || y < 0 || y > cast(s32, size_y) then return 0;
 	
 	// get the current char with "rounding"
 	x = cast(s32, mouse_x - pos.x + 8);
@@ -233,9 +251,8 @@ event_mouse_down :: () {
 	x += cast(s32, editor.scrollbar_pos.x);
 	y += cast(s32, editor.scrollbar_pos.y);
 	
-	// Todo - Quattro - 5 is because of padding, make it more robust
 	x -= cast(s32, get_width_of_line_count_bar());
-	y -= 5;
+	y -= TOP_PADDING;
 	
 	y /= 16;
 	if y >= rows_length.count {
@@ -269,15 +286,83 @@ event_mouse_down :: () {
 		caret_col = xx x;  // :)
 	}
 	
+	interaction := Editor_Interaction.RESET_CARET;
+	
 	if is_mouse_pressed(0) {
 		caret_col_selection = caret_col;
 		caret_row_selection = caret_row;
+		interaction |= .RESET_SELECTION;
 	}
+	
+	return interaction;
 }
 
-event_end :: () {
+event_end :: () -> Editor_Interaction {
 	line_length := rows_length[caret_row];
 	caret_col = line_length;
+	
+	return .RESET_CARET | .RESET_SELECTION;
+}
+
+event_copy :: () -> Editor_Interaction {
+	text_to_copy: string;
+
+	if area_selecting() {
+		caret := get_caret_pos(caret_row, caret_col);
+		other_caret := get_caret_pos(caret_row_selection, caret_col_selection);
+		
+		if caret > other_caret {  // forward
+			text_to_copy.data = content.data + other_caret;
+			text_to_copy.count = caret - other_caret;
+		} else {  // reverse
+			text_to_copy.data = content.data + caret;
+			text_to_copy.count = other_caret - caret;
+		}
+	} else {
+		// copy entire row
+		caret := get_caret_pos(caret_row, 0);
+		
+		text_to_copy.data = content.data + caret;
+		text_to_copy.count = rows_length[caret_row] + 1;  // +1 because of \n
+	}
+	
+	clipboard_set_text(vp.window, text_to_copy);
+	
+	return .RESET_CARET;
+}
+
+event_paste :: () -> Editor_Interaction {
+	data := clipboard_get_text(vp.window);
+	if !data then return .RESET_CARET;
+	
+	interaction: Editor_Interaction = .RESET_CARET | .UPDATE_COLORING;
+	
+	idx := get_caret_pos(caret_row, caret_col);
+	if area_selecting() {
+		// Todo - Quattro - avoid eccessive copy
+		remove_selected_area(*idx);
+		// now idx points to the correct position
+		
+		interaction |= .RESET_SELECTION;
+	}
+	
+	if content.count + data.count >= content.allocated {
+		// need more space to put data
+		array_reserve(*content, (content.count + data.count) * 2);
+	}
+	
+	from := content.data + idx;
+	to   := content.data + idx + data.count;
+	size := content.count - idx;
+	
+	copy(to, from, size);
+	
+	memcpy(from, data.data, data.count);
+	content.count += data.count;
+	
+	calculate_rows_length();
+	
+	return interaction;
 }
 
 handle_code_editor_events :: () {
@@ -310,43 +395,48 @@ handle_code_editor_events :: () {
 	modifiers |= xx cast(u64, is_key_down(KEY_CTRL))  << 1;
 	modifiers |= xx cast(u64, is_key_down(KEY_ALT))   << 2;
 	
+	interactions: Editor_Interaction;
+	
+	// Intentionally ignoring combinations at the moment
 	if modifiers == {
 		case .CTRL;
-			if is_key_pressed(KEY_S) then save_editor_file();
+			if is_key_pressed(KEY_S) then { save_editor_file(); interactions |= .RESET_CARET; }
+			if is_key_pressed(KEY_C) then interactions |= event_copy();
+			if is_key_pressed_or_repeated(KEY_V) then interactions |= event_paste();
 			// Todo - Quattro - word movement with arrows
 			// Todo - Quattro - word deletion
 			// Todo - Quattro - new line without changing the selected one
 			// Todo - Quattro - jump to label
 		case .SHIFT;
-			if pressed_char { event_char(); moved = true; edited = true; }
+			if pressed_char interactions |= event_char();
 			// Todo - Quattro - selection
 		case .ALT;
 			// Todo - Quattro - move line up or down
 		case;
-			if pressed_char { event_char(); moved = true; edited = true; }
+			if pressed_char then interactions |= event_char();
 
-			if is_key_pressed_or_repeated(KEY_LEFT)  { event_left();        moved = true; }
-			if is_key_pressed_or_repeated(KEY_RIGHT) { event_right();       moved = true; }
-			if is_key_pressed_or_repeated(KEY_UP)    { event_up();          moved = true; }
-			if is_key_pressed_or_repeated(KEY_DOWN)  { event_down();        moved = true; }
-			if is_key_pressed_or_repeated(KEY_TAB)   { event_tab();         moved = true; edited = true; }
-			if is_key_pressed_or_repeated(KEY_ENTER) { event_enter();       moved = true; edited = true; }
-			if is_key_pressed_or_repeated(KEY_CANC)  { event_cancel();      moved = true; edited = true; }
-			if is_key_pressed_or_repeated(KEY_DEL)   { event_delete();      moved = true; edited = true; }
-			if is_key_pressed_or_repeated(KEY_END)   { event_end();         moved = true; }
-			if is_mouse_down(0) && !focused_uuid     { event_mouse_down();  moved = true; }
+			if is_key_pressed_or_repeated(KEY_LEFT)  then interactions |= event_left();      
+			if is_key_pressed_or_repeated(KEY_RIGHT) then interactions |= event_right();     
+			if is_key_pressed_or_repeated(KEY_UP)    then interactions |= event_up();        
+			if is_key_pressed_or_repeated(KEY_DOWN)  then interactions |= event_down();      
+			if is_key_pressed_or_repeated(KEY_TAB)   then interactions |= event_tab();       
+			if is_key_pressed_or_repeated(KEY_ENTER) then interactions |= event_enter();     
+			if is_key_pressed_or_repeated(KEY_CANC)  then interactions |= event_cancel();    
+			if is_key_pressed_or_repeated(KEY_DEL)   then interactions |= event_delete();    
+			if is_key_pressed_or_repeated(KEY_END)   then interactions |= event_end();
+			if is_mouse_down(0) && !focused_uuid     then interactions |= event_mouse_down();
 	}
 
-	if moved {
+	if interactions & .RESET_CARET {
 		editor.caret_time = ms_since_init();
-		
-		if !is_mouse_down(0) {
-			caret_col_selection = caret_col;
-			caret_row_selection = caret_row;
-		}
 	}
 	
-	if edited {
+	if interactions & .RESET_SELECTION {
+		caret_col_selection = caret_col;
+		caret_row_selection = caret_row;
+	}
+	
+	if interactions & .UPDATE_COLORING {
 		// Todo - Quattro - This is updating everything, maybe we could update where needed.
 		update_code_editor_coloring();
 		
@@ -368,3 +458,9 @@ handle_code_editor_events :: () {
 
 #scope_file
 using editor;
+
+Editor_Interaction :: enum_flags {
+	RESET_CARET;
+	RESET_SELECTION;
+	UPDATE_COLORING;
+}

@@ -459,7 +459,7 @@ input_int :: (pos: Vec2, $s: f32, value: *$T, $$min_value: T, $$max_value: T, it
 
 	// at the moment it doesn't handle negative values
 	if widget.selected {
-		if is_mouse_up(0) {
+		if !is_mouse_down(0) {
 			border_col = settings.themes.platform_widget_border_hover;
 			text_col = settings.themes.platform_text_hover;
 		}

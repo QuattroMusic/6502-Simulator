@@ -14,7 +14,7 @@ goto :end
 		GOTO :cont
 	)
 	:cont
-	start "%executable:~0,-4% - Terminal" cmd /c ""%executable%" || pause"
+	start "%executable:~0,-4% - Terminal - %date% %time%" cmd /c ""%executable%" || pause"
 	
 	popd
 

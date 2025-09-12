@@ -1,5 +1,4 @@
 update_6502 :: () {
-	handle_displayed_file();
 	handle_code_editor_events();
 	handle_time();
 	handle_input();
@@ -193,6 +192,7 @@ Col :: struct {
 #import "Hash_Table";
 #import "Bit_Operations";
 #import "Memory";
+#import "Clipboard";
 
 #import "DX11";
 #import "d3d_compiler";
