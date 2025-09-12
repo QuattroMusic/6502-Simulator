@@ -213,10 +213,7 @@ draw_code_editor :: () {
 }
 
 draw_RAM_content :: (offset: Vec2, start: s64, end: s64, pos_y: f32, height: f32) {
-	chars :: u8.[
-		#char "0", #char "1", #char "2", #char "3", #char "4", #char "5", #char "6", #char "7",
-		#char "8", #char "9", #char "A", #char "B", #char "C", #char "D", #char "E", #char "F"
-	];
+	chars :: "0123456789ABCDEF";
 
 	for y: start..end {
 		// draw address
@@ -232,28 +229,69 @@ draw_RAM_content :: (offset: Vec2, start: s64, end: s64, pos_y: f32, height: f32
 		draw_character(#char ":", offset + .{5 + 32, 9.0 + y * 16}, FONT_SIZE_SMALL, settings.themes.platform_text_normal, range_check = false);
 
 		// draw values
-		for x: 0 .. 15 {  // Todo - Quattro - optimize this
-			data := engine.RAM[y * 16 + x];
-
-			col: Col = ---;
-			if 16 <= y && y < 32 {
-				col = ifx data then settings.themes.memory_stack_used else settings.themes.memory_stack_empty;
-			} else if 32 <= y && y < 632 {
-				col = ifx data then settings.themes.memory_display_used else settings.themes.memory_display_empty;
-			} else if y == 632 && x < 14 {
-				col = settings.themes.memory_input;
-			} else if data {
-				col = settings.themes.memory_normal_used;
-			} else {
-				col = settings.themes.memory_normal_empty;
+		draw_u32_internal :: (y: s64, data: u32, byte_offset: s64, draw_offset: Vec2) {
+			fetch_color :: (y: s64, x: s64, data: u8) -> Col {
+				col: Col = ---;
+				
+				if 16 <= y && y < 32 {
+					col = ifx data then settings.themes.memory_stack_used else settings.themes.memory_stack_empty;
+				} else if 32 <= y && y < 632 {
+					col = ifx data then settings.themes.memory_display_used else settings.themes.memory_display_empty;
+				} else if y == 632 && x < 14 {
+					col = settings.themes.memory_input;
+				} else if data {
+					col = settings.themes.memory_normal_used;
+				} else {
+					col = settings.themes.memory_normal_empty;
+				}
+				
+				return col;
 			}
-
-			lo := (data     ) & 0xF;
-			hi := (data >> 4) & 0xF;
-
-			draw_character(chars[hi], offset + .{55.0 + x * (32 + 4), 4.0 + y * 16}, FONT_SIZE_NORMAL, col, range_check = false);
-			draw_character(chars[lo], offset + .{71.0 + x * (32 + 4), 4.0 + y * 16}, FONT_SIZE_NORMAL, col, range_check = false);
+			
+			b1 := (data >>  0) & 0xFF;
+			b2 := (data >>  8) & 0xFF;
+			b3 := (data >> 16) & 0xFF;
+			b4 := (data >> 24) & 0xFF;
+			
+			c1 := fetch_color(y, byte_offset + 0, cast,no_check(u8, b1));
+			c2 := fetch_color(y, byte_offset + 1, cast,no_check(u8, b2));
+			c3 := fetch_color(y, byte_offset + 2, cast,no_check(u8, b3));
+			c4 := fetch_color(y, byte_offset + 3, cast,no_check(u8, b4));
+			
+			lo1 := (b1 >> 0) & 0xF;
+			hi1 := (b1 >> 4) & 0xF;
+			lo2 := (b2 >> 0) & 0xF;
+			hi2 := (b2 >> 4) & 0xF;
+			lo3 := (b3 >> 0) & 0xF;
+			hi3 := (b3 >> 4) & 0xF;
+			lo4 := (b4 >> 0) & 0xF;
+			hi4 := (b4 >> 4) & 0xF;
+			
+			draw_character(chars[hi1], draw_offset + .{55.0 + (byte_offset + 0) * (32 + 4), 4.0 + y * 16}, FONT_SIZE_NORMAL, c1, range_check = false);
+			draw_character(chars[lo1], draw_offset + .{71.0 + (byte_offset + 0) * (32 + 4), 4.0 + y * 16}, FONT_SIZE_NORMAL, c1, range_check = false);
+			draw_character(chars[hi2], draw_offset + .{55.0 + (byte_offset + 1) * (32 + 4), 4.0 + y * 16}, FONT_SIZE_NORMAL, c2, range_check = false);
+			draw_character(chars[lo2], draw_offset + .{71.0 + (byte_offset + 1) * (32 + 4), 4.0 + y * 16}, FONT_SIZE_NORMAL, c2, range_check = false);
+			draw_character(chars[hi3], draw_offset + .{55.0 + (byte_offset + 2) * (32 + 4), 4.0 + y * 16}, FONT_SIZE_NORMAL, c3, range_check = false);
+			draw_character(chars[lo3], draw_offset + .{71.0 + (byte_offset + 2) * (32 + 4), 4.0 + y * 16}, FONT_SIZE_NORMAL, c3, range_check = false);
+			draw_character(chars[hi4], draw_offset + .{55.0 + (byte_offset + 3) * (32 + 4), 4.0 + y * 16}, FONT_SIZE_NORMAL, c4, range_check = false);
+			draw_character(chars[lo4], draw_offset + .{71.0 + (byte_offset + 3) * (32 + 4), 4.0 + y * 16}, FONT_SIZE_NORMAL, c4, range_check = false);
 		}
+		
+		data_lo: u64 = ---;
+		data_hi: u64 = ---;
+		{
+			// used to grant 8-byte aligntment
+			ptr_lo := cast(*u64, y * 16 + engine.RAM.data);
+			ptr_hi := cast(*u64, y * 16 + engine.RAM.data + 8);
+			
+			data_lo = ptr_lo.*;
+			data_hi = ptr_hi.*;
+		}
+		
+		draw_u32_internal(y, cast,no_check(u32, (data_lo >>  0) & 0xFFFFFFFF),  0, offset);
+		draw_u32_internal(y, cast,no_check(u32, (data_lo >> 32) & 0xFFFFFFFF),  4, offset);
+		draw_u32_internal(y, cast,no_check(u32, (data_hi >>  0) & 0xFFFFFFFF),  8, offset);
+		draw_u32_internal(y, cast,no_check(u32, (data_hi >> 32) & 0xFFFFFFFF), 12, offset);
 	}
 
 	pos := offset.y + 279 + (cast(f32)(engine.S / 16)) * 16;
