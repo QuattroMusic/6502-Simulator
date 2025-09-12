@@ -17,6 +17,9 @@ init_code_editor :: (path: string) {
 
 	editor.caret_row = 0;
 	editor.caret_col = 0;
+	editor.caret_row_selection = 0;
+	editor.caret_col_selection = 0;
+	editor.scrollbar_pos = .{0, 0};
 
 	remove_bad_characters();
 
