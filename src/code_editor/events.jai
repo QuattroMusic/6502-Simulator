@@ -4,6 +4,20 @@ get_caret_pos :: (row: u32, col: u32) -> u32 {
 	return idx;
 }
 
+get_caret_col_and_row :: (idx: u32) -> (row: u32, col: u32) {
+	col := idx;
+	row: u32 = 0;
+	
+	for rows_length {
+		if col >= it + 1 {
+			col -= it + 1;
+			row += 1;
+		} else break;
+	}
+	
+	return row, col;
+}
+
 area_selecting :: () -> bool {
 	return caret_col != caret_col_selection || caret_row != caret_row_selection;
 }
@@ -361,6 +375,11 @@ event_paste :: () -> Editor_Interaction {
 	content.count += data.count;
 	
 	calculate_rows_length();
+	
+	// move the caret after the paste area
+	row, col := get_caret_col_and_row(xx (idx + data.count));
+	caret_row, caret_col = row, col;
+	caret_row_selection, caret_col_selection = row, col;
 	
 	return interaction;
 }
