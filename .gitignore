@@ -6,5 +6,7 @@
 
 *.bin
 
+*.cache
+
 theme
 settings

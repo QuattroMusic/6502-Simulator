@@ -112,11 +112,88 @@ create_dx11_swapchain :: () {
 
 init_shaders :: () {
 	compile_shader :: ($name: string) -> (V: string, G: string, P: string) #compile_time {
-		path := tprint("src/engine/shaders/%.hlsl", name);
-		Vdata, error, result := D3DCompileFromFile(path, .[], null, "VShader", "vs_5_0", 0, 0);
-		Gdata                := D3DCompileFromFile(path, .[], null, "GShader", "gs_5_0", 0, 0);
-		Pdata                := D3DCompileFromFile(path, .[], null, "PShader", "ps_5_0", 0, 0);
+		FMT :: "src/engine/shaders/%.%";
+		
+		shader_path := tprint(FMT, name, "hlsl");
+		cache_path  := tprint(FMT, name, "cache");
+		
+		// hot reloading
+		// cache file is stored in this format: [Apollo_Time][s64][s64][s64][Vdata][Gdata][Pdata]
+		// where every [s64] refers to the size of the vertex, geometry and pixel size, respectively.
+		file_time := file_modtime_and_size(shader_path);
+		
+		if file_exists(cache_path) {
+			// cache exists, check if the file has been updated
+			
+			file, success := file_open(cache_path);
+			assert(success);
+			
+			saved_time: Apollo_Time = ---;
+			file_read(*file, *saved_time, size_of(Apollo_Time));
+			
+			if file_time == saved_time {
+				// no need to recompile. Instead, read the cache and return it.
+				vertex:   string = ---;
+				geometry: string = ---;
+				pixel:    string = ---;
 
+				file_read(*file, *vertex.count,   size_of(s64));
+				file_read(*file, *geometry.count, size_of(s64));
+				file_read(*file, *pixel.count,    size_of(s64));
+
+				vertex.data   = alloc(vertex.count);
+				geometry.data = alloc(geometry.count);
+				pixel.data    = alloc(pixel.count);
+				
+				file_read(*file, vertex.data, vertex.count);
+				file_read(*file, geometry.data, geometry.count);
+				file_read(*file, pixel.data, pixel.count);
+				
+				return vertex, geometry, pixel;
+			} else {
+				// different time, proceed with compilation and cache update.
+			}
+			
+			file_close(*file);
+		}
+		
+		Vdata, error, result := D3DCompileFromFile(shader_path, .[], null, "VShader", "vs_5_0", 0, 0);
+		Gdata                := D3DCompileFromFile(shader_path, .[], null, "GShader", "gs_5_0", 0, 0);
+		Pdata                := D3DCompileFromFile(shader_path, .[], null, "PShader", "ps_5_0", 0, 0);
+
+		{
+			// file doesn't exists or should be updated
+			sb: String_Builder;
+			append_by_pointer(*sb, *file_time);
+			
+			vertex:   string = ---;
+			geometry: string = ---;
+			pixel:    string = ---;
+			
+			size :: ID3D10Blob_GetBufferSize;
+			data :: ID3D10Blob_GetBufferPointer;
+			
+			vertex   = .{cast(s64, size(Vdata)), data(Vdata)};
+			geometry = .{cast(s64, size(Gdata)), data(Gdata)};
+			pixel    = .{cast(s64, size(Pdata)), data(Pdata)};
+			
+			append_by_pointer(*sb, *vertex.count);
+			append_by_pointer(*sb, *geometry.count);
+			append_by_pointer(*sb, *pixel.count);
+			
+			append(*sb, vertex);
+			append(*sb, geometry);
+			append(*sb, pixel);
+			
+			cache_content := builder_to_string(*sb);
+			
+			file, success := file_open(cache_path, for_writing = true, keep_existing_content = false);
+			assert(success);
+			
+			file_write(*file, cache_content);
+			file_close(*file);
+		}
+		
 		// just one error check, since all the three components are in the same file
 		error_string: string;
 		if error {
