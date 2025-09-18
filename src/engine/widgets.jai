@@ -31,7 +31,7 @@ button :: ($$text: string, pos: Vec2, size: Vec2, $t: f32 = FONT_SIZE_SMALL, dis
 	}
 
 	draw_rect(pos, size, bg_col);
-	draw_rect_lines(pos, size, border_col, #run t / FONT_SIZE_GRANULARITY);
+	draw_rect_lines(pos, size, border_col, t / FONT_SIZE_GRANULARITY);
 
 	#if is_constant(text) {
 		s :: #run measure_text(text, t);
@@ -69,7 +69,7 @@ button :: ($$icon: Icon, pos: Vec2, size: Vec2, $t: f32 = FONT_SIZE_SMALL, it: s
 	}
 
 	draw_rect(pos, size, bg_col);
-	draw_rect_lines(pos, size, border_col, #run t / FONT_SIZE_GRANULARITY);
+	draw_rect_lines(pos, size, border_col, t / FONT_SIZE_GRANULARITY);
 
 	s :: Vec2.{t, t};
 	draw_icon(icon, pos + size / 2 - s / 2, t, text_col);
@@ -423,7 +423,7 @@ input_int :: (pos: Vec2, $s: f32, value: *$T, $$min_value: T, $$max_value: T, it
 	} {
 
 	digits :: #run count_digits(max_value);
-	size   :: #run Vec2.{digits * s + 8.0, s + 4.0};
+	size   :: Vec2.{digits * s + 8.0, s + 4.0};
 
 	uuid := hash_widget(loc, it);
 	state := create_selectable_region(.INPUT, pos, size, uuid);

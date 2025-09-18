@@ -168,16 +168,10 @@ is_an_instruction :: (buff: *u8, len: s64, it: s64) -> bool {
 		return false;
 	}
 	
-	make_u24 :: ($$s: string) -> u32 {
-		#if is_constant(s) {
-			c1 :: cast(u32, s[0]);
-			c2 :: cast(u32, s[1]);
-			c3 :: cast(u32, s[2]);
-		} else {
-			c1 := cast(u32, s[0]);
-			c2 := cast(u32, s[1]);
-			c3 := cast(u32, s[2]);
-		}
+	make_u24 :: (s: string) -> u32 {
+		c1 := cast(u32, s[0]);
+		c2 := cast(u32, s[1]);
+		c3 := cast(u32, s[2]);
 		
 		return c1 | (c2 << 8) | (c3 << 16);
 	}

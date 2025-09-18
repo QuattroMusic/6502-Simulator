@@ -17,7 +17,7 @@ compile_type := CompileFlag.DEBUG;
 	plugins_index := -1;
 	
     if args.count == 0 {
-        print("Unprovided build option. Compiling in debug\n");
+        print("Unprovided build options. Compiling in debug\n");
     } else {
         for arg: args {
 			if !arg then continue;

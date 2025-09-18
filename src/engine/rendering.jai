@@ -60,12 +60,12 @@ draw_icon :: ($$icon: Icon, pos: Vec2, $scale: f32, col: Col) {
 
 get_icon_mapping :: (icon: Icon) -> uvx: f32 {
 	if #complete icon == {
-		case .REDUCE;      return #run FONT_SIZE_GRANULARITY * 0 / texture_width;
-		case .MINIMIZE;    return #run FONT_SIZE_GRANULARITY * 1 / texture_width;
-		case .MAXIMIZE;    return #run FONT_SIZE_GRANULARITY * 2 / texture_width;
-		case .CLOSE;       return #run FONT_SIZE_GRANULARITY * 3 / texture_width;
-		case .ARROW_LEFT;  return #run FONT_SIZE_GRANULARITY * 4 / texture_width;
-		case .ARROW_DOWN;  return #run FONT_SIZE_GRANULARITY * 5 / texture_width;
+		case .REDUCE;      return FONT_SIZE_GRANULARITY * 0 / texture_width;
+		case .MINIMIZE;    return FONT_SIZE_GRANULARITY * 1 / texture_width;
+		case .MAXIMIZE;    return FONT_SIZE_GRANULARITY * 2 / texture_width;
+		case .CLOSE;       return FONT_SIZE_GRANULARITY * 3 / texture_width;
+		case .ARROW_LEFT;  return FONT_SIZE_GRANULARITY * 4 / texture_width;
+		case .ARROW_DOWN;  return FONT_SIZE_GRANULARITY * 5 / texture_width;
 	}
 }
 
@@ -73,7 +73,7 @@ get_char_mapping :: inline ($$c: u8, $range_check: bool) -> uvx: f32 {
 	// since the font is monospace, there's no need to return the size
 	// Todo - Quattro - check for unrecognized characters
 	
-	t :: #run FONT_SIZE_GRANULARITY / texture_width;
+	t :: FONT_SIZE_GRANULARITY / texture_width;
 
 	#if range_check then char := clamp(c, 32, 127);
 	else char := c;
