@@ -66,7 +66,10 @@ remove_selected_area :: (current_caret: *u32) {
 	content.count -= distance;
 }
 
-event_left :: () -> Editor_Interaction {
+event_left :: (mods: Editor_Modifier) -> Editor_Interaction {
+	if mods & .ALT || mods & .CTRL then return 0;
+
+	// Todo - Quattro - move the visual
 	if caret_row == 0 && caret_col == 0 then return .RESET_CARET | .RESET_SELECTION;
 	
 	if caret_col == 0 {
@@ -76,10 +79,16 @@ event_left :: () -> Editor_Interaction {
 		caret_col -= 1;
 	}
 	
-	return .RESET_CARET | .RESET_SELECTION;
+	interaction := Editor_Interaction.RESET_CARET;
+	interaction |= ifx !mods & .SHIFT then .RESET_SELECTION;
+	
+	return interaction;
 }
 
-event_right :: () -> Editor_Interaction {
+event_right :: (mods: Editor_Modifier) -> Editor_Interaction {
+	if mods & .ALT || mods & .CTRL then return 0;
+
+	// Todo - Quattro - move the visual
 	if caret_col == rows_length[caret_row] {
 		if caret_row == rows_length.count - 1 then return .RESET_CARET | .RESET_SELECTION;
 
@@ -89,10 +98,15 @@ event_right :: () -> Editor_Interaction {
 		caret_col += 1;
 	}
 	
-	return .RESET_CARET | .RESET_SELECTION;
+	interaction := Editor_Interaction.RESET_CARET;
+	interaction |= ifx !mods & .SHIFT then .RESET_SELECTION;
+	
+	return interaction;
 }
 
-event_up :: () -> Editor_Interaction {
+event_up :: (mods: Editor_Modifier) -> Editor_Interaction {
+	if mods & .ALT || mods & .CTRL then return 0;
+
 	// Todo - Quattro - move the visual
 	if caret_row == 0 then return .RESET_CARET | .RESET_SELECTION;
 	
@@ -102,10 +116,15 @@ event_up :: () -> Editor_Interaction {
 		caret_col = rows_length[caret_row];
 	}
 	
-	return .RESET_CARET | .RESET_SELECTION;
+	interaction := Editor_Interaction.RESET_CARET;
+	interaction |= ifx !mods & .SHIFT then .RESET_SELECTION;
+	
+	return interaction;
 }
 
-event_down :: () -> Editor_Interaction {
+event_down :: (mods: Editor_Modifier) -> Editor_Interaction {
+	if mods & .ALT || mods & .CTRL then return 0;
+
 	// Todo - Quattro - move the visual
 	if caret_row == rows_length.count - 1 {
 		caret_col = rows_length[rows_length.count - 1];
@@ -118,7 +137,10 @@ event_down :: () -> Editor_Interaction {
 		caret_col = rows_length[caret_row];
 	}
 	
-	return .RESET_CARET | .RESET_SELECTION;
+	interaction := Editor_Interaction.RESET_CARET;
+	interaction |= ifx !mods & .SHIFT then .RESET_SELECTION;
+	
+	return interaction;
 }
 
 event_tab :: () -> Editor_Interaction {
@@ -223,7 +245,7 @@ event_cancel :: () -> Editor_Interaction {
 event_delete :: () -> Editor_Interaction {
 	if !area_selecting() {
 		// reject the movement if the area is selected
-		event_right();
+		event_right(0);
 	}
 	
 	event_cancel();
@@ -250,7 +272,9 @@ event_char :: () -> Editor_Interaction {
 	return .RESET_CARET | .RESET_SELECTION | .UPDATE_COLORING;
 }
 
-event_mouse_down :: () -> Editor_Interaction {
+event_mouse_down :: (mods: Editor_Modifier) -> Editor_Interaction {
+	if mods & .CTRL || mods & .ALT then return 0;
+
 	x := cast(s32, mouse_x - pos.x);
 	y := cast(s32, mouse_y - pos.y);
 	
@@ -302,9 +326,8 @@ event_mouse_down :: () -> Editor_Interaction {
 	
 	interaction := Editor_Interaction.RESET_CARET;
 	
-	if is_mouse_pressed(0) {
-		caret_col_selection = caret_col;
-		caret_row_selection = caret_row;
+	if is_mouse_pressed(0) && !(mods & .SHIFT) {
+		// if we press shift, don't move the cursor, but select the area
 		interaction |= .RESET_SELECTION;
 	}
 	
@@ -365,8 +388,8 @@ event_paste :: () -> Editor_Interaction {
 		array_reserve(*content, (content.count + data.count) * 2);
 	}
 	
-	from := content.data + idx;
-	to   := content.data + idx + data.count;
+	from := content.data  + idx;
+	to   := content.data  + idx + data.count;
 	size := content.count - idx;
 	
 	copy(to, from, size);
@@ -403,18 +426,19 @@ handle_code_editor_events :: () {
 	edited := false;
 	moved  := false;
 	
-	Mod :: enum_flags {
-		SHIFT;
-		CTRL;
-		ALT;
-	}
-	
-	modifiers: Mod;
+	modifiers: Editor_Modifier;
 	modifiers |= xx cast(u64, is_key_down(KEY_SHIFT)) << 0;
 	modifiers |= xx cast(u64, is_key_down(KEY_CTRL))  << 1;
 	modifiers |= xx cast(u64, is_key_down(KEY_ALT))   << 2;
 	
 	interactions: Editor_Interaction;
+	
+	// some movement routines
+	if is_mouse_down(0) && !focused_uuid     then interactions |= event_mouse_down(modifiers);
+	if is_key_pressed_or_repeated(KEY_LEFT)  then interactions |= event_left(modifiers);      
+	if is_key_pressed_or_repeated(KEY_RIGHT) then interactions |= event_right(modifiers);     
+	if is_key_pressed_or_repeated(KEY_UP)    then interactions |= event_up(modifiers);        
+	if is_key_pressed_or_repeated(KEY_DOWN)  then interactions |= event_down(modifiers);      
 	
 	// Intentionally ignoring combinations at the moment
 	if modifiers == {
@@ -427,23 +451,17 @@ handle_code_editor_events :: () {
 			// Todo - Quattro - new line without changing the selected one
 			// Todo - Quattro - jump to label
 		case .SHIFT;
-			if pressed_char interactions |= event_char();
-			// Todo - Quattro - selection
+			if pressed_char then interactions |= event_char();
 		case .ALT;
 			// Todo - Quattro - move line up or down
 		case;
 			if pressed_char then interactions |= event_char();
 
-			if is_key_pressed_or_repeated(KEY_LEFT)  then interactions |= event_left();      
-			if is_key_pressed_or_repeated(KEY_RIGHT) then interactions |= event_right();     
-			if is_key_pressed_or_repeated(KEY_UP)    then interactions |= event_up();        
-			if is_key_pressed_or_repeated(KEY_DOWN)  then interactions |= event_down();      
 			if is_key_pressed_or_repeated(KEY_TAB)   then interactions |= event_tab();       
 			if is_key_pressed_or_repeated(KEY_ENTER) then interactions |= event_enter();     
 			if is_key_pressed_or_repeated(KEY_CANC)  then interactions |= event_cancel();    
 			if is_key_pressed_or_repeated(KEY_DEL)   then interactions |= event_delete();    
 			if is_key_pressed_or_repeated(KEY_END)   then interactions |= event_end();
-			if is_mouse_down(0) && !focused_uuid     then interactions |= event_mouse_down();
 	}
 
 	if interactions & .RESET_CARET {
@@ -482,4 +500,10 @@ Editor_Interaction :: enum_flags {
 	RESET_CARET;
 	RESET_SELECTION;
 	UPDATE_COLORING;
+}
+
+Editor_Modifier :: enum_flags {
+	SHIFT;
+	CTRL;
+	ALT;
 }
