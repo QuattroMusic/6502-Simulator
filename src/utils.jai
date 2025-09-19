@@ -25,6 +25,10 @@ round_ignoring_negative :: inline (x: f32) -> f32 {
 	return round_down(x + 0.5);
 }
 
+clamp_lo :: inline (x: $T, min: T) -> T {
+	return ifx x < min then min else x;
+}
+
 print :: (v: Any) {
 	print("%\n", v);
 }

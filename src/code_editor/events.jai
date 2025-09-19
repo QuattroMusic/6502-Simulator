@@ -66,10 +66,41 @@ remove_selected_area :: (current_caret: *u32) {
 	content.count -= distance;
 }
 
+update_visual_position :: () {
+	// when the caret is too far low or too far high, move the view to that position
+	
+	rows_on_screen     := editor_content_size.y / FONT_SIZE_NORMAL;
+	first_visible_row  := scrollbar_pos.y       / FONT_SIZE_NORMAL;
+	
+	relative_row_on_screen := caret_row - first_visible_row;
+	relative_row_on_screen_normalized := relative_row_on_screen / rows_on_screen;
+	
+	THRESHOLD :: 0.15;
+	
+	// upper check
+	if relative_row_on_screen_normalized <= THRESHOLD {
+		top_amount: = cast(s64, caret_row - (THRESHOLD * rows_on_screen) + 1);
+		top_amount = clamp_lo(top_amount, 0);
+		
+		scrollbar_pos.y = top_amount * FONT_SIZE_NORMAL;
+		return;
+	}
+	
+	// bottom check
+	if relative_row_on_screen_normalized >= (1 - THRESHOLD) {
+		t := ifx settings.editor.lock_content_view then 0.0 else THRESHOLD;
+		p := ifx settings.editor.lock_content_view then 3 else 1;  // ???
+		
+		bottom_amount: = cast(s64, caret_row + (t * rows_on_screen) + p - rows_on_screen);
+		bottom_amount = clamp_lo(bottom_amount, 0);
+		
+		scrollbar_pos.y = bottom_amount * FONT_SIZE_NORMAL;
+	}
+}
+
 event_left :: (mods: Editor_Modifier) -> Editor_Interaction {
 	if mods & .ALT || mods & .CTRL then return 0;
 
-	// Todo - Quattro - move the visual
 	if caret_row == 0 && caret_col == 0 then return .RESET_CARET | .RESET_SELECTION;
 	
 	if caret_col == 0 {
@@ -88,7 +119,6 @@ event_left :: (mods: Editor_Modifier) -> Editor_Interaction {
 event_right :: (mods: Editor_Modifier) -> Editor_Interaction {
 	if mods & .ALT || mods & .CTRL then return 0;
 
-	// Todo - Quattro - move the visual
 	if caret_col == rows_length[caret_row] {
 		if caret_row == rows_length.count - 1 then return .RESET_CARET | .RESET_SELECTION;
 
@@ -107,7 +137,6 @@ event_right :: (mods: Editor_Modifier) -> Editor_Interaction {
 event_up :: (mods: Editor_Modifier) -> Editor_Interaction {
 	if mods & .ALT || mods & .CTRL then return 0;
 
-	// Todo - Quattro - move the visual
 	if caret_row == 0 then return .RESET_CARET | .RESET_SELECTION;
 	
 	caret_row -= 1;
@@ -125,7 +154,6 @@ event_up :: (mods: Editor_Modifier) -> Editor_Interaction {
 event_down :: (mods: Editor_Modifier) -> Editor_Interaction {
 	if mods & .ALT || mods & .CTRL then return 0;
 
-	// Todo - Quattro - move the visual
 	if caret_row == rows_length.count - 1 {
 		caret_col = rows_length[rows_length.count - 1];
 		return .RESET_CARET | .RESET_SELECTION;
@@ -183,17 +211,6 @@ event_enter :: () -> Editor_Interaction {
 	
 	editor.row_digits = count_digits(xx rows_length.count);
 	
-	// advance scrollbar if pressing enter at the bottom of the screen
-	rows_on_screen     := editor_content_size.y / FONT_SIZE_NORMAL;
-	first_visible_row  := scrollbar_pos.y       / FONT_SIZE_NORMAL;
-	
-	relative_row_on_screen := caret_row - first_visible_row;
-	rows_delta_from_bottom_of_screen := rows_on_screen - relative_row_on_screen;
-	
-	if rows_delta_from_bottom_of_screen < 6 && rows_delta_from_bottom_of_screen >= 0 {
-		editor.scrollbar_pos.y += FONT_SIZE_NORMAL;
-	}
-	
 	calculate_rows_length();
 	
 	return .UPDATE_COLORING | .RESET_CARET | .RESET_SELECTION;
@@ -221,16 +238,6 @@ event_cancel :: () -> Editor_Interaction {
 		
 		editor.row_digits = count_digits(xx editor.rows_length.count);
 		
-		// advance scrollbar if pressing delete at the top of the screen
-		rows_on_screen     := editor_content_size.y / FONT_SIZE_NORMAL;
-		first_visible_row  := scrollbar_pos.y       / FONT_SIZE_NORMAL;
-		
-		relative_row_on_screen := caret_row - first_visible_row;
-		
-		if relative_row_on_screen < 6 && relative_row_on_screen >= 0 {
-			editor.scrollbar_pos.y -= FONT_SIZE_NORMAL;
-			editor.scrollbar_pos.y = max(0.0, editor.scrollbar_pos.y);
-		}
 	} else {
 		rows_length[caret_row] -= 1;
 		
@@ -365,7 +372,7 @@ event_copy :: () -> Editor_Interaction {
 	
 	clipboard_set_text(vp.window, text_to_copy);
 	
-	return .RESET_CARET;
+	return 0;
 }
 
 event_paste :: () -> Editor_Interaction {
@@ -463,9 +470,10 @@ handle_code_editor_events :: () {
 			if is_key_pressed_or_repeated(KEY_DEL)   then interactions |= event_delete();    
 			if is_key_pressed_or_repeated(KEY_END)   then interactions |= event_end();
 	}
-
+	
 	if interactions & .RESET_CARET {
 		editor.caret_time = ms_since_init();
+		update_visual_position();
 	}
 	
 	if interactions & .RESET_SELECTION {
