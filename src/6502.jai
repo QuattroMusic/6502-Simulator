@@ -93,7 +93,7 @@ Settings :: struct {
 }
 
 General_UI :: struct {
-	memory_scrollbar_pos: f32;
+	memory_scrollbar_pos: type_of(Scrollbar_Vector.x);
 
 	modal_error_message: string;
 	modal_error_type: Error_Type;
@@ -105,7 +105,7 @@ General_UI :: struct {
 	}
 
 	settings_platform_scrollbar_edited: bool;
-	settings_theming_scroll_pos: Vec2;
+	settings_theming_scroll_pos: Scrollbar_Vector;
 	
 	// color picker stuff
 	internal_selected: *Col;
@@ -117,9 +117,9 @@ General_UI :: struct {
 		ADDRESSING;
 	}
 	
-	cheatsheet_isa_scrollbar: Vec2;
+	cheatsheet_isa_scrollbar: Scrollbar_Vector;
 	cheatsheet_isa_packed_checkbox: bool;
-	cheatsheet_addressing_scrollbar: Vec2;
+	cheatsheet_addressing_scrollbar: Scrollbar_Vector;
 
 	display_window:    *Window;
 	modal_window:      *Window;
@@ -151,7 +151,7 @@ Color_Tokens :: enum u8 {
 Code_Editor :: struct {
 	pos:                 Vec2;
 	size:                Vec2;
-	scrollbar_pos:       Vec2;
+	scrollbar_pos:       Scrollbar_Vector;
 	editor_content_size: Vec2;  // size without scrollbars
 
 	file_path: string;
@@ -185,6 +185,10 @@ Code_Editor :: struct {
 	last_saved_time: s64;
 	
 	TOP_PADDING :: 5;
+}
+
+Scrollbar_Vector :: struct {
+	x, y: s64;
 }
 
 Status_Flags :: struct {

@@ -1,52 +1,53 @@
-round_up :: (n: f32, $base: f32) -> f32 {
-	#assert base != 0 "base must not be zero";
+round_up :: (n: s64, $base: s64) -> s64 {
+	#assert #run -> bool {
+		v := cast(s64, base);
+		return popcount(v) == 1;
+	} "base must to be a power of two"
 	
-	if n != 0 {
-		sign := ifx n > 0 then 1 else -1;
-		n *= sign;
-		n /= base;
-		n = (cast(s64)ceil(n)) * base;
-		n *= sign;
-	}
-	return n;
+	mask := ~(base - 1);
+	x := n & mask;
+	
+	return x;
 }
 
-round_down :: (x: f32) -> f32 {
+floor_positive :: (x: f32) -> f32 {
 	// ignoring negative numbers
 	return cast(f32, cast(s32, x));
 }
 
-round_ignoring_negative :: inline (x: f32) -> f32 {
+round_positive :: inline (x: f32) -> f32 {
 	// normal round is
 	// ifx x >= 0 then floor(x + 0.5) else ceil(x - 0.5);
 	// but if we ignore negative, we'll get
 	// floor(x + 0.5);
-	// but again, since floor is ignoring negative
-	return round_down(x + 0.5);
+	// but again, since floor is ignoring negative,
+	return floor_positive(x + 0.5);
 }
 
 clamp_lo :: inline (x: $T, min: T) -> T {
 	return ifx x < min then min else x;
 }
 
-print :: (v: Any) {
-	print("%\n", v);
-}
-
-printv :: (v: ..Any) {
-	for v {
-		print("% ", it);
+count_digits :: (x: u64) -> u32 {
+	pow10 :: u64.[
+        10, 100, 1000, 10000, 100000, 1000000, 10000000,
+		100000000, 1000000000, 10000000000, 100000000000,
+		1000000000000, 10000000000000, 100000000000000,
+		1000000000000000, 10000000000000000, 100000000000000000,
+		1000000000000000000, 10000000000000000000
+	];
+	
+	if x == 0 then return 1;
+	
+	leading_zero: u32;
+	#asm {
+		lzcnt.64 leading_zero, x;
 	}
-	write_string("\n");
-}
-
-count_digits :: (x: u32) -> u32 {
-	n: u32 = 1;
-	while x / 10 {
-		x /= 10;
-		n += 1;
-	}
-	return n;
+	
+	a := (leading_zero * 77) / 256;
+	out: u32 = xx (1 + a + cast(u32, (x >= pow10[a])));
+	
+	return out;
 }
 
 split_from_right :: (s: string, c: u8) -> right: string {

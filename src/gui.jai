@@ -129,7 +129,7 @@ draw_code_editor :: () {
 
 	draw_rect(editor.pos, editor.size, settings.themes.platform_background);
 
-	char_per_lines := round_down(editor.size.x / 16) - 2;
+	char_per_lines := floor_positive(editor.size.x / 16) - 2;
 
 	scroll_size := editor.size + .{(editor.visually_longest_line + 1) * FONT_SIZE_NORMAL, editor.rows_length.count * FONT_SIZE_NORMAL};
 
@@ -137,7 +137,7 @@ draw_code_editor :: () {
 	min_size.x = (char_per_lines - 0) * FONT_SIZE_NORMAL;
 	
 	if settings.editor.lock_content_view {
-		visible_lines := round_down((editor.size.y - 8) / 16);
+		visible_lines := floor_positive((editor.size.y - 8) / 16);
 		min_size.y = visible_lines * FONT_SIZE_NORMAL;
 	} else {
 		min_size.y = FONT_SIZE_NORMAL;
@@ -311,15 +311,15 @@ draw_program_memory :: () {
 	draw_rect(pos, size, settings.themes.platform_background);
 	draw_rect(pos, .{48, size.y}, settings.themes.platform_widget_bg_normal);
 
-	rows_on_screen := round_down((size.y - 8) / FONT_SIZE_NORMAL);
-	scroll_pos     := Vec2.{0, ui.memory_scrollbar_pos};
+	rows_on_screen := floor_positive((size.y - 8) / FONT_SIZE_NORMAL);
+	scroll_pos     := Scrollbar_Vector.{0, ui.memory_scrollbar_pos};
 	min_size       := Vec2.{0, 0};
 
 	draw_scrollbar(pos, size, *scroll_pos, .{0, 2048 * 16}, min_size, settings.platform.memory_cursor_speed_slow, settings.platform.memory_cursor_speed_fast);
 
 	ui.memory_scrollbar_pos = scroll_pos.y;
 
-	offset := pos + .{2, -ui.memory_scrollbar_pos};
+	offset := pos + .{2, -cast(f32, ui.memory_scrollbar_pos)};
 	start: s64 = xx ((ui.memory_scrollbar_pos) / FONT_SIZE_NORMAL);
 	end:   s64 = xx ((ui.memory_scrollbar_pos + size.y - 24) / FONT_SIZE_NORMAL);
 	draw_RAM_content(offset, start, end, pos.y, size.y);

@@ -316,21 +316,21 @@ draw_cheatsheet :: (window: *Window) {
 				lo := y.* - CHEATSHEET_HEIGHT + 120;
 				hi := y.*;
 			
-				if lo <= v && v <= hi then draw_text(instruction, pos + .{ 20, 71 + y.* - v}, FONT_SIZE_NORMAL, settings.themes.viewer_instruction);
+				if cast(s64, lo) <= v && v <= cast(s64, hi) then draw_text(instruction, pos + .{ 20, 71 + y.* - v}, FONT_SIZE_NORMAL, settings.themes.viewer_instruction);
 				#if addressing != "" {
 					if !packed {
-						if lo <= v && v <= hi then draw_text(addressing, pos + .{ 20 + s, 71 + y.* - v}, FONT_SIZE_NORMAL, settings.themes.platform_text_normal);
+						if cast(s64, lo) <= v && v <= cast(s64, hi) then draw_text(addressing, pos + .{ 20 + s, 71 + y.* - v}, FONT_SIZE_NORMAL, settings.themes.platform_text_normal);
 					}
 				}
 				
 				x := ifx packed then 94.0 else 190.0;
-				if lo <= v && v <= hi then draw_text(description, pos + .{x, 71 + y.* - v}, FONT_SIZE_NORMAL, settings.themes.platform_text_normal);
+				if cast(s64, lo) <= v && v <= cast(s64, hi) then draw_text(description, pos + .{x, 71 + y.* - v}, FONT_SIZE_NORMAL, settings.themes.platform_text_normal);
 				y.* += 16.0;
 			}
 			internal_separator :: inline (y: *f32, pos: Vec2) {
 				v := ui.cheatsheet_isa_scrollbar.y;
 				
-				if y.* - CHEATSHEET_HEIGHT + 120 <= v && v <= y.* then h_separator("", pos + .{15, 81 + y.* - v}, CHEATSHEET_WIDTH - 40);
+				if cast(s64, y.*) - CHEATSHEET_HEIGHT + 120 <= v && v <= cast(s64, y.*) then h_separator("", pos + .{15, 81 + y.* - v}, CHEATSHEET_WIDTH - 40);
 				y.* += 16.0;
 			}
 			
@@ -560,7 +560,7 @@ draw_cheatsheet :: (window: *Window) {
 				
 				v := ui.cheatsheet_addressing_scrollbar.y;
 				
-				if lo <= v && v <= hi then draw_text(text, pos + .{0, y_off + 75 - v}, FONT_SIZE_NORMAL, settings.themes.platform_text_normal);
+				if cast(s64, lo) <= v && v <= cast(s64, hi) then draw_text(text, pos + .{0, y_off + 75 - v}, FONT_SIZE_NORMAL, settings.themes.platform_text_normal);
 			}
 			internal_separator :: inline (y: *f32, pos: Vec2) {
 				v := ui.cheatsheet_addressing_scrollbar.y;
@@ -568,7 +568,7 @@ draw_cheatsheet :: (window: *Window) {
 				lo := y.* - CHEATSHEET_HEIGHT + 120;
 				hi := y.*;
 				
-				if lo <= v && v <= hi then h_separator("", pos + .{15, 83 + y.* - v}, CHEATSHEET_WIDTH - 40);
+				if cast(s64, lo) <= v && v <= cast(s64, hi) then h_separator("", pos + .{15, 83 + y.* - v}, CHEATSHEET_WIDTH - 40);
 				y.* += 16.0;
 			}
 			

@@ -158,7 +158,7 @@ draw_step_hslider :: (pos: Vec2, size: Vec2, amt: s32, value: *$T, disabled: boo
 	draw_rect(main_step_bar_pos, .{8, size.y}, col_main);
 }
 
-draw_scrollbar :: (pos: Vec2, size: Vec2, scroll_pos: *Vec2, scroll_size: Vec2, min_size: Vec2, speed_slow: s64, speed_fast: s64, it: s64 = 0, loc := #caller_location) -> Vec2 {
+draw_scrollbar :: (pos: Vec2, size: Vec2, scroll_pos: *Scrollbar_Vector, scroll_size: Vec2, min_size: Vec2, speed_slow: s64, speed_fast: s64, it: s64 = 0, loc := #caller_location) -> Vec2 {
 	y_visible := (min_size.y + size.y) < scroll_size.y;
 	x_visible := (min_size.x + size.x) < scroll_size.x;
 
@@ -182,7 +182,7 @@ draw_scrollbar :: (pos: Vec2, size: Vec2, scroll_pos: *Vec2, scroll_size: Vec2, 
 
 		if mouse_dz && !is_key_down(KEY_SHIFT) && content_state == .HOVER {
 			true_speed := ifx is_key_down(KEY_CTRL) then speed_fast else speed_slow;
-			amt := mouse_dz * FONT_SIZE_NORMAL * true_speed;
+			amt := mouse_dz * cast(s64, FONT_SIZE_NORMAL) * true_speed;
 			scroll_pos.*.y -= amt;
 		}
 
@@ -190,16 +190,16 @@ draw_scrollbar :: (pos: Vec2, size: Vec2, scroll_pos: *Vec2, scroll_size: Vec2, 
 		bar_height := ceil(aspect_ratio * size.y);
 
 		if state == .PRESSED || state == .HOLD || state == .HOLD_NON_HOVER {
-			scroll_pos.*.y = (cast(f32, mouse_y) - pos.y - bar_height / 2) / aspect_ratio;
+			scroll_pos.*.y = cast(s64, (cast(f32, mouse_y) - pos.y - bar_height / 2) / aspect_ratio);
 		}
 
 		bar_col := ifx state == .NORMAL then settings.themes.platform_widget_border_normal else settings.themes.platform_widget_bg_press;
 
-		val := round_up(scroll_pos.y, FONT_SIZE_NORMAL);
-		scroll_pos.*.y = clamp(val, 0, scroll_size.y - size.y - min_size.y);
+		val := round_up(scroll_pos.y, cast(s64, FONT_SIZE_NORMAL));
+		scroll_pos.*.y = clamp(val, 0, cast(s64, scroll_size.y - size.y - min_size.y));
 		
 		scrollbar_pos := Vec2.{scroll_pos_x, scroll_pos_y + aspect_ratio * scroll_pos.*.y};
-		scrollbar_pos.y = round_down(scrollbar_pos.y);
+		scrollbar_pos.y = floor_positive(scrollbar_pos.y);
 
 		draw_rect(.{scroll_pos_x, scroll_pos_y}, .{WIDGET_SCROLLBAR_SIZE, size.y}, settings.themes.platform_widget_bg_normal);
 		draw_rect(scrollbar_pos, .{WIDGET_SCROLLBAR_SIZE, bar_height}, bar_col);
@@ -216,7 +216,7 @@ draw_scrollbar :: (pos: Vec2, size: Vec2, scroll_pos: *Vec2, scroll_size: Vec2, 
 
 		if mouse_dz && is_key_down(KEY_SHIFT) && content_state == .HOVER {
 			true_speed := ifx is_key_down(KEY_CTRL) then speed_fast else speed_slow;
-			amt := mouse_dz * FONT_SIZE_NORMAL * true_speed;
+			amt := mouse_dz * cast(s64, FONT_SIZE_NORMAL) * true_speed;
 			scroll_pos.*.x -= amt;
 		}
 
@@ -224,16 +224,19 @@ draw_scrollbar :: (pos: Vec2, size: Vec2, scroll_pos: *Vec2, scroll_size: Vec2, 
 		bar_width := ceil(aspect_ratio * size.x);
 
 		if state == .PRESSED || state == .HOLD || state == .HOLD_NON_HOVER {
-			scroll_pos.*.x = (cast(f32, mouse_x) - pos.x - bar_width / 2) / aspect_ratio;
+			scroll_pos.*.x = cast(s64, (cast(f32, mouse_x) - pos.x - bar_width / 2) / aspect_ratio);
 		}
 
 		bar_col := ifx state == .NORMAL then settings.themes.platform_widget_border_normal else settings.themes.platform_widget_bg_press;
 
-		val := round_up(scroll_pos.x, FONT_SIZE_NORMAL);
-		scroll_pos.*.x = clamp(val, 0, scroll_size.x - size.x - min_size.x);
+		val := round_up(scroll_pos.x, cast(s64, FONT_SIZE_NORMAL));
+		scroll_pos.*.x = clamp(val, 0, cast(s64, scroll_size.x - size.x - min_size.x));
+
+		scrollbar_pos := Vec2.{scroll_pos_x + aspect_ratio * scroll_pos.*.x, scroll_pos_y};
+		scrollbar_pos.x = floor_positive(scrollbar_pos.x);
 
 		draw_rect(.{scroll_pos_x, scroll_pos_y}, .{size.x, WIDGET_SCROLLBAR_SIZE}, settings.themes.platform_widget_bg_normal);
-		draw_rect(.{scroll_pos_x + aspect_ratio * scroll_pos.*.x, scroll_pos_y}, .{bar_width, WIDGET_SCROLLBAR_SIZE}, bar_col);
+		draw_rect(scrollbar_pos, .{bar_width, WIDGET_SCROLLBAR_SIZE}, bar_col);
 	}
 
 	return true_size;
@@ -597,9 +600,9 @@ color_picker :: (pos: Vec2, rgb: *Col, external_update: bool, it: s64 = 0, loc :
 		rgb_edited |= input_int(pos + text_pos + .{ 86, 20}, FONT_SIZE_SMALL, *widget.stored_pointer.g, 0, 255, uuid, draw_border_when_focused = true, update_on_change = true);
 		rgb_edited |= input_int(pos + text_pos + .{148, 20}, FONT_SIZE_SMALL, *widget.stored_pointer.b, 0, 255, uuid, draw_border_when_focused = true, update_on_change = true);
 
-		h := cast(s64, round_ignoring_negative(widget.hsv.x * 360));
-		s := cast(s64, round_ignoring_negative(widget.hsv.y * 100));
-		v := cast(s64, round_ignoring_negative(widget.hsv.z * 100));
+		h := cast(s64, round_positive(widget.hsv.x * 360));
+		s := cast(s64, round_positive(widget.hsv.y * 100));
+		v := cast(s64, round_positive(widget.hsv.z * 100));
 		
 		hsv_edited := false;
 		hsv_edited |= input_int(pos + text_pos + .{ 24, 36}, FONT_SIZE_SMALL, *h, 0, 360, uuid, draw_border_when_focused = true, update_on_change = true);
@@ -652,7 +655,7 @@ color_picker :: (pos: Vec2, rgb: *Col, external_update: bool, it: s64 = 0, loc :
 		
 		for 0 .. (vsteps - 1) {
 			pos2 := pos + .{s + 12, s * it / vsteps + 8};
-			size2 := Vec2.{20, round_down(s / vsteps + 1)};
+			size2 := Vec2.{20, floor_positive(s / vsteps + 1)};
 
 			x := cast(f32, it) / (vsteps - 1);
 			draw_rect(pos2, size2, HSV_to_RGB(.{x, 1, 1}));

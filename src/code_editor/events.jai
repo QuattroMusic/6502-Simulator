@@ -79,10 +79,11 @@ update_visual_position :: () {
 	
 	// upper check
 	if relative_row_on_screen_normalized <= THRESHOLD {
-		top_amount: = cast(s64, caret_row - (THRESHOLD * rows_on_screen) + 1);
+		top_amount := cast(s64, caret_row - (THRESHOLD * rows_on_screen) + 1);
 		top_amount = clamp_lo(top_amount, 0);
+		top_amount_s64 := cast,no_check(s64, top_amount);
 		
-		scrollbar_pos.y = top_amount * FONT_SIZE_NORMAL;
+		scrollbar_pos.y = top_amount_s64 * cast(s64, FONT_SIZE_NORMAL);
 		return;
 	}
 	
@@ -93,8 +94,9 @@ update_visual_position :: () {
 		
 		bottom_amount: = cast(s64, caret_row + (t * rows_on_screen) + p - rows_on_screen);
 		bottom_amount = clamp_lo(bottom_amount, 0);
+		bottom_amount_s64 := cast,no_check(s64, bottom_amount);
 		
-		scrollbar_pos.y = bottom_amount * FONT_SIZE_NORMAL;
+		scrollbar_pos.y = bottom_amount_s64 * cast(s64, FONT_SIZE_NORMAL);
 	}
 }
 
@@ -410,6 +412,8 @@ event_paste :: () -> Editor_Interaction {
 	row, col := get_caret_col_and_row(xx (idx + data.count));
 	caret_row, caret_col = row, col;
 	caret_row_selection, caret_col_selection = row, col;
+	
+	editor.row_digits = count_digits(xx editor.rows_length.count);
 	
 	return interaction;
 }
