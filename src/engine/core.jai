@@ -166,7 +166,15 @@ events_manager :: (hwnd: *void, msg: u32, wparam: u64, lparam: s64) -> s64 #c_ca
 		case WM_MOUSEMOVE;
 			mouse_x = cast(s64, (lparam      ) & 0xFFFF);
 			mouse_y = cast(s64, (lparam >> 16) & 0xFFFF);
-		case WM_MOUSEWHEEL;  mouse_dz = cast,trunc(s16)(wparam >> 16) / 120;
+		case WM_MOUSEWHEEL;
+			amt := cast,trunc(s16, wparam >> 16);
+			
+			vp.scroll_accumulator += amt;
+			
+			v := vp.scroll_accumulator / 120;
+			vp.scroll_accumulator %= 120;
+			
+			mouse_dz = v;
 		case WM_DROPFILES;
 			data := cast(HDROP)wparam;
 			defer DragFinish(data);
@@ -270,6 +278,7 @@ Viewport :: struct {
 	window_style :: WS_THICKFRAME | WS_MAXIMIZEBOX | WS_MINIMIZEBOX | WS_SYSMENU | WS_VISIBLE;
 
 	init_time: s64;
+	scroll_accumulator: s64;
 }
 
 
