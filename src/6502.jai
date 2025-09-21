@@ -294,6 +294,8 @@ cpu_stop :: () {
 	engine.running = false;
 	
 	engine.current_instruction = 0xFF;  // intentionally out of range
+	
+	handle_time();
 }
 
 cpu_reset :: ($virtual := false) {
@@ -306,6 +308,8 @@ cpu_reset :: ($virtual := false) {
 	engine.Y = 0;
 	
 	engine.current_instruction = 0xFF;  // intentionally out of range
+	
+	handle_time();
 }
 
 cpu_init :: ($virtual := false) {
@@ -319,6 +323,8 @@ cpu_init :: ($virtual := false) {
 	engine.Y = 0;
 	
 	engine.current_instruction = 0xFF;  // intentionally out of range
+	
+	handle_time();
 }
 
 next_instruction :: () {
@@ -329,8 +335,6 @@ next_instruction :: () {
 
 cpu_start :: () {
 	threaded_func :: (t: *Thread) -> s64 {
-		handle_time();
-		
 		PC_jump(read_address(engine.PC));
 		while engine.running {
 			if !engine.metrics.unlock then lock_frame_rate_6502();

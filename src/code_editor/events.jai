@@ -495,9 +495,10 @@ handle_code_editor_events :: () {
 		case .ALT;
 			// Todo - Quattro - move line up or down
 		case .CTRL | .SHIFT;
-		case .CTRL |          .ALT;
+		case .CTRL |          .ALT;  // because of the # character
+			if pressed_char then interactions |= event_char();
 		case         .SHIFT | .ALT;
-		case .CTRL | .SHIFT | .ALT;  // nothing for now
+		case .CTRL | .SHIFT | .ALT;
 		case;
 			if pressed_char then interactions |= event_char();
 
