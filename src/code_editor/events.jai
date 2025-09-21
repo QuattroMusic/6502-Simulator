@@ -4,7 +4,7 @@ get_caret_pos :: (row: u32, col: u32) -> u32 {
 	return idx;
 }
 
-get_caret_col_and_row :: (idx: u32) -> (row: u32, col: u32) {
+get_caret_row_and_col :: (idx: u32) -> (row: u32, col: u32) {
 	col := idx;
 	row: u32 = 0;
 	
@@ -105,7 +105,7 @@ event_left :: (mods: Editor_Modifier) -> Editor_Interaction {
 	if mods & .ALT || mods & .CTRL then return 0;
 
 	if caret_row == 0 && caret_col == 0 then return .RESET_CARET | .RESET_SELECTION;
-	
+
 	if caret_col == 0 {
 		caret_row -= 1;
 		caret_col = rows_length[caret_row];
@@ -140,12 +140,13 @@ event_right :: (mods: Editor_Modifier) -> Editor_Interaction {
 event_up :: (mods: Editor_Modifier) -> Editor_Interaction {
 	if mods & .ALT || mods & .CTRL then return 0;
 
-	if caret_row == 0 then return .RESET_CARET | .RESET_SELECTION;
-	
-	caret_row -= 1;
-	
-	if rows_length[caret_row] < caret_col {
-		caret_col = rows_length[caret_row];
+	if caret_row == 0 {
+		caret_col = 0;
+	} else {
+		caret_row -= 1;
+		if rows_length[caret_row] < caret_col {
+			caret_col = rows_length[caret_row];
+		}
 	}
 	
 	interaction := Editor_Interaction.RESET_CARET;
@@ -160,12 +161,12 @@ event_down :: (mods: Editor_Modifier) -> Editor_Interaction {
 	if caret_row == rows_length.count - 1 {
 		caret_col = rows_length[rows_length.count - 1];
 		return .RESET_CARET | .RESET_SELECTION;
-	}
-	
-	caret_row += 1;
-	
-	if rows_length[caret_row] < caret_col {
-		caret_col = rows_length[caret_row];
+	} else {
+		caret_row += 1;
+		
+		if rows_length[caret_row] < caret_col {
+			caret_col = rows_length[caret_row];
+		}
 	}
 	
 	interaction := Editor_Interaction.RESET_CARET;
@@ -344,11 +345,27 @@ event_mouse_down :: (mods: Editor_Modifier) -> Editor_Interaction {
 	return interaction;
 }
 
-event_end :: () -> Editor_Interaction {
+event_end :: (mods: Editor_Modifier) -> Editor_Interaction {
+	if mods & .ALT || mods & .CTRL then return 0;
+	
 	line_length := rows_length[caret_row];
 	caret_col = line_length;
 	
-	return .RESET_CARET | .RESET_SELECTION;
+	interactions := Editor_Interaction.RESET_CARET;
+	if !mods & .SHIFT then interactions |= .RESET_SELECTION;
+	
+	return interactions;
+}
+
+event_start :: (mods: Editor_Modifier) -> Editor_Interaction {
+	if mods & .ALT || mods & .CTRL then return 0;
+	
+	caret_col = 0;
+	
+	interactions := Editor_Interaction.RESET_CARET;
+	if !mods & .SHIFT then interactions |= .RESET_SELECTION;
+	
+	return interactions;
 }
 
 event_copy :: () -> Editor_Interaction {
@@ -410,13 +427,22 @@ event_paste :: () -> Editor_Interaction {
 	calculate_rows_length();
 	
 	// move the caret after the paste area
-	row, col := get_caret_col_and_row(xx (idx + data.count));
+	row, col := get_caret_row_and_col(xx (idx + data.count));
 	caret_row, caret_col = row, col;
 	caret_row_selection, caret_col_selection = row, col;
 	
 	editor.row_digits = count_digits(xx editor.rows_length.count);
 	
 	return interaction;
+}
+
+event_new_line_in_middle :: () -> Editor_Interaction {
+	event_end(0);
+	caret_col_selection = caret_col;
+	
+	event_enter();
+	
+	return .RESET_CARET | .UPDATE_COLORING | .RESET_SELECTION;
 }
 
 handle_code_editor_events :: () {
@@ -447,25 +473,31 @@ handle_code_editor_events :: () {
 	
 	// some movement routines
 	if is_mouse_down(0) && !focused_uuid     then interactions |= event_mouse_down(modifiers);
-	if is_key_pressed_or_repeated(KEY_LEFT)  then interactions |= event_left(modifiers);      
-	if is_key_pressed_or_repeated(KEY_RIGHT) then interactions |= event_right(modifiers);     
-	if is_key_pressed_or_repeated(KEY_UP)    then interactions |= event_up(modifiers);        
-	if is_key_pressed_or_repeated(KEY_DOWN)  then interactions |= event_down(modifiers);      
+	if is_key_pressed_or_repeated(KEY_LEFT)  then interactions |= event_left(modifiers);
+	if is_key_pressed_or_repeated(KEY_RIGHT) then interactions |= event_right(modifiers);
+	if is_key_pressed_or_repeated(KEY_UP)    then interactions |= event_up(modifiers);
+	if is_key_pressed_or_repeated(KEY_DOWN)  then interactions |= event_down(modifiers);
 	
-	// Intentionally ignoring combinations at the moment
+	if is_key_pressed_or_repeated(KEY_END)   then interactions |= event_end(modifiers);
+	if is_key_pressed_or_repeated(KEY_START) then interactions |= event_start(modifiers);
+	
 	if modifiers == {
 		case .CTRL;
-			if is_key_pressed(KEY_S) then { save_editor_file(); interactions |= .RESET_CARET; }
-			if is_key_pressed(KEY_C) then interactions |= event_copy();
+			if is_key_pressed(KEY_S)             then { interactions |= .RESET_CARET; save_editor_file(); }
+			if is_key_pressed(KEY_C)             then interactions |= event_copy();
 			if is_key_pressed_or_repeated(KEY_V) then interactions |= event_paste();
+			if is_key_pressed(KEY_ENTER)         then interactions |= event_new_line_in_middle();
 			// Todo - Quattro - word movement with arrows
 			// Todo - Quattro - word deletion
-			// Todo - Quattro - new line without changing the selected one
 			// Todo - Quattro - jump to label
 		case .SHIFT;
 			if pressed_char then interactions |= event_char();
 		case .ALT;
 			// Todo - Quattro - move line up or down
+		case .CTRL | .SHIFT;
+		case .CTRL |          .ALT;
+		case         .SHIFT | .ALT;
+		case .CTRL | .SHIFT | .ALT;  // nothing for now
 		case;
 			if pressed_char then interactions |= event_char();
 
@@ -473,7 +505,6 @@ handle_code_editor_events :: () {
 			if is_key_pressed_or_repeated(KEY_ENTER) then interactions |= event_enter();     
 			if is_key_pressed_or_repeated(KEY_CANC)  then interactions |= event_cancel();    
 			if is_key_pressed_or_repeated(KEY_DEL)   then interactions |= event_delete();    
-			if is_key_pressed_or_repeated(KEY_END)   then interactions |= event_end();
 	}
 	
 	if interactions & .RESET_CARET {
