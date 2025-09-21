@@ -29,6 +29,7 @@ clamp_lo :: inline (x: $T, min: T) -> T {
 }
 
 count_digits :: (x: u64) -> u32 {
+	/*
 	pow10 :: u64.[
         10, 100, 1000, 10000, 100000, 1000000, 10000000,
 		100000000, 1000000000, 10000000000, 100000000000,
@@ -44,10 +45,22 @@ count_digits :: (x: u64) -> u32 {
 		lzcnt.64 leading_zero, x;
 	}
 	
+	leading_zero = 63 - leading_zero;
+	
 	a := (leading_zero * 77) / 256;
 	out: u32 = xx (1 + a + cast(u32, (x >= pow10[a])));
 	
 	return out;
+	*/
+	n: u32 = 1;
+	v := x;
+	
+	while v / 10 {
+		v /= 10;
+		n += 1;
+	}
+	
+	return n;
 }
 
 split_from_right :: (s: string, c: u8) -> right: string {

@@ -68,6 +68,7 @@ remove_selected_area :: (current_caret: *u32) {
 
 update_visual_position :: () {
 	// when the caret is too far low or too far high, move the view to that position
+	// the THRESHOLD parameter controls the area size
 	
 	rows_on_screen     := editor_content_size.y / FONT_SIZE_NORMAL;
 	first_visible_row  := scrollbar_pos.y       / FONT_SIZE_NORMAL;
