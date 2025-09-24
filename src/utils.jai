@@ -164,6 +164,10 @@ operator == :: inline (a: Col, b: Col) -> bool {
 	return a.data == b.data;
 }
 
+blend :: (a: Col, b: Col, t: f32) -> Col {
+	return t * a + (1 - t) * b;
+}
+
 is_inside_rect :: (p: Vec2, pos: Vec2, size: Vec2) -> bool {
 	return (pos.x <= p.x) && (p.x < (pos.x + size.x)) && (pos.y <= p.y) && (p.y < (pos.y + size.y));
 }

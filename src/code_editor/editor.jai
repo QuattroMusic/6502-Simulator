@@ -103,3 +103,9 @@ handle_dropped_file :: (file: string) {
 		save_options_file();  // just to save the name of the file
 	}
 }
+
+save_editor_file :: () {
+	write_entire_file(editor.file_path, editor.content.data, editor.content.count);
+	
+	editor.save_animation_time = ms_since_init();
+}

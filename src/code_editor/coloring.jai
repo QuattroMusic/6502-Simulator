@@ -79,13 +79,34 @@ draw_line_count_bar :: (x_visible: bool) {
 	start: s64 = xx (editor.scrollbar_pos.y / FONT_SIZE_NORMAL);
 	end:   s64 = xx ((editor.scrollbar_pos.y + editor.editor_content_size.y - editor.TOP_PADDING) / FONT_SIZE_NORMAL);
 
+	rows_on_screen := end - start;
+
+	ANIM_TIME :: 300;
+	FADE_TIME :: 400;
+	
+	time := ms_since_init();
+	fade_on_time  := cast(f32, time - editor.save_animation_time) / ANIM_TIME;
+	fade_off_time := cast(f32, time - editor.save_animation_time) / FADE_TIME;
+
 	for start..end - 1 {
 		if it == editor.rows_length.count then return;
 
 		y := off.y + 10 + it * FONT_SIZE_NORMAL - editor.scrollbar_pos.y;
 		fmt := formatInt(it + 1, minimum_digits = editor.row_digits, padding = #char " ");
+		
+		relative_position := cast(f32, it - start) / (rows_on_screen + 1);
+		
+		// Todo - Quattro - show animation only when we're allowed to save
+		col: Col = ---;
+		if (fade_on_time <= 1 || fade_off_time <= 2) && relative_position < fade_on_time {
+			v := clamp(cast(f32, relative_position < fade_on_time) - fade_off_time + relative_position, 0, 1);
+			col = blend(.{59, 187, 20, 255}, settings.themes.platform_text_normal, v);
+		} else {
+			col = settings.themes.platform_text_normal;
+		}
+		
 		// Todo - Quattro - benchmark this?
-		draw_text(tprint("%", fmt), .{off.x + 8, y}, FONT_SIZE_SMALL, settings.themes.platform_text_normal, range_check = false);
+		draw_text(tprint("%", fmt), .{off.x + 8, y}, FONT_SIZE_SMALL, col, range_check = false);
 	}
 }
 

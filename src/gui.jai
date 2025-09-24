@@ -392,7 +392,8 @@ draw_program_debug :: () {
 
 	draw_panel("Stack used", offset + .{10, 50}, .{170, 35});
 	stack_used := (255.0 - engine.S) / 255;
-	col: Col = stack_used * settings.themes.general_debug_stack_full + (1 - stack_used) * settings.themes.general_debug_stack_empty;
+	
+	col := blend(settings.themes.general_debug_stack_full, settings.themes.general_debug_stack_empty, stack_used);
 
 	ff := formatFloat(stack_used * 100, trailing_width = 1, zero_removal = .NO);
 
