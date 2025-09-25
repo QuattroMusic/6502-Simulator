@@ -43,6 +43,34 @@ init_d3d :: () {
 	set_viewport();
 }
 
+get_max_monitor_size :: () -> Monitor_Size {
+	// Iterate through all monitors and get the size of the largest one
+	test_proc :: (mon: HMONITOR, hdc: HDC, r: *RECT, w: LPARAM) -> BOOL #c_call {
+		c: #Context;
+		push_context,defer_pop c;
+		
+		width := r.right - r.left;
+		height := r.bottom - r.top;
+		
+		max_size_ptr := cast(*Monitor_Size, w);
+		
+		if width > max_size_ptr.width && height > max_size_ptr.height {
+			max_size_ptr.width = width;
+			max_size_ptr.height = height;
+		}
+		
+		return .TRUE;
+	}
+	
+	// Thank you WinAPI...
+	max_size: Monitor_Size;
+	ptr_as_lparam := cast(LPARAM, *max_size);
+	
+	EnumDisplayMonitors(null, null, test_proc, ptr_as_lparam);
+	
+	return max_size;
+}
+
 create_dx11_swapchain :: () {
 	hr: HRESULT;
 
@@ -86,9 +114,11 @@ create_dx11_swapchain :: () {
 
 	IUnknown_QueryInterface(devcon, *uid(ID3D11DeviceContext1_UUID), xx *devcon);
 
+	size := get_max_monitor_size();
+
 	sd: DXGI_SWAP_CHAIN_DESC1;
-	sd.Width              = xx vp.width;
-	sd.Height             = xx vp.height;
+	sd.Width              = xx size.width;
+	sd.Height             = xx size.height;
 	sd.Format             = .R8G8B8A8_UNORM;
 	sd.Stereo             = xx false;
 	sd.SampleDesc.Count   = 1;
@@ -356,11 +386,6 @@ set_viewport :: () {
 	ID3D11DeviceContext_RSSetViewports(devcon, 1, *viewport);
 }
 
-begin_drawing :: () {
-	// flags: u32 = xx (D3D11_CLEAR_FLAG.DEPTH | D3D11_CLEAR_FLAG.STENCIL);
-	// ID3D11DeviceContext_ClearDepthStencilView(devcon, null, flags, 1, 0);
-}
-
 flush_buffer :: (data: *Buffer_Data) {
 	if data.elements_view.count == 0 then return;
 
@@ -419,16 +444,6 @@ clear_background :: (col: Col) {
 }
 
 resize_viewport :: () {
-	hr: HRESULT;
-
-	ID3D11DeviceContext_OMSetRenderTargets(devcon, 0, null, null);
-	IUnknown_Release(back_buffer);
-
-	flags: u32 = xx DXGI_SWAP_CHAIN_FLAG.ALLOW_TEARING;
-	hr = IDXGISwapChain_ResizeBuffers(swapchain1, 0, 0, 0, .DXGI_FORMAT_UNKNOWN, flags);
-	assert(SUCCEEDED(hr));
-
-	set_render_target();
 	set_viewport();
 	update_camera();
 }
@@ -507,3 +522,10 @@ texture_data, texture_width, texture_height :: #run -> ([]u8, s64, s64) {
 	}
 	return mem, texture_width, texture_height;
 };
+
+#scope_file
+
+Monitor_Size :: struct {
+	width:  s32;
+	height: s32;
+}
