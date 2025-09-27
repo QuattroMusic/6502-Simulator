@@ -169,12 +169,30 @@ events_manager :: (hwnd: *void, msg: u32, wparam: u64, lparam: s64) -> s64 #c_ca
 		case WM_MOUSEWHEEL;
 			amt := cast,trunc(s16, wparam >> 16);
 			
-			vp.scroll_accumulator += amt;
+			if wparam & 0x4 {  // is shift pressed
+				vp.scroll_haccumulator += amt;
 			
-			v := vp.scroll_accumulator / 120;
-			vp.scroll_accumulator %= 120;
+				v := vp.scroll_haccumulator / 120;
+				vp.scroll_haccumulator %= 120;
+				
+				mouse_dhz = v;
+			} else {
+				vp.scroll_vaccumulator += amt;
+				
+				v := vp.scroll_vaccumulator / 120;
+				vp.scroll_vaccumulator %= 120;
+				
+				mouse_dz = v;
+			}
+		case WM_MOUSEHWHEEL;
+			amt := cast,trunc(s16, wparam >> 16);
 			
-			mouse_dz = v;
+			vp.scroll_haccumulator += amt;
+			
+			v := vp.scroll_haccumulator / 120;
+			vp.scroll_haccumulator %= 120;
+			
+			mouse_dhz = -v;
 		case WM_DROPFILES;
 			data := cast(HDROP)wparam;
 			defer DragFinish(data);
@@ -278,9 +296,9 @@ Viewport :: struct {
 	window_style :: WS_THICKFRAME | WS_MAXIMIZEBOX | WS_MINIMIZEBOX | WS_SYSMENU | WS_VISIBLE;
 
 	init_time: s64;
-	scroll_accumulator: s64;
+	scroll_vaccumulator: s64;
+	scroll_haccumulator: s64;
 }
-
 
 WINDOWPOS :: struct {
 	hwnd: *void;

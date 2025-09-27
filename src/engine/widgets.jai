@@ -180,7 +180,7 @@ draw_scrollbar :: (pos: Vec2, size: Vec2, scroll_pos: *Scrollbar_Vector, scroll_
 
 		state := create_selectable_region(.SCROLLBAR, .{scroll_pos_x, scroll_pos_y}, .{WIDGET_SCROLLBAR_SIZE, size.y - off}, loc, it + 1);
 
-		if mouse_dz && !is_key_down(KEY_SHIFT) && content_state == .HOVER {
+		if mouse_dz && content_state == .HOVER {
 			true_speed := ifx is_key_down(KEY_CTRL) then speed_fast else speed_slow;
 			amt := mouse_dz * cast(s64, FONT_SIZE_NORMAL) * true_speed;
 			scroll_pos.*.y -= amt;
@@ -214,9 +214,9 @@ draw_scrollbar :: (pos: Vec2, size: Vec2, scroll_pos: *Scrollbar_Vector, scroll_
 
 		state := create_selectable_region(.SCROLLBAR, .{scroll_pos_x, scroll_pos_y}, .{size.x - off, WIDGET_SCROLLBAR_SIZE}, loc, it + 2);
 
-		if mouse_dz && is_key_down(KEY_SHIFT) && content_state == .HOVER {
+		if mouse_dhz && content_state == .HOVER {
 			true_speed := ifx is_key_down(KEY_CTRL) then speed_fast else speed_slow;
-			amt := mouse_dz * cast(s64, FONT_SIZE_NORMAL) * true_speed;
+			amt := mouse_dhz * cast(s64, FONT_SIZE_NORMAL) * true_speed;
 			scroll_pos.*.x -= amt;
 		}
 

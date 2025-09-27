@@ -5,7 +5,8 @@ fetch_window_inputs :: () {
 	for * input_keyboard_states it.* &= keyboard_mask;
 	for * input_mouse_states    it.* &= mouse_mask;
 	
-	mouse_dz = 0;
+	mouse_dz     = 0;
+	mouse_dhz    = 0;
 	pressed_char = 0;
 	
 	while true {
@@ -18,7 +19,8 @@ fetch_window_inputs :: () {
 }
 
 reset_input :: () {
-	mouse_dz = 0;
+	mouse_dz  = 0;
+	mouse_dhz = 0;
 	
 	memset(input_keyboard_states.data, xx Button_State.UP, size_of(type_of(input_keyboard_states)));
 	memset(input_mouse_states.data,    xx Button_State.UP, size_of(type_of(input_mouse_states)));
@@ -35,9 +37,10 @@ is_key_pressed_or_repeated :: (key: u8) -> bool {
 	return cast(bool, input_keyboard_states[key] & .PRESSED || input_keyboard_states[key] & .REPEATED);
 }
 
-mouse_x:  s64;
-mouse_y:  s64;
-mouse_dz: s64;
+mouse_x:   s64;
+mouse_y:   s64;
+mouse_dz:  s64;
+mouse_dhz: s64;
 
 last_down_key: u8;
 pressed_char:  u8;
