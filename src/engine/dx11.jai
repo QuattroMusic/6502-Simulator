@@ -46,9 +46,6 @@ init_d3d :: () {
 get_max_monitor_size :: () -> Monitor_Size {
 	// Iterate through all monitors and get the size of the largest one
 	test_proc :: (mon: HMONITOR, hdc: HDC, r: *RECT, w: LPARAM) -> BOOL #c_call {
-		c: #Context;
-		push_context,defer_pop c;
-		
 		width := r.right - r.left;
 		height := r.bottom - r.top;
 		
@@ -147,7 +144,6 @@ init_shaders :: () {
 		shader_path := tprint(FMT, name, "hlsl");
 		cache_path  := tprint(FMT, name, "cache");
 		
-		// hot reloading
 		// cache file is stored in this format: [Apollo_Time][s64][s64][s64][Vdata][Gdata][Pdata]
 		// where every [s64] refers to the size of the vertex, geometry and pixel size, respectively.
 		file_time := file_modtime_and_size(shader_path);
@@ -515,7 +511,7 @@ texture_data, texture_width, texture_height :: #run -> ([]u8, s64, s64) {
 	for texture_data {
 		v := it;
 		for 0..63 {
-			x := ifx (v >> (63 - it)) & 1 then 255;
+			x := ifx (v >> (63 - it)) & 1 then 0xFF;
 			mem[it + off] = xx x;
 		}
 		off += 64;
