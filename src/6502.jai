@@ -180,6 +180,8 @@ Code_Editor :: struct {
 	caret_col_selection: u32;
 	caret_row_selection: u32;
 	
+	saved_caret_col: u32;
+	
 	// when it's set to save every x milliseconds
 	asked_to_save: bool;
 	last_saved_time: s64;

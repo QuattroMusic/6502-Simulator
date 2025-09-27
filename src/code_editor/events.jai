@@ -106,12 +106,14 @@ event_left :: (mods: Editor_Modifier) -> Editor_Interaction {
 
 	if caret_row == 0 && caret_col == 0 then return .RESET_CARET | .RESET_SELECTION;
 
-	if caret_col == 0 {
+	if caret_col == 0 {  // jump to previous row
 		caret_row -= 1;
 		caret_col = rows_length[caret_row];
 	} else {
 		caret_col -= 1;
 	}
+	
+	saved_caret_col = caret_col;
 	
 	interaction := Editor_Interaction.RESET_CARET;
 	interaction |= ifx !mods & .SHIFT then .RESET_SELECTION;
@@ -131,6 +133,8 @@ event_right :: (mods: Editor_Modifier) -> Editor_Interaction {
 		caret_col += 1;
 	}
 	
+	saved_caret_col = caret_col;
+	
 	interaction := Editor_Interaction.RESET_CARET;
 	interaction |= ifx !mods & .SHIFT then .RESET_SELECTION;
 	
@@ -140,12 +144,15 @@ event_right :: (mods: Editor_Modifier) -> Editor_Interaction {
 event_up :: (mods: Editor_Modifier) -> Editor_Interaction {
 	if mods & .ALT || mods & .CTRL then return 0;
 
-	if caret_row == 0 {
+	if caret_row == 0 {  // first row
 		caret_col = 0;
 	} else {
 		caret_row -= 1;
-		if rows_length[caret_row] < caret_col {
+		
+		if rows_length[caret_row] < saved_caret_col {
 			caret_col = rows_length[caret_row];
+		} else {
+			caret_col = saved_caret_col;
 		}
 	}
 	
@@ -164,8 +171,10 @@ event_down :: (mods: Editor_Modifier) -> Editor_Interaction {
 	} else {
 		caret_row += 1;
 		
-		if rows_length[caret_row] < caret_col {
+		if rows_length[caret_row] < saved_caret_col {
 			caret_col = rows_length[caret_row];
+		} else {
+			caret_col = saved_caret_col;
 		}
 	}
 	
@@ -181,6 +190,7 @@ event_tab :: () -> Editor_Interaction {
 	
 	array_insert_at(*content, #char "\t", idx);
 	caret_col += 1;
+	saved_caret_col += 1;
 
 	calculate_rows_length();
 	
@@ -212,6 +222,8 @@ event_enter :: () -> Editor_Interaction {
 	
 	caret_row += 1;
 	caret_col = xx tabs;
+	
+	saved_caret_col = caret_col;
 	
 	editor.row_digits = count_digits(xx rows_length.count);
 	
@@ -248,6 +260,8 @@ event_cancel :: () -> Editor_Interaction {
 		caret_col -= 1;
 	}
 	
+	saved_caret_col = caret_col;
+	
 	calculate_rows_length();
 
 	return .UPDATE_COLORING | .RESET_CARET | .RESET_SELECTION;
@@ -277,6 +291,7 @@ event_char :: () -> Editor_Interaction {
 	rows_length[caret_row] += 1;
 	
 	caret_col += 1;
+	saved_caret_col = caret_col;
 	
 	calculate_rows_length();
 	
@@ -335,6 +350,8 @@ event_mouse_down :: (mods: Editor_Modifier) -> Editor_Interaction {
 		caret_col = xx x;  // :)
 	}
 	
+	saved_caret_col = caret_col;
+	
 	interaction := Editor_Interaction.RESET_CARET;
 	
 	if is_mouse_pressed(0) && !(mods & .SHIFT) {
@@ -350,6 +367,7 @@ event_end :: (mods: Editor_Modifier) -> Editor_Interaction {
 	
 	line_length := rows_length[caret_row];
 	caret_col = line_length;
+	saved_caret_col = line_length;
 	
 	interactions := Editor_Interaction.RESET_CARET;
 	if !mods & .SHIFT then interactions |= .RESET_SELECTION;
@@ -361,6 +379,7 @@ event_start :: (mods: Editor_Modifier) -> Editor_Interaction {
 	if mods & .ALT || mods & .CTRL then return 0;
 	
 	caret_col = 0;
+	saved_caret_col = 0;
 	
 	interactions := Editor_Interaction.RESET_CARET;
 	if !mods & .SHIFT then interactions |= .RESET_SELECTION;
@@ -432,6 +451,8 @@ event_paste :: () -> Editor_Interaction {
 	caret_row_selection, caret_col_selection = row, col;
 	
 	editor.row_digits = count_digits(xx editor.rows_length.count);
+	
+	saved_caret_col = caret_col;
 	
 	return interaction;
 }
