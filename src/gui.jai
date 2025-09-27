@@ -100,7 +100,9 @@ get_tab_offset :: (row: u32, col: u32) -> f32 {
 }
 
 draw_selected_line :: (row: u32, from_col: u32, to_col: u32, end_padding: f32 = 0) {
-	global_x := editor.pos.x - editor.scrollbar_pos.x + get_width_of_line_count_bar();
+	count_bar_width := get_width_of_line_count_bar();
+
+	global_x := editor.pos.x - editor.scrollbar_pos.x + count_bar_width;
 	global_y := editor.pos.y - editor.scrollbar_pos.y + 5;
 
 	start_tab_offset := get_tab_offset(row, from_col);
@@ -108,6 +110,13 @@ draw_selected_line :: (row: u32, from_col: u32, to_col: u32, end_padding: f32 = 
 	
 	x := global_x + from_col * FONT_SIZE_NORMAL + start_tab_offset;
 	width := (cast(s64, to_col) - cast(s64, from_col)) * FONT_SIZE_NORMAL + (end_tab_offset - start_tab_offset) + end_padding;
+	
+	p2 := x + width;
+
+	p2 = clamp(p2, count_bar_width + editor.pos.x, editor.editor_content_size.x + editor.pos.x);
+	x  = clamp(x,  count_bar_width + editor.pos.x, editor.editor_content_size.x + editor.pos.x);
+	
+	width = p2 - x;
 	
 	y := global_y + row * FONT_SIZE_NORMAL;
 	
@@ -159,10 +168,10 @@ draw_code_editor :: () {
 		y := global_y + editor.caret_row * FONT_SIZE_NORMAL;
 
 		size := editor.editor_content_size;
-		if (editor.pos.x + w) <= x && x < (editor.pos.x + size.x) && editor.pos.y < y && y <= (editor.pos.y + size.y - FONT_SIZE_NORMAL) {
-			draw_rect(.{editor.pos.x - editor.scrollbar_pos.x + w, y}, .{editor.size.x - w, FONT_SIZE_NORMAL}, settings.themes.platform_widget_bg_normal);
+		if editor.pos.y < y && y <= (editor.pos.y + size.y - FONT_SIZE_NORMAL) {
+			draw_rect(.{editor.pos.x + w, y}, .{editor.size.x - w, FONT_SIZE_NORMAL}, settings.themes.platform_widget_bg_normal);
 			
-			if editor.focused {
+			if (editor.pos.x + w) <= x && x < (editor.pos.x + size.x) && editor.focused {
 				time := (ms_since_init() - editor.caret_time) % 1000;
 				if time < 500 then draw_rect(.{x, y}, .{1, FONT_SIZE_NORMAL}, .{255, 255, 255, 255});
 			}
