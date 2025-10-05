@@ -172,7 +172,7 @@ eat_until_whitespace :: (idx: u32, i: u32, len: u32) -> u32 {
 is_word_a_label :: (idx: u32, it: u32, len: u32, label_len: *u32) -> bool {
 	c: u8;
 	off: u32;
-	while it + off < len && c != #char " " && c != #char "\n" && c != #char "\r" && c != #char "\t" {
+	while it + off < len && c != #char " " && c != #char "\n" && c != #char "\t" {
 		c = editor.content[idx + it + off];
 		off += 1;
 		if c == #char ":" {
@@ -184,7 +184,7 @@ is_word_a_label :: (idx: u32, it: u32, len: u32, label_len: *u32) -> bool {
 }
 
 is_an_instruction :: (buff: *u8, len: s64, it: s64) -> bool {
-	if (len - it) > 3 && !(buff[3] == #char " " || buff[3] == #char "\n" || buff[3] == #char "\r" || buff[3] == #char "\t") {
+	if (len - it) > 3 && !(buff[3] == #char " " || buff[3] == #char "\n" || buff[3] == #char "\t") {
 		// check if instruction is 3 char long
 		return false;
 	}

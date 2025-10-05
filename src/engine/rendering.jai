@@ -1,5 +1,5 @@
-draw_rect :: inline (pos: Vec2, size: Vec2, col: Col) {
-	uv :: #run FONT_SIZE_GRANULARITY * 8 / texture_width;
+draw_rect :: (pos: Vec2, size: Vec2, col: Col) {
+	uv :: FONT_SIZE_GRANULARITY * 8 / texture_width;
 	element_add(*font_buffer, .{pos.x, pos.y, size.x, size.y, col.data, uv});
 }
 
@@ -10,26 +10,17 @@ draw_rect_lines :: (pos: Vec2, size: Vec2, col: Col, t: f32 = 1) {
 	draw_rect(pos + .{0, size.y - t}, .{size.x, t}, col);
 }
 
-draw_character :: inline ($$c: u8, pos: Vec2, scale: f32, col: Col, $range_check := true) {
-	#if is_constant(c) { #if c == #char " " || c == #char "\t" || c == #char "\r" then return; }
-	else               {  if c == #char " " || c == #char "\t" || c == #char "\r" then return; }
+draw_character :: (c: u8, pos: Vec2, scale: f32, col: Col, range_check := true) {
+	if c == #char " " || c == #char "\t" then return;
 	
-	do_range_check :: #ifx is_constant(c) then false else range_check;
-	
-	#if is_constant(c) {
-		uv :: #run get_char_mapping(c, do_range_check);
-	} else {
-		uv := get_char_mapping(c, do_range_check);
-	}
+	uv := get_char_mapping(c, range_check);
 
 	element_add(*font_buffer, .{pos.x, pos.y, scale, scale, col.data, uv});
 }
 
-draw_text :: ($$text: string, pos: Vec2, scale: f32, color: Col, $wrap: f32 = 0, $range_check := true) {
+draw_text :: (text: string, pos: Vec2, scale: f32, color: Col, $wrap: f32 = 0, range_check := true) {
 	x_pos: f32;
 	y_pos: f32;
-
-	do_range_check :: #ifx is_constant(text) then false else range_check;
 
 	for text {
 		if it == #char "\n" {
@@ -38,7 +29,7 @@ draw_text :: ($$text: string, pos: Vec2, scale: f32, color: Col, $wrap: f32 = 0,
 			continue;
 		}
 		
-		draw_character(cast,trunc(u8)it, pos + .{x_pos, y_pos}, scale, color, do_range_check);
+		draw_character(cast,trunc(u8)it, pos + .{x_pos, y_pos}, scale, color, range_check);
 		x_pos += scale;
 		
 		#if wrap if x_pos + scale > wrap {
@@ -48,12 +39,8 @@ draw_text :: ($$text: string, pos: Vec2, scale: f32, color: Col, $wrap: f32 = 0,
 	}
 }
 
-draw_icon :: ($$icon: Icon, pos: Vec2, $scale: f32, col: Col) {
-	#if is_constant(icon) {
-		uv :: #run get_icon_mapping(icon);
-	} else {
-		uv := get_icon_mapping(icon);
-	}
+draw_icon :: (icon: Icon, pos: Vec2, scale: f32, col: Col) {
+	uv := get_icon_mapping(icon);
 	
 	element_add(*font_buffer, .{pos.x, pos.y, scale, scale, col.data, uv});
 }
@@ -69,19 +56,20 @@ get_icon_mapping :: (icon: Icon) -> uvx: f32 {
 	}
 }
 
-get_char_mapping :: inline ($$c: u8, $range_check: bool) -> uvx: f32 {
+get_char_mapping :: (c: u8, range_check: bool) -> uvx: f32 {
 	// since the font is monospace, there's no need to return the size
 	// Todo - Quattro - check for unrecognized characters
 	
 	t :: FONT_SIZE_GRANULARITY / texture_width;
 
-	#if range_check then char := clamp(c, 32, 127);
-	else char := c;
+	char: u8 = ---;
+	if range_check then char = clamp(c, 32, 127);
+	else                char = c;
 	
 	return char * t;
 }
 
-measure_text :: inline (text: string, scale: f32) -> Vec2 {
+measure_text :: (text: string, scale: f32) -> Vec2 {
 	return .{text.count * scale, scale};
 }
 

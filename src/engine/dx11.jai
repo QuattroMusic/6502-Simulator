@@ -6,7 +6,7 @@ init_rendering :: () {
 }
 
 deinit_rendering :: () {
-	safe_release :: inline (data: *IUnknown) { if data then IUnknown_Release(data); }
+	safe_release :: (data: *IUnknown) { if data then IUnknown_Release(data); }
 
 	release_buffer :: (buff: Buffer_Data) {
 		safe_release(buff.layout);
@@ -506,16 +506,48 @@ texture_data, texture_width, texture_height :: #run -> ([]u8, s64, s64) {
 	texture_height   :: 8;
 	texture_width    :: texture_data.count * 8;
 	mem: [texture_width * texture_height]u8;
+	
+	mem_as_u64 := cast(*u64, mem.data);
 
+	b: u64;
+	value:        u64 = 0x8412_0102_4418_3ca6;
+	shuffle_mask: u64 = 0x0000_0000_0000_0000;
+	and_mask:     u64 = 0x8040_2010_0804_0201;
+	
+	#asm SSE {
+		// register pinning to avoid unnecessary movs
+		am:  vec === 0;
+		sm:  vec === 1;
+		z:   vec === 2;
+		x:   vec === 3;
+		
+		movq am, and_mask;
+		movq sm, shuffle_mask;
+		pxor z, z;
+	}
+	
 	off: s64;
 	for texture_data {
 		v := it;
-		for 0..63 {
-			x := ifx (v >> (63 - it)) & 1 then 0xFF;
-			mem[it + off] = xx x;
+		for 0..7 {
+			vs := (v >> (56 - it * 8)) & 0xFF;
+			
+			#asm SSE {
+				movq x, vs;
+				
+				pshufb x, sm;
+				pandn x, am;
+				pcmpeqb x, z;
+				
+				movq b, x;
+				bswap.64 b;
+			}
+			
+			mem_as_u64[off + it] = b;
 		}
-		off += 64;
+		off += 8;
 	}
+	
 	return mem, texture_width, texture_height;
 };
 

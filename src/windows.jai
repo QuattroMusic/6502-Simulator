@@ -84,9 +84,9 @@ draw_settings :: (panel: *Window) {
 			edit := combo_box(pos + .{40 + w, 50 - 2}, .{205, 20}, *settings.platform.at_startup);
 			if edit then save_options_file();
 
-			internal_scroll :: ($text: string, pos: Vec2, var: *u8, y: f32) {
+			internal_scroll :: (text: string, pos: Vec2, var: *u8, y: f32) {
 				draw_text(text, pos + .{20, y}, FONT_SIZE_NORMAL, settings.themes.platform_text_normal);
-				w :: #run measure_text(text, FONT_SIZE_NORMAL).x;
+				w := measure_text(text, FONT_SIZE_NORMAL).x;
 
 				edit := input_int(pos + .{40 + w, y}, s = FONT_SIZE_NORMAL, var, min_value = 1, max_value = 255, it = xx y);
 
@@ -100,13 +100,13 @@ draw_settings :: (panel: *Window) {
 			internal_scroll("memory viewer slow speed", pos, *settings.platform.memory_cursor_speed_slow, 165);
 			internal_scroll("memory viewer fast speed", pos, *settings.platform.memory_cursor_speed_fast, 190);
 		case .THEMING;
-			internal_selectable :: ($text: string, pos: Vec2, x: f32, y: *f32, col: *Col, loc := #caller_location) {
+			internal_selectable :: (text: string, pos: Vec2, x: f32, y: *f32, col: *Col, loc := #caller_location) {
 				defer y.* += 16;
 
 				y_off := y.*;
 				y_off -= ui.settings_theming_scroll_pos.y;
 				if y_off < 40 || y_off > SETTINGS_HEIGHT - 50 then return;
-				s :: #run measure_text(text, FONT_SIZE_NORMAL);
+				s := measure_text(text, FONT_SIZE_NORMAL);
 
 				box_pos := Vec2.{x, y_off + 2};
 				box_size :: Vec2.{14, 14};
@@ -153,7 +153,7 @@ draw_settings :: (panel: *Window) {
 				}
 			}
 
-			internal_separator :: ($text: string, pos: Vec2, y: *f32) {
+			internal_separator :: (text: string, pos: Vec2, y: *f32) {
 				y.* += 20;
 				defer y.* += 5;
 
@@ -307,17 +307,17 @@ draw_cheatsheet :: (window: *Window) {
 	
 	if #complete ui.cheatsheet_tab == {
 		case .ISA;
-			internal_text :: inline ($instruction: string, $addressing: string, $description: string, y: *f32, pos: Vec2, $$packed := false) {
+			internal_text :: (instruction: string, addressing: string, description: string, y: *f32, pos: Vec2, packed := false) {
 				v := ui.cheatsheet_isa_scrollbar.y;
 			
 				// text + space
-				s :: #run measure_text(instruction, FONT_SIZE_NORMAL).x + FONT_SIZE_NORMAL;
+				s := measure_text(instruction, FONT_SIZE_NORMAL).x + FONT_SIZE_NORMAL;
 			
 				lo := y.* - CHEATSHEET_HEIGHT + 120;
 				hi := y.*;
 			
 				if cast(s64, lo) <= v && v <= cast(s64, hi) then draw_text(instruction, pos + .{ 20, 71 + y.* - v}, FONT_SIZE_NORMAL, settings.themes.viewer_instruction);
-				#if addressing != "" {
+				if addressing != "" {
 					if !packed {
 						if cast(s64, lo) <= v && v <= cast(s64, hi) then draw_text(addressing, pos + .{ 20 + s, 71 + y.* - v}, FONT_SIZE_NORMAL, settings.themes.platform_text_normal);
 					}
@@ -327,7 +327,7 @@ draw_cheatsheet :: (window: *Window) {
 				if cast(s64, lo) <= v && v <= cast(s64, hi) then draw_text(description, pos + .{x, 71 + y.* - v}, FONT_SIZE_NORMAL, settings.themes.platform_text_normal);
 				y.* += 16.0;
 			}
-			internal_separator :: inline (y: *f32, pos: Vec2) {
+			internal_separator :: (y: *f32, pos: Vec2) {
 				v := ui.cheatsheet_isa_scrollbar.y;
 				
 				if cast(s64, y.*) - CHEATSHEET_HEIGHT + 120 <= v && v <= cast(s64, y.*) then h_separator("", pos + .{15, 81 + y.* - v}, CHEATSHEET_WIDTH - 40);
@@ -562,7 +562,7 @@ draw_cheatsheet :: (window: *Window) {
 				
 				if cast(s64, lo) <= v && v <= cast(s64, hi) then draw_text(text, pos + .{0, y_off + 75 - v}, FONT_SIZE_NORMAL, settings.themes.platform_text_normal);
 			}
-			internal_separator :: inline (y: *f32, pos: Vec2) {
+			internal_separator :: (y: *f32, pos: Vec2) {
 				v := ui.cheatsheet_addressing_scrollbar.y;
 				
 				lo := y.* - CHEATSHEET_HEIGHT + 120;

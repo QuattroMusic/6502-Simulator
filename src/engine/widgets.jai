@@ -1,4 +1,4 @@
-button :: ($$text: string, pos: Vec2, size: Vec2, $t: f32 = FONT_SIZE_SMALL, disabled := false, it: s64 = 0, loc := #caller_location) -> bool {
+button :: (text: string, pos: Vec2, size: Vec2, t: f32 = FONT_SIZE_SMALL, disabled := false, it: s64 = 0, loc := #caller_location) -> bool {
 	state := create_selectable_region(.BUTTON, pos, size, loc, it);
 
 	bg_col:     Col = ---;
@@ -33,17 +33,13 @@ button :: ($$text: string, pos: Vec2, size: Vec2, $t: f32 = FONT_SIZE_SMALL, dis
 	draw_rect(pos, size, bg_col);
 	draw_rect_lines(pos, size, border_col, t / FONT_SIZE_GRANULARITY);
 
-	#if is_constant(text) {
-		s :: #run measure_text(text, t);
-	} else {
-		s := measure_text(text, t);
-	}
+	s := measure_text(text, t);
 	draw_text(text, pos + size / 2 - s / 2, t, text_col);
 
 	return state == .RELEASE;
 }
 
-button :: ($$icon: Icon, pos: Vec2, size: Vec2, $t: f32 = FONT_SIZE_SMALL, it: s64 = 0, loc := #caller_location) -> bool {
+button :: (icon: Icon, pos: Vec2, size: Vec2, t: f32 = FONT_SIZE_SMALL, it: s64 = 0, loc := #caller_location) -> bool {
 	state := create_selectable_region(.BUTTON, pos, size, loc, it);
 
 	bg_col:     Col = ---;
@@ -71,18 +67,14 @@ button :: ($$icon: Icon, pos: Vec2, size: Vec2, $t: f32 = FONT_SIZE_SMALL, it: s
 	draw_rect(pos, size, bg_col);
 	draw_rect_lines(pos, size, border_col, t / FONT_SIZE_GRANULARITY);
 
-	s :: Vec2.{t, t};
+	s := Vec2.{t, t};
 	draw_icon(icon, pos + size / 2 - s / 2, t, text_col);
 
 	return state == .RELEASE;
 }
 
-checkbox :: ($$text: string, pos: Vec2, size: Vec2, value: *bool, it: s64 = 0, loc := #caller_location) -> bool {
-	#if is_constant(text) {
-		s :: #run measure_text(text, FONT_SIZE_SMALL);
-	} else {
-		s := measure_text(text, FONT_SIZE_SMALL);
-	}
+checkbox :: (text: string, pos: Vec2, size: Vec2, value: *bool, it: s64 = 0, loc := #caller_location) -> bool {
+	s := measure_text(text, FONT_SIZE_SMALL);
 
 	state := create_selectable_region(.CHECKBOX, pos, size + .{s.x + 12, 0}, loc, it);
 
@@ -298,13 +290,13 @@ tab_bar :: (pos: Vec2, width: f32, focused_tab: *$T, it_: s64 = 0, loc := #calle
 	draw_rect(pos + .{w_continue, tab_height - 1}, .{width - w_continue, 1}, settings.themes.platform_line);
 }
 
-h_separator :: ($name: string, pos: Vec2, width: f32) {
-	#if name {
+h_separator :: (name: string, pos: Vec2, width: f32) {
+	if name {
 		p :: 12;
 		draw_rect(pos, .{p, 1}, settings.themes.platform_line);
 
 		draw_text(name, pos + .{p + 4, -5}, FONT_SIZE_SMALL, settings.themes.platform_text_normal);
-		s :: #run measure_text(name, FONT_SIZE_SMALL);
+		s := measure_text(name, FONT_SIZE_SMALL);
 
 		draw_rect(pos + .{p + 8 + s.x, 0}, .{width - p - 8 - s.x, 1}, settings.themes.platform_line);
 	} else {
@@ -420,13 +412,13 @@ combo_box :: (pos: Vec2, size: Vec2, sel: *$T, it_: s64 = 0, loc := #caller_loca
 	return fire_internal;
 }
 
-input_int :: (pos: Vec2, $s: f32, value: *$T, $$min_value: T, $$max_value: T, it: s64 = 0, $draw_border_when_focused := false, $update_on_change := false, loc := #caller_location) -> bool #modify {
+input_int :: (pos: Vec2, s: f32, value: *$T, min_value: T, max_value: T, it: s64 = 0, draw_border_when_focused := false, update_on_change := false, loc := #caller_location) -> bool #modify {
 	info := cast(*Type_Info, T);
 	return info.type == .INTEGER;
 	} {
 
-	digits :: #run count_digits(max_value);
-	size   :: Vec2.{digits * s + 8.0, s + 4.0};
+	digits := count_digits(xx max_value);
+	size   := Vec2.{digits * s + 8.0, s + 4.0};
 
 	uuid := hash_widget(loc, it);
 	state := create_selectable_region(.INPUT, pos, size, uuid);
@@ -485,7 +477,7 @@ input_int :: (pos: Vec2, $s: f32, value: *$T, $$min_value: T, $$max_value: T, it
 		}
 	}
 	
-	#if draw_border_when_focused {
+	if draw_border_when_focused {
 		if widget.selected {
 			draw_rect_lines(pos + .{0, -1}, size, border_col);
 		}
@@ -493,8 +485,7 @@ input_int :: (pos: Vec2, $s: f32, value: *$T, $$min_value: T, $$max_value: T, it
 		draw_rect_lines(pos + .{0, -1}, size, border_col);
 	}
 
-	fmt :: #bake_arguments formatInt(minimum_digits = digits, padding = #char " ");
-	draw_text(tprint("%", fmt(value.*)), pos + .{4, 0}, s, text_col);
+	draw_text(tprint("%", formatInt(value.*, minimum_digits = digits, padding = #char " ")), pos + .{4, 0}, s, text_col);
 
 	if unfocused {
 		value.* = clamp(value.*, min_value, max_value);
@@ -502,7 +493,7 @@ input_int :: (pos: Vec2, $s: f32, value: *$T, $$min_value: T, $$max_value: T, it
 		return widget.edited;
 	}
 	
-	#if update_on_change {
+	if update_on_change {
 		if widget.edited {
 			defer widget.edited = false;
 			return widget.edited;
@@ -682,7 +673,7 @@ color_picker :: (pos: Vec2, rgb: *Col, external_update: bool, it: s64 = 0, loc :
 	return edited;
 }
 
-draw_panel :: ($$text: string, pos: Vec2, size: Vec2) {
+draw_panel :: (text: string, pos: Vec2, size: Vec2) {
 	p :: 4;
 
 	s :: FONT_SIZE_SMALL;
@@ -817,7 +808,7 @@ make_window_topmost_by_value :: inline (p: *Window) {
 	make_window_topmost_by_index(idx);
 }
 
-toggle_window :: (panel: *Window, $centered := false) {
+toggle_window :: (panel: *Window, centered := false) {
 	if panel.*.visible {
 		panel.*.visible = false;
 		panel.*.pressed = false;
@@ -826,7 +817,7 @@ toggle_window :: (panel: *Window, $centered := false) {
 		make_window_topmost_by_value(panel);
 	}
 
-	#if centered {
+	if centered {
 		x := (vp.width  - panel.size.x) / 2;
 		y := (vp.height - panel.size.y) / 2;
 		panel.*.pos = .{x, y};
@@ -845,16 +836,16 @@ mouse_inside_a_window :: () -> bool {
 	return false;
 }
 
-fetch_parent :: inline () -> Vec2 {
+fetch_parent :: () -> Vec2 {
 	if stack.count then return stack[stack.count - 1]; else return .{0, 0};
 }
 
-create_selectable_region :: inline (type: Widget_Type, pos: Vec2, size: Vec2, loc := #caller_location, it: s64 = 0, $disable_interactions := false) -> Interaction_State {
+create_selectable_region :: inline (type: Widget_Type, pos: Vec2, size: Vec2, loc := #caller_location, it: s64 = 0, disable_interactions := false) -> Interaction_State {
 	uuid := hash_widget(loc, it);
 	return create_selectable_region(type, pos, size, uuid, disable_interactions);
 }
 
-create_selectable_region :: (type: Widget_Type, pos: Vec2, size: Vec2, uuid: ID, $disable_interactions := false) -> Interaction_State {
+create_selectable_region :: (type: Widget_Type, pos: Vec2, size: Vec2, uuid: ID, disable_interactions := false) -> Interaction_State {
 	// handling of the focused ID
 	if focused_uuid == uuid {
 		if is_mouse_inside_rect(pos, size) {
@@ -893,7 +884,7 @@ create_selectable_region :: (type: Widget_Type, pos: Vec2, size: Vec2, uuid: ID,
 
 	if state == .HOVER && is_mouse_pressed(0) {
 		state = .PRESSED;
-		#if !disable_interactions then focused_uuid = uuid;
+		if !disable_interactions then focused_uuid = uuid;
 	}
 
 	return state;

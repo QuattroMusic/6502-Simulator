@@ -15,7 +15,7 @@ floor_positive :: (x: f32) -> f32 {
 	return cast(f32, cast(s32, x));
 }
 
-round_positive :: inline (x: f32) -> f32 {
+round_positive :: (x: f32) -> f32 {
 	// normal round is
 	// ifx x >= 0 then floor(x + 0.5) else ceil(x - 0.5);
 	// but if we ignore negative, we'll get
@@ -24,7 +24,7 @@ round_positive :: inline (x: f32) -> f32 {
 	return floor_positive(x + 0.5);
 }
 
-clamp_lo :: inline (x: $T, min: T) -> T {
+clamp_lo :: (x: $T, min: T) -> T {
 	return ifx x < min then min else x;
 }
 

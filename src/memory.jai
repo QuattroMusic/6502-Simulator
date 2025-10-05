@@ -16,8 +16,8 @@ read_ROM :: (name: string) {
 	if !res then log_error("An error occured while reading the ROM.");
 }
 
-PC_advance :: inline (steps: u8) { engine.PC += steps; }
-PC_jump    :: inline (addr: u16) { engine.PC  = addr;  }
+PC_advance :: (steps: u8) { engine.PC += steps; }
+PC_jump    :: (addr: u16) { engine.PC  = addr;  }
 
 read_data :: (addr: u16) -> u8 {
 	if addr < RAM_SIZE then return engine.RAM[addr];

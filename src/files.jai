@@ -21,7 +21,7 @@ save_options_file :: () {
 	file_close(*file);
 }
 
-get_asset_path :: inline (file: string) -> string {
+get_asset_path :: (file: string) -> string {
 	return tprint("%/%", DATA_FOLDER_NAME, file);
 }
 
@@ -359,13 +359,13 @@ parse_theming_version_3 :: (file: *File) {
 	memcpy(*settings.themes_saved_state, *settings.themes, size_of(Theming));
 }
 
-write_color_to_file :: inline (f: *File, c: *Col) {
+write_color_to_file :: (f: *File, c: *Col) {
 	file_write(f, *c.r, 1);
 	file_write(f, *c.g, 1);
 	file_write(f, *c.b, 1);
 }
 
-read_color_from_file :: inline (f: *File) -> Col {
+read_color_from_file :: (f: *File) -> Col {
 	c: Col = ---;
 	
 	file_read(f, *c, 3);
@@ -380,7 +380,7 @@ skip_bytes :: (f: File, bytes: s64) {
 	file_set_position(f, pos);
 }
 
-read_in_range :: inline (f: *File, $type: Type, min_value: type, max_value: type) -> type {
+read_in_range :: (f: *File, $type: Type, min_value: type, max_value: type) -> type {
 	data: type = ---;
 	
 	file_read(f, *data, size_of(type));
