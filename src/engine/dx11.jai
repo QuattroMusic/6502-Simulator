@@ -5,38 +5,6 @@ init_rendering :: () {
 	init_graphics();
 }
 
-deinit_rendering :: () {
-	safe_release :: (data: *IUnknown) { if data then IUnknown_Release(data); }
-
-	release_buffer :: (buff: Buffer_Data) {
-		safe_release(buff.layout);
-		safe_release(buff.PS);
-		safe_release(buff.GS);
-		safe_release(buff.VS);
-	}
-
-	safe_release(transparency);
-	safe_release(rasterizer);
-
-	safe_release(font_buffer.elements_buffer);
-
-	safe_release(camera_buffer);
-
-	safe_release(tex_sampler_state);
-	safe_release(texture_resource_view);
-	safe_release(texture);
-
-	release_buffer(font_buffer);
-
-	safe_release(back_buffer);
-	
-	safe_release(swapchain);
-	safe_release(swapchain1);
-	safe_release(dev1);
-	safe_release(devcon);
-	safe_release(dev);
-}
-
 init_d3d :: () {
 	create_dx11_swapchain();
 	set_render_target();

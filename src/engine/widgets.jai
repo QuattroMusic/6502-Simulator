@@ -787,10 +787,6 @@ init_widgets :: () {
 	init(*widgets);
 }
 
-deinit_widgets :: () {
-	deinit(*widgets);
-}
-
 make_window_topmost_by_index :: (idx: s64) {
 	panel := windows_order[idx];
 

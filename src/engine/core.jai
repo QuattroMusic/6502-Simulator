@@ -18,18 +18,10 @@ init_window :: () {
 }
 
 deinit_window :: () {
-	deinit_rendering();
-	deinit_widgets();
-	
-	name := utf8_to_wide(TITLE_NAME,, temp);
-	
-	DestroyWindow(vp.window);
-	UnregisterClassW(name, null);
-
 	timeEndPeriod(1);
 }
 
-get_monitor_size :: () -> (w: s32, h: s32) {
+get_main_monitor_size :: () -> (w: s32, h: s32) {
 	w := GetSystemMetrics(0);
 	h := GetSystemMetrics(1);
 	return w, h;
@@ -90,7 +82,7 @@ create_window :: () -> *void {
 
 	RegisterClassExW(*info);
 
-	monitor_width, monitor_height := get_monitor_size();
+	monitor_width, monitor_height := get_main_monitor_size();
 	x := (monitor_width  - w) / 2;
 	y := (monitor_height - h) / 2;
 
