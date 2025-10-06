@@ -461,9 +461,16 @@ input_int :: (pos: Vec2, s: f32, value: *$T, min_value: T, max_value: T, it: s64
 		
 		if is_digit(pressed_char) {
 			v := pressed_char - #char "0";
-			new_value := value.* * 10 + v;
 
-			value.* = min(new_value, max_value);
+			info :: type_info(T);
+			if info.signed {
+				new_value := cast(s64, value.*) * 10 + v;
+				value.* = xx min(new_value, cast(s64, max_value));
+			} else {
+				new_value := cast(u64, value.*) * 10 + v;
+				value.* = xx min(new_value, cast(u64, max_value));
+			}
+
 			widget.edited = true;
 		}
 		if is_key_pressed_or_repeated(KEY_CANC) {
