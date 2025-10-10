@@ -189,9 +189,6 @@ Code_Editor :: struct {
 	last_saved_time: s64;
 	
 	TOP_PADDING :: 5;
-	
-	// animation on save
-	save_animation_time: s64;
 }
 
 Scrollbar_Vector :: struct {
