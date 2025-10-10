@@ -234,20 +234,45 @@ draw_code_editor :: () {
 
 	draw_rect(editor.pos, .{p, 1}, settings.themes.platform_line);
 	
-	characters_to_display := cast(s64, (editor.size.x - 60) / FONT_SIZE_SMALL);
+	unsaved_offset := p + 4.0;
 	
-	if characters_to_display < text.count {
+	if editor.size.x - 36 < m.x {
+		p2 :: 3 * FONT_SIZE_SMALL;
+	
+		characters_to_display := cast(s64, (editor.size.x - 60) / FONT_SIZE_SMALL);
 		text.count = characters_to_display;
 		
 		offx := characters_to_display * FONT_SIZE_SMALL;
+
+		linex := p + 8 + offx + p2;
+		linew := editor.size.x - p - 8 - offx - p2;
 		
-		draw_rect(editor.pos + .{p + 8 + offx + (FONT_SIZE_SMALL * 3), 0}, .{editor.size.x - p - 8 - offx - (3 * FONT_SIZE_SMALL), 1}, settings.themes.platform_line);
+		if editor.file_edited {
+			linex += FONT_SIZE_SMALL;
+			linew -= FONT_SIZE_SMALL;
+		}
 		
-		draw_text(text, editor.pos + .{p + 4, -m.y / 2}, FONT_SIZE_SMALL, settings.themes.platform_line);
+		draw_rect(editor.pos + .{linex, 0}, .{linew, 1}, settings.themes.platform_line);
 		draw_text("...", editor.pos + .{p + 4 + offx, -m.y / 2}, FONT_SIZE_SMALL, settings.themes.platform_line);
+		
+		unsaved_offset += offx + 3 * FONT_SIZE_SMALL;
 	} else {
-		draw_rect(editor.pos + .{p + 8 + m.x, 0}, .{editor.size.x - p - 8 - m.x, 1}, settings.themes.platform_line);
-		draw_text(text, editor.pos + .{p + 4, -m.y / 2}, FONT_SIZE_SMALL, settings.themes.platform_line);
+		linex := p + 8 + m.x;
+		linew := editor.size.x - p - 8 - m.x;
+		
+		if editor.file_edited {
+			linex += FONT_SIZE_SMALL;
+			linew -= FONT_SIZE_SMALL;
+		}
+		
+		draw_rect(editor.pos + .{linex, 0}, .{linew, 1}, settings.themes.platform_line);
+		
+		unsaved_offset += m.x;
+	}
+	
+	draw_text(text, editor.pos + .{p + 4, -m.y / 2}, FONT_SIZE_SMALL, settings.themes.platform_line);
+	if editor.file_edited {
+		draw_character(#char "*", editor.pos + .{unsaved_offset, -m.y / 2}, FONT_SIZE_SMALL, settings.themes.platform_line);
 	}
 }
 

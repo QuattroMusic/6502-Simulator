@@ -543,6 +543,8 @@ handle_code_editor_events :: () {
 		// Todo - Quattro - This is updating everything, maybe we could update where needed.
 		update_code_editor_coloring();
 		
+		editor.file_edited = true;
+		
 		if settings.editor.when_to_save == .EACH_EDIT then save_editor_file();
 		if settings.editor.when_to_save == .EVERY_MS then editor.asked_to_save = true;
 	}
@@ -553,6 +555,7 @@ handle_code_editor_events :: () {
 		if time - last_saved_time > settings.editor.save_interval_in_ms {
 			editor.last_saved_time = time;
 			editor.asked_to_save = false;
+			editor.file_edited = false;
 			
 			save_editor_file();
 		}

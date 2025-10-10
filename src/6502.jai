@@ -182,6 +182,8 @@ Code_Editor :: struct {
 	
 	saved_caret_col: u32;
 	
+	file_edited: bool;
+	
 	// when it's set to save every x milliseconds
 	asked_to_save: bool;
 	last_saved_time: s64;
