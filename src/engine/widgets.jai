@@ -687,17 +687,13 @@ draw_panel :: (text: string, pos: Vec2, size: Vec2) {
 	m: Vec2 = ---;
 	m = measure_text(text, s);
 
-	if text.count != 0 {
-		draw_rect(pos, .{p, 1}, settings.themes.platform_line);
-		draw_rect(pos + .{p + 8 + m.x, 0}, .{size.x - p - 8 - m.x, 1}, settings.themes.platform_line);
-	} else {
-		draw_rect(pos, .{size.x, 1}, settings.themes.platform_line);
-	}
-
+	draw_rect(pos, .{p, 1}, settings.themes.platform_line);
+	draw_rect(pos + .{p + 8 + m.x, 0}, .{size.x - p - 8 - m.x, 1}, settings.themes.platform_line);
+	
 	draw_rect(pos, .{1, size.y}, settings.themes.platform_line);
 	draw_rect(pos + .{0, size.y - 1}, .{size.x, 1}, settings.themes.platform_line);
 	draw_rect(pos + .{size.x - 1, 0}, .{1, size.y}, settings.themes.platform_line);
-
+	
 	draw_text(text, pos + .{p + 4, -m.y / 2}, s, settings.themes.platform_line);
 }
 

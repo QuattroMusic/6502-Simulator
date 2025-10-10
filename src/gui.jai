@@ -218,7 +218,37 @@ draw_code_editor :: () {
 	true_size := draw_scrollbar(editor.pos, editor.size, *editor.scrollbar_pos, scroll_size, min_size, settings.platform.code_cursor_speed_slow, settings.platform.code_cursor_speed_fast);
 	editor.editor_content_size = true_size;
 
-	draw_panel(editor.file_name, editor.pos, editor.size);
+	// This panel has special interactions, so, instead of making a
+	// new procedure, we put the fancy stuff here.
+	// The interactions in particular:
+	// - adds "..." at the end if the file name is too long
+	// - adds "*" at the beginning of the file if it's not saved
+	
+	draw_rect(editor.pos, .{1, editor.size.y}, settings.themes.platform_line);
+	draw_rect(editor.pos + .{0, editor.size.y - 1}, .{editor.size.x, 1}, settings.themes.platform_line);
+	draw_rect(editor.pos + .{editor.size.x - 1, 0}, .{1, editor.size.y}, settings.themes.platform_line);
+
+	text := editor.file_name;
+	m := measure_text(text, FONT_SIZE_SMALL);
+	p :: 4;
+
+	draw_rect(editor.pos, .{p, 1}, settings.themes.platform_line);
+	
+	characters_to_display := cast(s64, (editor.size.x - 60) / FONT_SIZE_SMALL);
+	
+	if characters_to_display < text.count {
+		text.count = characters_to_display;
+		
+		offx := characters_to_display * FONT_SIZE_SMALL;
+		
+		draw_rect(editor.pos + .{p + 8 + offx + (FONT_SIZE_SMALL * 3), 0}, .{editor.size.x - p - 8 - offx - (3 * FONT_SIZE_SMALL), 1}, settings.themes.platform_line);
+		
+		draw_text(text, editor.pos + .{p + 4, -m.y / 2}, FONT_SIZE_SMALL, settings.themes.platform_line);
+		draw_text("...", editor.pos + .{p + 4 + offx, -m.y / 2}, FONT_SIZE_SMALL, settings.themes.platform_line);
+	} else {
+		draw_rect(editor.pos + .{p + 8 + m.x, 0}, .{editor.size.x - p - 8 - m.x, 1}, settings.themes.platform_line);
+		draw_text(text, editor.pos + .{p + 4, -m.y / 2}, FONT_SIZE_SMALL, settings.themes.platform_line);
+	}
 }
 
 draw_RAM_content :: (offset: Vec2, start: s64, end: s64, pos_y: f32, height: f32) {
