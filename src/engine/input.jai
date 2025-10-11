@@ -71,6 +71,7 @@ KEY_UP    :: 38;
 KEY_RIGHT :: 39;
 KEY_DOWN  :: 40;
 KEY_DEL   :: 46;
+KEY_A     :: 65;
 KEY_C     :: 67;
 KEY_S     :: 83;
 KEY_V     :: 86;

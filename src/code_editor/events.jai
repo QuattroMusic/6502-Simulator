@@ -114,6 +114,7 @@ event_left :: (mods: Editor_Modifier) -> Editor_Interaction {
 	}
 	
 	saved_caret_col = caret_col;
+	saved_caret_row = caret_row;
 	
 	interaction := Editor_Interaction.RESET_CARET;
 	interaction |= ifx !mods & .SHIFT then .RESET_SELECTION;
@@ -134,6 +135,7 @@ event_right :: (mods: Editor_Modifier) -> Editor_Interaction {
 	}
 	
 	saved_caret_col = caret_col;
+	saved_caret_row = caret_row;
 	
 	interaction := Editor_Interaction.RESET_CARET;
 	interaction |= ifx !mods & .SHIFT then .RESET_SELECTION;
@@ -146,14 +148,38 @@ event_up :: (mods: Editor_Modifier) -> Editor_Interaction {
 
 	if caret_row == 0 {  // first row
 		caret_col = 0;
+		saved_caret_col = 0;
+		saved_caret_row = 0;
 	} else {
+		start_of_current_row_index := cast(s64, get_caret_pos(saved_caret_row, 0));
+		
 		caret_row -= 1;
 		
-		if rows_length[caret_row] < saved_caret_col {
-			caret_col = rows_length[caret_row];
-		} else {
-			caret_col = saved_caret_col;
+		visually_caret_col := 0;
+		for start_of_current_row_index .. start_of_current_row_index + saved_caret_col - 1 {
+			c := content[it];
+			
+			if c == #char "\t" then visually_caret_col += 3;
+			visually_caret_col += 1;
 		}
+		
+		// tabs check
+		start_of_next_row_index := cast(s64, get_caret_pos(caret_row, 0));
+		
+		visually_next_caret_col := 0;
+		next_index := 0;
+		
+		for start_of_next_row_index .. start_of_next_row_index + rows_length[caret_row] - 1 {
+			c := content[it];
+			
+			if visually_next_caret_col >= visually_caret_col then break;
+			
+			if c == #char "\t" then visually_next_caret_col += 3;
+			visually_next_caret_col += 1;
+			next_index += 1;
+		}
+		
+		caret_col = xx next_index;
 	}
 	
 	interaction := Editor_Interaction.RESET_CARET;
@@ -167,15 +193,38 @@ event_down :: (mods: Editor_Modifier) -> Editor_Interaction {
 
 	if caret_row == rows_length.count - 1 {
 		caret_col = rows_length[rows_length.count - 1];
-		return .RESET_CARET | .RESET_SELECTION;
+		saved_caret_col = caret_col;
+		saved_caret_row = caret_row;
 	} else {
+		start_of_current_row_index := cast(s64, get_caret_pos(saved_caret_row, 0));
+		
 		caret_row += 1;
 		
-		if rows_length[caret_row] < saved_caret_col {
-			caret_col = rows_length[caret_row];
-		} else {
-			caret_col = saved_caret_col;
+		visually_caret_col := 0;
+		for start_of_current_row_index .. start_of_current_row_index + saved_caret_col - 1 {
+			c := content[it];
+			
+			if c == #char "\t" then visually_caret_col += 3;
+			visually_caret_col += 1;
 		}
+		
+		// tabs check
+		start_of_next_row_index := cast(s64, get_caret_pos(caret_row, 0));
+		
+		visually_next_caret_col := 0;
+		next_index := 0;
+		
+		for start_of_next_row_index .. start_of_next_row_index + rows_length[caret_row] - 1 {
+			c := content[it];
+			
+			if visually_next_caret_col >= visually_caret_col then break;
+			
+			if c == #char "\t" then visually_next_caret_col += 3;
+			visually_next_caret_col += 1;
+			next_index += 1;
+		}
+		
+		caret_col = xx next_index;
 	}
 	
 	interaction := Editor_Interaction.RESET_CARET;
@@ -224,6 +273,7 @@ event_enter :: () -> Editor_Interaction {
 	caret_col = xx tabs;
 	
 	saved_caret_col = caret_col;
+	saved_caret_row = caret_row;
 	
 	editor.row_digits = count_digits(xx rows_length.count);
 	
@@ -261,6 +311,7 @@ event_cancel :: () -> Editor_Interaction {
 	}
 	
 	saved_caret_col = caret_col;
+	saved_caret_row = caret_row;
 	
 	calculate_rows_length();
 
@@ -269,8 +320,10 @@ event_cancel :: () -> Editor_Interaction {
 
 event_delete :: () -> Editor_Interaction {
 	if !area_selecting() {
-		// reject the movement if the area is selected
 		event_right(0);
+		
+		caret_col_selection = caret_col;
+		caret_row_selection = caret_row;
 	}
 	
 	event_cancel();
@@ -351,6 +404,7 @@ event_mouse_down :: (mods: Editor_Modifier) -> Editor_Interaction {
 	}
 	
 	saved_caret_col = caret_col;
+	saved_caret_row = caret_row;
 	
 	interaction := Editor_Interaction.RESET_CARET;
 	
@@ -362,12 +416,16 @@ event_mouse_down :: (mods: Editor_Modifier) -> Editor_Interaction {
 	return interaction;
 }
 
-event_end :: (mods: Editor_Modifier) -> Editor_Interaction {
-	if mods & .ALT || mods & .CTRL then return 0;
+event_start :: (mods: Editor_Modifier) -> Editor_Interaction {
+	if mods & .ALT then return 0;
 	
-	line_length := rows_length[caret_row];
-	caret_col = line_length;
-	saved_caret_col = line_length;
+	if mods & .CTRL {
+		caret_row = 0;
+		saved_caret_row = 0;
+	}
+	
+	caret_col = 0;
+	saved_caret_col = 0;
 	
 	interactions := Editor_Interaction.RESET_CARET;
 	if !mods & .SHIFT then interactions |= .RESET_SELECTION;
@@ -375,11 +433,21 @@ event_end :: (mods: Editor_Modifier) -> Editor_Interaction {
 	return interactions;
 }
 
-event_start :: (mods: Editor_Modifier) -> Editor_Interaction {
-	if mods & .ALT || mods & .CTRL then return 0;
+event_end :: (mods: Editor_Modifier) -> Editor_Interaction {
+	if mods & .ALT then return 0;
 	
-	caret_col = 0;
-	saved_caret_col = 0;
+	if mods & .CTRL {
+		rows_amount := rows_length.count;
+		caret_row = xx (rows_amount - 1);
+		caret_col = rows_length[caret_row];
+		
+		saved_caret_row = caret_row;
+	} else {
+		line_length := rows_length[caret_row];
+		caret_col = line_length;
+	}
+	
+	saved_caret_col = caret_col;
 	
 	interactions := Editor_Interaction.RESET_CARET;
 	if !mods & .SHIFT then interactions |= .RESET_SELECTION;
@@ -453,8 +521,19 @@ event_paste :: () -> Editor_Interaction {
 	editor.row_digits = count_digits(xx editor.rows_length.count);
 	
 	saved_caret_col = caret_col;
+	saved_caret_row = caret_row;
 	
 	return interaction;
+}
+
+event_select_all :: () -> Editor_Interaction {
+	event_start(.CTRL);
+	caret_col_selection = 0;
+	caret_row_selection = 0;
+	
+	event_end(.CTRL | .SHIFT);
+	
+	return .RESET_CARET;
 }
 
 event_new_line_in_middle :: () -> Editor_Interaction {
@@ -508,6 +587,7 @@ handle_code_editor_events :: () {
 			if is_key_pressed(KEY_C)             then interactions |= event_copy();
 			if is_key_pressed_or_repeated(KEY_V) then interactions |= event_paste();
 			if is_key_pressed(KEY_ENTER)         then interactions |= event_new_line_in_middle();
+			if is_key_pressed(KEY_A)             then interactions |= event_select_all();
 			// Todo - Quattro - word movement with arrows
 			// Todo - Quattro - word deletion
 			// Todo - Quattro - jump to label

@@ -181,6 +181,7 @@ Code_Editor :: struct {
 	caret_row_selection: u32;
 	
 	saved_caret_col: u32;
+	saved_caret_row: u32;
 	
 	file_edited: bool;
 	
