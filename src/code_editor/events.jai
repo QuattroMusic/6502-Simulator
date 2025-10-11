@@ -76,7 +76,7 @@ update_visual_position :: () {
 	relative_row_on_screen := caret_row - first_visible_row;
 	relative_row_on_screen_normalized := relative_row_on_screen / rows_on_screen;
 	
-	THRESHOLD :: 0.15;
+	THRESHOLD :: 0.05;
 	
 	// upper check
 	if relative_row_on_screen_normalized <= THRESHOLD {
