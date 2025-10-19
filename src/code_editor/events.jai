@@ -583,11 +583,11 @@ handle_code_editor_events :: () {
 	
 	if modifiers == {
 		case .CTRL;
-			if is_key_pressed(KEY_S)             then save_editor_file();
-			if is_key_pressed(KEY_C)             then interactions |= event_copy();
-			if is_key_pressed_or_repeated(KEY_V) then interactions |= event_paste();
-			if is_key_pressed(KEY_ENTER)         then interactions |= event_new_line_in_middle();
-			if is_key_pressed(KEY_A)             then interactions |= event_select_all();
+			if is_key_pressed(KEY_S)                 then save_editor_file();
+			if is_key_pressed(KEY_C)                 then interactions |= event_copy();
+			if is_key_pressed_or_repeated(KEY_V)     then interactions |= event_paste();
+			if is_key_pressed_or_repeated(KEY_ENTER) then interactions |= event_new_line_in_middle();
+			if is_key_pressed(KEY_A)                 then interactions |= event_select_all();
 			// Todo - Quattro - word movement with arrows
 			// Todo - Quattro - word deletion
 			// Todo - Quattro - jump to label
