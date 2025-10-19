@@ -183,7 +183,7 @@ draw_code_editor :: () {
 			end_col:   u32 = ---;
 			
 			start_row := min(editor.caret_row, editor.caret_row_selection);
-			end_row := max(editor.caret_row, editor.caret_row_selection);
+			end_row   := max(editor.caret_row, editor.caret_row_selection);
 			
 			if editor.caret_row < editor.caret_row_selection {
 				// reverse selection
@@ -218,8 +218,8 @@ draw_code_editor :: () {
 	true_size := draw_scrollbar(editor.pos, editor.size, *editor.scrollbar_pos, scroll_size, min_size, settings.platform.code_cursor_speed_slow, settings.platform.code_cursor_speed_fast);
 	editor.editor_content_size = true_size;
 
-	// This panel has special interactions, so, instead of making a
-	// new procedure, we put the fancy stuff here.
+	// The "panel" widget used to view the file name has special interactions, so,
+	// instead of making a new procedure, we put the fancy stuff here.
 	// The interactions in particular:
 	// - adds "..." at the end if the file name is too long
 	// - adds "*" at the beginning of the file if it's not saved
@@ -276,7 +276,54 @@ draw_code_editor :: () {
 	}
 }
 
-draw_RAM_content :: (offset: Vec2, start: s64, end: s64, pos_y: f32, height: f32) {
+draw_RAM_content :: (offset: Vec2, start: s64, end: s64, pos: Vec2, height: f32) {
+	draw_u32_internal :: (y: s64, data: u32, byte_offset: s64, draw_offset: Vec2) {
+		fetch_color :: (y: s64, x: s64, data: u8) -> Col {
+			col: Col = ---;
+			
+			if 16 <= y && y < 32 {
+				col = ifx data then settings.themes.memory_stack_used else settings.themes.memory_stack_empty;
+			} else if 32 <= y && y < 632 {
+				col = ifx data then settings.themes.memory_display_used else settings.themes.memory_display_empty;
+			} else if y == 632 && x < 14 {
+				col = settings.themes.memory_input;
+			} else if data {
+				col = settings.themes.memory_normal_used;
+			} else {
+				col = settings.themes.memory_normal_empty;
+			}
+			
+			return col;
+		}
+		
+		b1 := (data >>  0) & 0xFF;
+		b2 := (data >>  8) & 0xFF;
+		b3 := (data >> 16) & 0xFF;
+		b4 := (data >> 24) & 0xFF;
+		
+		c1 := fetch_color(y, byte_offset + 0, cast,no_check(u8, b1));
+		c2 := fetch_color(y, byte_offset + 1, cast,no_check(u8, b2));
+		c3 := fetch_color(y, byte_offset + 2, cast,no_check(u8, b3));
+		c4 := fetch_color(y, byte_offset + 3, cast,no_check(u8, b4));
+		
+		lo1 := (b1 >> 0) & 0xF;
+		hi1 := (b1 >> 4) & 0xF;
+		lo2 := (b2 >> 0) & 0xF;
+		hi2 := (b2 >> 4) & 0xF;
+		lo3 := (b3 >> 0) & 0xF;
+		hi3 := (b3 >> 4) & 0xF;
+		lo4 := (b4 >> 0) & 0xF;
+		hi4 := (b4 >> 4) & 0xF;
+		
+		draw_character(chars[hi1], draw_offset + .{55.0 + (byte_offset + 0) * (32 + 4), 4.0 + y * 16}, FONT_SIZE_NORMAL, c1, range_check = false);
+		draw_character(chars[lo1], draw_offset + .{71.0 + (byte_offset + 0) * (32 + 4), 4.0 + y * 16}, FONT_SIZE_NORMAL, c1, range_check = false);
+		draw_character(chars[hi2], draw_offset + .{55.0 + (byte_offset + 1) * (32 + 4), 4.0 + y * 16}, FONT_SIZE_NORMAL, c2, range_check = false);
+		draw_character(chars[lo2], draw_offset + .{71.0 + (byte_offset + 1) * (32 + 4), 4.0 + y * 16}, FONT_SIZE_NORMAL, c2, range_check = false);
+		draw_character(chars[hi3], draw_offset + .{55.0 + (byte_offset + 2) * (32 + 4), 4.0 + y * 16}, FONT_SIZE_NORMAL, c3, range_check = false);
+		draw_character(chars[lo3], draw_offset + .{71.0 + (byte_offset + 2) * (32 + 4), 4.0 + y * 16}, FONT_SIZE_NORMAL, c3, range_check = false);
+		draw_character(chars[hi4], draw_offset + .{55.0 + (byte_offset + 3) * (32 + 4), 4.0 + y * 16}, FONT_SIZE_NORMAL, c4, range_check = false);
+		draw_character(chars[lo4], draw_offset + .{71.0 + (byte_offset + 3) * (32 + 4), 4.0 + y * 16}, FONT_SIZE_NORMAL, c4, range_check = false);
+	}
 	chars :: "0123456789ABCDEF";
 
 	for y: start..end {
@@ -293,54 +340,6 @@ draw_RAM_content :: (offset: Vec2, start: s64, end: s64, pos_y: f32, height: f32
 		draw_character(#char ":", offset + .{5 + 32, 9.0 + y * 16}, FONT_SIZE_SMALL, settings.themes.platform_text_normal, range_check = false);
 
 		// draw values
-		draw_u32_internal :: (y: s64, data: u32, byte_offset: s64, draw_offset: Vec2) {
-			fetch_color :: (y: s64, x: s64, data: u8) -> Col {
-				col: Col = ---;
-				
-				if 16 <= y && y < 32 {
-					col = ifx data then settings.themes.memory_stack_used else settings.themes.memory_stack_empty;
-				} else if 32 <= y && y < 632 {
-					col = ifx data then settings.themes.memory_display_used else settings.themes.memory_display_empty;
-				} else if y == 632 && x < 14 {
-					col = settings.themes.memory_input;
-				} else if data {
-					col = settings.themes.memory_normal_used;
-				} else {
-					col = settings.themes.memory_normal_empty;
-				}
-				
-				return col;
-			}
-			
-			b1 := (data >>  0) & 0xFF;
-			b2 := (data >>  8) & 0xFF;
-			b3 := (data >> 16) & 0xFF;
-			b4 := (data >> 24) & 0xFF;
-			
-			c1 := fetch_color(y, byte_offset + 0, cast,no_check(u8, b1));
-			c2 := fetch_color(y, byte_offset + 1, cast,no_check(u8, b2));
-			c3 := fetch_color(y, byte_offset + 2, cast,no_check(u8, b3));
-			c4 := fetch_color(y, byte_offset + 3, cast,no_check(u8, b4));
-			
-			lo1 := (b1 >> 0) & 0xF;
-			hi1 := (b1 >> 4) & 0xF;
-			lo2 := (b2 >> 0) & 0xF;
-			hi2 := (b2 >> 4) & 0xF;
-			lo3 := (b3 >> 0) & 0xF;
-			hi3 := (b3 >> 4) & 0xF;
-			lo4 := (b4 >> 0) & 0xF;
-			hi4 := (b4 >> 4) & 0xF;
-			
-			draw_character(chars[hi1], draw_offset + .{55.0 + (byte_offset + 0) * (32 + 4), 4.0 + y * 16}, FONT_SIZE_NORMAL, c1, range_check = false);
-			draw_character(chars[lo1], draw_offset + .{71.0 + (byte_offset + 0) * (32 + 4), 4.0 + y * 16}, FONT_SIZE_NORMAL, c1, range_check = false);
-			draw_character(chars[hi2], draw_offset + .{55.0 + (byte_offset + 1) * (32 + 4), 4.0 + y * 16}, FONT_SIZE_NORMAL, c2, range_check = false);
-			draw_character(chars[lo2], draw_offset + .{71.0 + (byte_offset + 1) * (32 + 4), 4.0 + y * 16}, FONT_SIZE_NORMAL, c2, range_check = false);
-			draw_character(chars[hi3], draw_offset + .{55.0 + (byte_offset + 2) * (32 + 4), 4.0 + y * 16}, FONT_SIZE_NORMAL, c3, range_check = false);
-			draw_character(chars[lo3], draw_offset + .{71.0 + (byte_offset + 2) * (32 + 4), 4.0 + y * 16}, FONT_SIZE_NORMAL, c3, range_check = false);
-			draw_character(chars[hi4], draw_offset + .{55.0 + (byte_offset + 3) * (32 + 4), 4.0 + y * 16}, FONT_SIZE_NORMAL, c4, range_check = false);
-			draw_character(chars[lo4], draw_offset + .{71.0 + (byte_offset + 3) * (32 + 4), 4.0 + y * 16}, FONT_SIZE_NORMAL, c4, range_check = false);
-		}
-		
 		data_lo: u64 = ---;
 		data_hi: u64 = ---;
 		{
@@ -352,14 +351,14 @@ draw_RAM_content :: (offset: Vec2, start: s64, end: s64, pos_y: f32, height: f32
 			data_hi = ptr_hi.*;
 		}
 		
-		draw_u32_internal(y, cast,no_check(u32, (data_lo >>  0) & 0xFFFFFFFF),  0, offset);
-		draw_u32_internal(y, cast,no_check(u32, (data_lo >> 32) & 0xFFFFFFFF),  4, offset);
-		draw_u32_internal(y, cast,no_check(u32, (data_hi >>  0) & 0xFFFFFFFF),  8, offset);
-		draw_u32_internal(y, cast,no_check(u32, (data_hi >> 32) & 0xFFFFFFFF), 12, offset);
+		draw_u32_internal(y, cast,no_check(u32, (data_lo >>  0) & 0xFFFFFFFF),  0, offset + .{-4, 0});
+		draw_u32_internal(y, cast,no_check(u32, (data_lo >> 32) & 0xFFFFFFFF),  4, offset + .{-1, 0});
+		draw_u32_internal(y, cast,no_check(u32, (data_hi >>  0) & 0xFFFFFFFF),  8, offset + .{ 3, 0});
+		draw_u32_internal(y, cast,no_check(u32, (data_hi >> 32) & 0xFFFFFFFF), 12, offset + .{ 6, 0});
 	}
 
-	pos := offset.y + 279 + (cast(f32)(engine.S / 16)) * 16;
-	if (pos_y + 20) <= pos && pos < (pos_y + height) {
+	relative := offset.y + 279 + (cast(f32)(engine.S / 16)) * 16;
+	if (pos.y + 20) <= relative && relative < (pos.y + height) {
 		x := 53 + (cast(f32)(engine.S % 16)) * (32 + 4);
 		y := 260 + (cast(f32)(engine.S / 16)) * (16);
 		w := 16 * 2 + 2;
@@ -385,8 +384,8 @@ draw_program_memory :: () {
 
 	offset := pos + .{2, -cast(f32, ui.memory_scrollbar_pos)};
 	start: s64 = xx ((ui.memory_scrollbar_pos) / FONT_SIZE_NORMAL);
-	end:   s64 = xx ((ui.memory_scrollbar_pos + size.y - 24) / FONT_SIZE_NORMAL);
-	draw_RAM_content(offset, start, end, pos.y, size.y);
+	end:   s64 = xx ((ui.memory_scrollbar_pos + size.y - 23) / FONT_SIZE_NORMAL);
+	draw_RAM_content(offset, start, end, pos, size.y);
 
 	draw_panel("memory", pos, size);
 }

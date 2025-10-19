@@ -198,7 +198,7 @@ Scrollbar_Vector :: struct {
 
 Status_Flags :: struct {
 	// Todo - Quattro - Maybe i could just use a single aligned u8.
-	// But I need to check for performance first
+	// But I need to check the performance of the engine.
 	N: bool #align 8;
 	V: bool #align 8;
 	B: bool #align 8;
@@ -212,7 +212,6 @@ Emulator :: struct {
 	// Atomic values needs to be 8 byte aligned on x64 machines.
 	// Note that rather filling the whole program with `atomic_read` or `atomic_write`
 	// we're just aligning the data.
-	// If you look at the implementation, it's just a common read or write.
 
 	ROM: [ROM_SIZE] u8 = --- #align 8;
 	RAM: [RAM_SIZE] u8 = --- #align 8;
