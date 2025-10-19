@@ -6,10 +6,10 @@ A simple to use 6502 simulator, featuring a code editor, keyboard input and a di
 ![[video]](_data/hello_6502.gif)
 
 ## Technical specifications
-- 32kB RAM and ROM
+- 32kiB of RAM and ROM
 - 120x80 display
 - Date and time in RAM
-- Keyboard input
+- Keyboard and mouse input
 - Frequency selector in the range of 1Hz to 1GHz
 
 ### Address Space
@@ -34,14 +34,17 @@ A simple to use 6502 simulator, featuring a code editor, keyboard input and a di
 │   NMI Vector  │ 0xFFFA
 │    (unused)   │ 0xFFFB
 ├───────────────┤
-│   RES Vector  │ 0xFFFC & 0xFFFD
+│      RES      │ 0xFFFC
+│     Vector    │ 0xFFFD
 ├───────────────┤
 │   IRQ Vector  │ 0xFFFE
 │    (unused)   │ 0xFFFF
 └───────────────┘
 ```
 
-The Zero Page is considered as RAM, it's just an optimized way for the memory operations (less cycles).
+The Zero Page is still considered as RAM.
+The main difference between the two is that the zero page
+uses less cycles to compute memory read and/or write operations.
 
 The RAM is then subdivided as below:
 ```
@@ -50,10 +53,10 @@ The RAM is then subdivided as below:
 │    Display    │
 │               │ 0x277F
 ├───────────────┤
-│    Keyboard   │ 0x2780
-│     Input     │
+│ Time Control  │ 0x2780
 ├───────────────┤
-│     Year      │ 0x2781 & 0x2782
+│   Year (LO)   │ 0x2781
+│   Year (HI)   │ 0x2782
 ├───────────────┤
 │     Month     │ 0x2783
 ├───────────────┤
@@ -65,29 +68,49 @@ The RAM is then subdivided as below:
 ├───────────────┤
 │    Seconds    │ 0x2787
 ├───────────────┤
-│ Milliseconds  │ 0x2788 & 0x2789
+│   Milli (LO)  │ 0x2788
+│   Milli (HI)  │ 0x2789
 ├───────────────┤
-│               │ 0x278A
+│    Keyboard   │ 0x278A
+├───────────────┤
+│    Mouse X    │ 0x278B
+├───────────────┤
+│    Mouse Y    │ 0x278C
+├───────────────┤
+│  Mouse Input  │ 0x278D
+├───────────────┤
+│               │ 0x278E
 │      RAM      │
 │               │ 0x7FFF
 └───────────────┘
 ```
 
-The Year and the Milliseconds section is stored as little-endian (see programmers model)
+The year and the milliseconds data is stored as little-endian,
+as stated in the picture above.
 
-Note: you can use the display space as RAM storage without any problem, but not the input and date space.
-The keyboard input only works when the display is open
+If more RAM is needed, the display space could be used without any problem.
+The date and the input section cannot be used for this purpose.
+
+The keyboard input only works when the code editor is not focused.
+
+The time control byte is used to precisely read the time.
+When that byte is set to 0x02, the data is ready to be read.
+The user must then write 0x01 to that address, so, the engine won't
+update the data.
+After reading it, the user must to clear the first bit (write 0x00 is
+suggested), so, the engine will update the data and write 0x02 again.
 
 ### Programmers Model
-At the beginning of the exectution, the 6502 will read the data at the address `0xFFFC` and `0xFFFD` (RES Vector).
+When the play button is pressed, the 6502 will read the data in the address `0xFFFC` and `0xFFFD` (RES Vector).
 The resulted address will give the entry point of your program (see examples or the minimal code).
 
 Multiple byte data is stored in little-endian, so, the address `0x1234` will be stored the RAM as `0x34` and `0x12`
 
-The 6502 features 3 general purpose 8b registers, called `A` (accumulator), `X` and `Y`.
-Then there's the 16b `PC` (Program Counter) used to point at the instruction in the ROM,
-an 8b register `S`, which points to the next free slot in the stack (0xFF at startup, downwards)
-and the 8b `P` reg, which includes the flags used for comparisons and branching.
+The 6502 features 3 general purpose 8 bit registers, called `A` (accumulator), `X` and `Y`.
+The Program Counter is a 16 bit register, called `PC`, used to point at the instruction in the ROM.
+There are also two more 8 bit registers, the `S` and `P` registers, which they are used to
+point to the next free slot in the stack (0xFF at startup, downwards) and to contain
+the flags used for comparisongs and branching, respectively.
 
 ```
    MSB                             LSB
@@ -151,17 +174,24 @@ init:
 
 # License
 
-I don't like the way the license system works, so instead of searching for a license that satisfies me, I'm making my own version.
+I don't like the way the license system works, so instead of searching
+for a license that satisfies me, I'm making my own version.
 
 #### What this software allows you to do
-You can keep the source code on your devices; you may compile it and use it for private or public use.
+You can keep the source code on your devices; you may compile it and use it
+for private or public use.
+If you modify it, you have to explicitly state that you possess a
+altered version of the software.
 
 #### What this software doesn't allow you to do
-Even if you've modified it, I don't want you to use this product for commercial use or to distribute under your name;
-I put a lot of effort on this project, for learning purposes, and to make it possible for everyone to use a 6502 simulator to learn assembly in the easiest possible way.
+Even if you've modified it, I don't want you to use this product for
+commercial use or to distribute it under your name;
+I put a lot of effort on this project, for learning purposes
+and to allow everyone to use a 6502 simulator to learn assembly
+in the easiest possible way.
 
 ## Contact me
 
-Questions? Bugs? Ideas? Feel free to contact me on Discord `@quattromusic`!
+Questions? Bugs? Ideas? Something is not clear? Feel free to contact me on Discord `@quattromusic`!
 
 Join [my server](https://discord.gg/wXECkMJb6V) for the latest news.
