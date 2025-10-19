@@ -180,7 +180,7 @@ for a license that satisfies me, I'm making my own version.
 #### What this software allows you to do
 You can keep the source code on your devices; you may compile it and use it
 for private or public use.
-If you modify it, you have to explicitly state that you possess a
+If you modify it, you have to explicitly state that you possess an
 altered version of the software.
 
 #### What this software doesn't allow you to do
