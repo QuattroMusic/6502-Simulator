@@ -100,6 +100,8 @@ update the data.
 After reading it, the user must to clear the first bit (write 0x00 is
 suggested), so, the engine will update the data and write 0x02 again.
 
+You may read time and input examples for a pratical use.
+
 ### Programmers Model
 When the play button is pressed, the 6502 will read the data in the address `0xFFFC` and `0xFFFD` (RES Vector).
 The resulted address will give the entry point of your program (see examples or the minimal code).
