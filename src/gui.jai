@@ -356,13 +356,19 @@ draw_RAM_content :: (offset: Vec2, start: s64, end: s64, pos: Vec2, height: f32)
 		draw_u32_internal(y, cast,no_check(u32, (data_hi >>  0) & 0xFFFFFFFF),  8, offset + .{ 3, 0});
 		draw_u32_internal(y, cast,no_check(u32, (data_hi >> 32) & 0xFFFFFFFF), 12, offset + .{ 6, 0});
 	}
-
+	
 	relative := offset.y + 279 + (cast(f32)(engine.S / 16)) * 16;
 	if (pos.y + 20) <= relative && relative < (pos.y + height) {
-		x := 53 + (cast(f32)(engine.S % 16)) * (32 + 4);
+		x := 49 + (cast(f32)(engine.S % 16)) * (32 + 4);
 		y := 260 + (cast(f32)(engine.S / 16)) * (16);
 		w := 16 * 2 + 2;
 		h := 18;
+		
+		v := (engine.S % 16) / 4;
+		x += ifx v >= 1 then 3 else 0;
+		x += ifx v >= 2 then 4 else 0;
+		x += ifx v >= 3 then 3 else 0;
+		
 		draw_rect_lines(offset + .{xx x, xx y}, .{xx w, xx h}, settings.themes.general_stack_focus, 2);
 	}
 }
